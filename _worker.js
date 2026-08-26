@@ -4,17 +4,21 @@ function preferred(request){const h=(request.headers.get('Accept-Language')||'')
 function json(data,status=200){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}
 
 async function loadMigration(request,env){
-  let encoded='';
-  for(let i=0;i<4;i++){
-    const r=await env.ASSETS.fetch(new Request(new URL(`/db/migration/payload.${i}`,request.url)));
-    if(!r.ok)throw new Error(`payload.${i} unavailable (${r.status})`);
-    encoded+=(await r.text()).trim();
+  const manifestResponse=await env.ASSETS.fetch(new Request(new URL('/db/plain_migration/manifest.json',request.url)));
+  if(!manifestResponse.ok)throw new Error(`manifest unavailable (${manifestResponse.status})`);
+  const manifest=await manifestResponse.json();
+  if(!Number.isInteger(manifest.parts)||manifest.parts<1)throw new Error('invalid migration manifest');
+  const statements=[];
+  for(let i=0;i<manifest.parts;i++){
+    const name=`/db/plain_migration/part_${String(i).padStart(2,'0')}.json`;
+    const r=await env.ASSETS.fetch(new Request(new URL(name,request.url)));
+    if(!r.ok)throw new Error(`${name} unavailable (${r.status})`);
+    const part=await r.json();
+    if(!Array.isArray(part))throw new Error(`${name} is not an array`);
+    statements.push(...part);
   }
-  const raw=atob(encoded.replace(/\s+/g,''));
-  const bytes=new Uint8Array(raw.length);
-  for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
-  const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-  return JSON.parse(await new Response(stream).text());
+  if(statements.length!==manifest.statements)throw new Error(`statement count mismatch ${statements.length}/${manifest.statements}`);
+  return statements;
 }
 
 async function migrationStatus(db){

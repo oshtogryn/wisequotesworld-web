@@ -1,0 +1,29 @@
+name: Validate Wise DB payload
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/validate-db-payload.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate migration payload
+        run: |
+          python - <<'PY'
+          import base64,gzip,json,pathlib,hashlib
+          files=sorted(pathlib.Path('db/migration').glob('payload.*'))
+          assert files, 'No migration files'
+          s=''.join(p.read_text().strip() for p in files)
+          raw=base64.b64decode(s, validate=True)
+          data=gzip.decompress(raw)
+          obj=json.loads(data)
+          assert isinstance(obj,list), type(obj)
+          print(json.dumps({'files':len(files),'b64_chars':len(s),'gzip_bytes':len(raw),'json_bytes':len(data),'statements':len(obj),'sha256':hashlib.sha256(data).hexdigest()}))
+          PY

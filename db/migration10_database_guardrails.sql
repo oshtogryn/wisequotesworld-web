@@ -175,3 +175,25 @@ SELECT 'wisequotesworld','project',NULL,NULL,'database_guardrails','d1_hard_publ
 'D1 triggers enforce adapted attribution cleanup, verbatim source verification, eight-language content approval, and publication approval before scheduled/publishing/published states.',
 'Critical guardrails remain active even if Admin or Worker validation is bypassed.',1,'approved',1,'2026-08-29'
 WHERE NOT EXISTS (SELECT 1 FROM rules WHERE project_id='wisequotesworld' AND rule_key='d1_hard_publication_gate' AND version=1);
+
+-- French is live on website + Pinterest now. Only unconnected FR social channels remain blocked.
+UPDATE rules SET status='superseded',notes='Superseded 2026-08-29: FR website and Pinterest are enabled; only FB/IG/Threads/TikTok/YouTube remain pending.'
+WHERE project_id='wisequotesworld' AND rule_key='fr_social_disabled_until_connected' AND status='approved';
+
+INSERT INTO rules(project_id,scope_type,language_code,platform_code,rule_group,rule_key,rule_value,notes,mandatory,status,version,effective_from)
+SELECT 'wisequotesworld','language','fr','website','publishing','fr_website_enabled',
+'French website content is active and must be generated, indexed and published with the other locales.',
+'FR is the eighth website language.',1,'approved',1,'2026-08-29'
+WHERE NOT EXISTS (SELECT 1 FROM rules WHERE project_id='wisequotesworld' AND rule_key='fr_website_enabled' AND version=1);
+
+INSERT INTO rules(project_id,scope_type,language_code,platform_code,rule_group,rule_key,rule_value,notes,mandatory,status,version,effective_from)
+SELECT 'wisequotesworld','language','fr','pinterest','publishing','fr_pinterest_enabled',
+'French Pinterest content is active. Generate French Pinterest creative and copy for every content item and publish only after the French board integration is configured and normal content/visual approvals pass.',
+'Board ID remains a runtime integration requirement; do not invent it.',1,'approved',1,'2026-08-29'
+WHERE NOT EXISTS (SELECT 1 FROM rules WHERE project_id='wisequotesworld' AND rule_key='fr_pinterest_enabled' AND version=1);
+
+INSERT INTO rules(project_id,scope_type,language_code,platform_code,rule_group,rule_key,rule_value,notes,mandatory,status,version,effective_from)
+SELECT 'wisequotesworld','language','fr',NULL,'publishing','fr_social_channels_pending',
+'French Facebook, Instagram, Threads, TikTok and YouTube publishing remains disabled until those FR accounts are created, connected and explicitly enabled. Content and prompts should still be prepared and stored.',
+'Does not apply to website or Pinterest.',1,'approved',1,'2026-08-29'
+WHERE NOT EXISTS (SELECT 1 FROM rules WHERE project_id='wisequotesworld' AND rule_key='fr_social_channels_pending' AND version=1);

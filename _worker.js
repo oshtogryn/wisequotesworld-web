@@ -1,3 +1,5 @@
+import {publicationApi} from './lib/publication_core.js';
+
 const LANGS=['en','uk','ru','pl','sv','de','es','fr'];
 const PROJECT_ID='wisequotesworld';
 const PIN_MODEL='@cf/black-forest-labs/flux-1-schnell';
@@ -191,6 +193,7 @@ function adminHtml(){return `<!doctype html><html><head><meta charset="utf-8"><m
 async function api(request,env,url){
  if(url.pathname==='/api/health')return json({ok:true,project:PROJECT_ID,languages:LANGS,db:!!env.DB,r2:!!env.MEDIA,ai:!!env.AI,admin_secret:!!env.ADMIN_TOKEN,pinterest_model:PIN_MODEL});
  if(!env.DB)return json({ok:false,error:'DB binding unavailable'},503);if(!url.pathname.startsWith('/api/admin/'))return json({ok:false,error:'not found'},404);const deny=requireAdmin(request,env);if(deny)return deny;
+ const pub=await publicationApi(request,env,url);if(pub)return pub;
  if(url.pathname==='/api/admin/schema'&&request.method==='GET')return json({ok:true,schema:await schemaStatus(env.DB),bindings:{r2:!!env.MEDIA,ai:!!env.AI}});
  if(url.pathname==='/api/admin/migrate'&&request.method==='POST')return applyMigrations(request,env);
  if(url.pathname==='/api/admin/content'&&request.method==='GET')return json({ok:true,items:await listContent(env)});if(url.pathname==='/api/admin/content'&&request.method==='POST')return createContent(request,env);

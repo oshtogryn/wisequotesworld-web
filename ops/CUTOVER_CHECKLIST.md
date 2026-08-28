@@ -1,5 +1,18 @@
 # Wise Quotes World — database-first cutover checklist
 
+## Code/CI gate
+- [x] Worker JavaScript passes `node --check`
+- [x] D1 schema v2 -> migrations v3-v10 pass SQLite smoke test
+- [x] partial-v3 automatic migration replay is blocked
+- [x] `projects.id='wisequotesworld'` is required before migration4
+- [x] adapted attribution cleanup enforced in Worker + D1
+- [x] verbatim verification minimum enforced in Worker + D1
+- [x] explicit content approval API/UI implemented
+- [x] approval requires all 8 language versions
+- [x] publication scheduled/publishing/published states require content approval in D1
+- [x] AI target dimensions are not stored as actual media dimensions
+- [x] FR website + Pinterest enabled; FR FB/IG/Threads/TikTok/YouTube remain pending until channels exist
+
 ## Preview gate
 - [ ] newest automation-v3 deployment is green
 - [ ] `/api/health` reports `db=true`, `r2=true`, `ai=true`, `admin_secret=true`
@@ -8,28 +21,17 @@
 - [ ] authorized `/api/admin/schema` reads the actual D1 schema
 
 ## Migration gate
-- [ ] base schema v2 exists
-- [ ] migration preflight rejects unsafe partially-applied v3 instead of blindly rerunning ALTER TABLE statements
-- [ ] `projects.id='wisequotesworld'` exists before migration4 seeds project_languages
+- [ ] live D1 base schema v2 exists
+- [ ] live schema does not report `partial_v3=true`
 - [ ] v3 applies without duplicate columns
 - [ ] v4 adds French and database-only rules
 - [ ] v5 adds source verification fields/evidence with TEXT content IDs
 - [ ] v6 adds quote_pages and content_approvals with NULL-safe approval uniqueness
 - [ ] v7 seeds required outputs and hard guardrails
 - [ ] v8 adds ai_generation_jobs and Pinterest AI-generation rules
-- [ ] v9 seeds runtime, attribution, visual-QA and free-AI cost-control rules
-- [ ] v10 installs D1 triggers for attribution cleanup, verbatim verification, 8-language approval and publication approval
-- [ ] schema/rule/trigger re-read confirms expected state through v10
-
-## D1 hard-guardrail gate
-- [ ] adapted insert/update cannot retain author_name/source_name/author_source/source_work/source_date
-- [ ] adapted attribution_status resolves to `not_required`
-- [ ] verbatim cannot transition to `verified` without complete verified source evidence
-- [ ] content approval cannot become `approved` before all 8 language versions exist
-- [ ] verbatim content approval additionally requires verified attribution + evidence
-- [ ] publication INSERT with status scheduled/publishing/published fails without approved content
-- [ ] publication UPDATE to scheduled/publishing/published fails without approved content
-- [ ] approved content permits publication state transition
+- [ ] v9 adds runtime/cost/text-fidelity rules
+- [ ] v10 adds D1 guardrail triggers + final FR website/Pinterest policy
+- [ ] schema re-read confirms expected tables/columns/rules/triggers through v10
 
 ## R2 + Workers AI gate
 - [ ] `MEDIA` R2 binding is present and public R2 access stays disabled
@@ -67,18 +69,26 @@
 - [ ] publication blocked if verification is removed/unverified
 
 ## Approval + publication gate
-- [ ] Admin supports explicit approve/reject/pending workflow
-- [ ] final approval validates required content/source/media state
-- [ ] no publication can transition to scheduled without approval
+- [x] Admin supports explicit approve/reject/pending workflow
+- [x] approval validates 8 language versions and verbatim source state
+- [x] no publication can transition to scheduled without approval at D1 level
+- [ ] Pinterest visual-QA endpoint/UI supports approve/reject after image inspection
 - [ ] publisher records external platform ID, status, scheduled time and timezone after write/readback
 - [ ] analytics collection can attach platform metrics to the publication record
-- [ ] FR website + Pinterest enabled; FR Facebook/Instagram/Threads/TikTok/YouTube remain disabled until their channels exist
+- [x] FR website + Pinterest policy is explicit; other FR social channels remain disabled until connected
+
+## Website gate
+- [ ] D1 quote page upsert/API implemented
+- [ ] public `/<locale>/quotes/<slug>/` reads published quote page from D1
+- [ ] dynamic sitemap/hreflang/canonical verified
+- [ ] static site remains fallback when D1 page does not exist
 
 ## Production gate
 - [ ] no unresolved preview errors
 - [ ] no schema/data loss
 - [ ] WQ006 end-to-end test passes
 - [ ] WQ007 end-to-end test passes
+- [ ] publisher/readback/analytics path validated
 - [ ] PR #1 mergeable
 - [ ] merge to main
 - [ ] production deployment green

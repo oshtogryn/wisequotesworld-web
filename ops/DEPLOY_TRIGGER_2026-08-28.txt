@@ -1,0 +1,3 @@
+Wise Quotes World automation-v3 preview deployment trigger.
+Cloudflare bindings prepared: DB, MEDIA; ADMIN_TOKEN configured separately as encrypted secret.
+Timestamp: 2026-08-28.

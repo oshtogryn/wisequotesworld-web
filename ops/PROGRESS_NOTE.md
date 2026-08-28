@@ -10,24 +10,27 @@ Completed:
 - migration8 adds ai_generation_jobs and automatic Pinterest-generation rules.
 - migration9 adds machine-readable runtime/cost/text-fidelity rules using the canonical rules schema.
 - migration10 adds D1 triggers enforcing adapted attribution cleanup, complete verbatim evidence, eight-language content approval and publication approval gates; it also finalizes FR website + Pinterest enabled while FR FB/IG/Threads/TikTok/YouTube remain pending.
-- Worker schema status and controlled migrations now cover v3-v10.
-- Worker refuses automatic migration when partial v3 is detected and refuses migration4 if the wisequotesworld project row is missing.
-- Adapted API paths clear author attribution fields; verbatim verified evidence requires author/original language/locator/verification notes/source title-or-URL.
-- Explicit content approval API/UI added; approval requires all 8 language versions and complete verified evidence for verbatim quotes.
-- Pinterest AI no longer stores target 1000x1500 as actual generated dimensions; actual width/height remain NULL until inspected/transformed.
-- Pinterest AI flow remains content_version -> Workers AI -> R2 MEDIA -> media_inbox -> pinterest_creatives -> visual QA pending. AI generation success never equals approval.
-- Initial Pinterest model: @cf/black-forest-labs/flux-1-schnell. No OpenAI API dependency is required.
-- GitHub validation workflow added: node --check _worker.js + Python SQLite migration/guardrail smoke tests.
-- CI run 33215872346 completed successfully on 2026-08-29: Worker syntax PASS and D1 v2->v10/guardrail smoke tests PASS.
-- WQ006 adapted/no-author and WQ007 Nietzsche verbatim test definitions are prepared. WQ007 original/source has been externally verified; runtime D1 evidence insertion is still pending.
+- Worker schema status and controlled migrations cover v3-v10; partial-v3 replay and missing project row are fail-closed.
+- Adapted API paths clear attribution fields; verbatim verified evidence requires author/original language/locator/verification notes/source title-or-URL.
+- Explicit content approval API/UI requires all 8 language versions and verified evidence for verbatim quotes.
+- Pinterest generation stores actual dimensions as unknown until inspected, keeps QA pending, and has explicit pending/approved/rejected QA API/UI.
+- D1 website page upsert implemented. Published pages require content approval. Public /<locale>/quotes/<slug>/ renders published D1 content with canonical/hreflang; /sitemap.xml is dynamic; static site remains fallback.
+- Native Metricool-replacement data plane started in lib/publication_core.js: publication queue, due-items query, scheduling validation, external publish readback, publication-attempt audit log, analytics snapshots and 30-day-style summaries.
+- Native analytics summary uses the latest snapshot per publication and then aggregates per platform, avoiding historical snapshot double-counting.
+- FR native publishing guard allows FR Pinterest but blocks FR Facebook/Instagram/Threads/TikTok/YouTube until those accounts exist.
+- Initial Pinterest model remains @cf/black-forest-labs/flux-1-schnell; no OpenAI API dependency is required.
+- GitHub validation workflow checks _worker.js + lib/publication_core.js syntax and runs SQLite D1 migration/guardrail/publication/analytics smoke tests.
+- CI run 33216490595 completed successfully on 2026-08-29. Earlier runs 33215872346, 33216101233 and 33216321553 also passed.
+- WQ006 adapted/no-author and WQ007 Nietzsche verbatim test definitions are prepared. WQ007 source research is verified; runtime D1 evidence insertion is pending.
 
 Current gate:
-1. verify newest Cloudflare preview exposes current /api/health and /admin;
-2. confirm DB, MEDIA, ADMIN_TOKEN and AI bindings in that preview;
-3. read live schema preflight; apply v3-v10 only if compatible;
-4. create WQ006 + 8 versions, generate 8 Pinterest jobs, verify R2/Media Inbox/visual QA/quote pages;
-5. create WQ007 + verified source evidence + 8 direct-from-German versions, generate Pinterest jobs and verify approval gate;
-6. complete/validate dynamic D1 website quote-page delivery and publisher/readback/analytics path;
-7. only then merge PR #1 into main.
+1. verify newest Cloudflare automation-v3 preview and /api/health;
+2. confirm live DB, MEDIA, ADMIN_TOKEN and AI bindings;
+3. inspect live D1 schema and apply v3-v10 only if preflight is compatible;
+4. execute WQ006 end-to-end: 8 versions -> AI Pinterest -> R2/Media Inbox -> visual QA -> 8 D1 website pages -> approval;
+5. execute WQ007 end-to-end with verified Nietzsche source evidence and 8 direct-from-German versions;
+6. add/configure actual platform OAuth/API adapters for native publishing and analytics collection, while keeping Metricool only as fallback until parity is verified;
+7. configure the French Pinterest board ID once that board exists;
+8. only after runtime + end-to-end tests pass, merge PR #1 into main.
 
 Production main remains untouched until the full gate passes.

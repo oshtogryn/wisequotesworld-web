@@ -36,11 +36,16 @@ CREATE TABLE IF NOT EXISTS content_approvals (
   notes TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(content_item_id, approval_scope, language_code),
   FOREIGN KEY(project_id) REFERENCES projects(id),
   FOREIGN KEY(content_item_id) REFERENCES content_items(id) ON DELETE CASCADE,
   FOREIGN KEY(language_code) REFERENCES languages(code)
 );
+
+-- SQLite UNIQUE constraints allow multiple NULL values. Normalizing NULL to an
+-- empty string in the index guarantees exactly one approval row per scope,
+-- including project/content-level approvals where language_code is NULL.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_content_approval_scope
+  ON content_approvals(content_item_id, approval_scope, COALESCE(language_code, ''));
 
 CREATE INDEX IF NOT EXISTS idx_quote_pages_content
   ON quote_pages(content_item_id, language_code, status);

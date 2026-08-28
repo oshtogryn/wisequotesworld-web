@@ -17,6 +17,11 @@
 - [x] public `/<locale>/quotes/<slug>/` route renders published D1 quote pages
 - [x] dynamic sitemap + hreflang + canonical rendering implemented
 - [x] static site remains fallback when a D1 page does not exist
+- [x] native publication queue + due-items API implemented
+- [x] publication readback stores external ID/URL/status and publication-attempt audit entries
+- [x] analytics snapshots + latest-snapshot-per-publication platform aggregation implemented
+- [x] schedule/readback/analytics date-time validation implemented
+- [x] publication/analytics database smoke coverage implemented and passing
 
 ## Preview gate
 - [ ] newest automation-v3 deployment is green
@@ -25,6 +30,7 @@
 - [ ] unauthorized `/api/admin/*` returns 401
 - [ ] authorized `/api/admin/schema` reads the actual D1 schema
 - [ ] dynamic D1 quote route and sitemap verified against live preview
+- [ ] native publication queue/readback/analytics endpoints verified against live D1
 
 ## Migration gate
 - [ ] live D1 base schema v2 exists
@@ -74,13 +80,26 @@
 - [ ] 8 Pinterest AI jobs complete and remain pending visual QA until checked
 - [ ] publication blocked if verification is removed/unverified
 
+## Native publisher / Metricool replacement gate
+- [x] D1 owns publication queue and scheduled time/timezone state
+- [x] due-items API identifies publications ready for execution
+- [x] readback data model stores external platform ID, URL, state and attempt details
+- [x] analytics data model stores per-publication platform snapshots
+- [x] analytics summary avoids double-counting historical snapshots
+- [x] FR Pinterest may be queued; unconnected FR Facebook/Instagram/Threads/TikTok/YouTube are blocked
+- [ ] platform OAuth/API adapters actually publish to Facebook/Instagram/Threads/TikTok/YouTube/Pinterest
+- [ ] native platform adapters perform write-readback and verify external IDs/status
+- [ ] native analytics collectors fetch real platform metrics on schedule
+- [ ] native publisher/analytics results match Metricool during parallel validation
+- [ ] only after parity is verified may Metricool be removed
+
 ## Approval + publication gate
 - [x] Admin supports explicit approve/reject/pending workflow
 - [x] approval validates 8 language versions and verbatim source state
 - [x] no publication can transition to scheduled without approval at D1 level
 - [x] Pinterest visual-QA endpoint/UI supports approve/reject after image inspection
-- [ ] publisher records external platform ID, status, scheduled time and timezone after write/readback
-- [ ] analytics collection can attach platform metrics to the publication record
+- [x] data plane records external platform ID, URL, status, scheduled time/timezone and attempt audit after readback
+- [x] analytics snapshots attach platform metrics to publication/content-version records
 - [x] FR website + Pinterest policy is explicit; other FR social channels remain disabled until connected
 
 ## Website gate
@@ -95,7 +114,7 @@
 - [ ] no schema/data loss
 - [ ] WQ006 end-to-end test passes
 - [ ] WQ007 end-to-end test passes
-- [ ] publisher/readback/analytics path validated
+- [ ] native external publisher/readback/analytics adapters validated
 - [ ] PR #1 mergeable
 - [ ] merge to main
 - [ ] production deployment green

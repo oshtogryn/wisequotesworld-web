@@ -17,7 +17,19 @@
 - [ ] v6 adds quote_pages and content_approvals with NULL-safe approval uniqueness
 - [ ] v7 seeds required outputs and hard guardrails
 - [ ] v8 adds ai_generation_jobs and Pinterest AI-generation rules
-- [ ] schema re-read confirms expected tables/columns through v8
+- [ ] v9 seeds runtime, attribution, visual-QA and free-AI cost-control rules
+- [ ] v10 installs D1 triggers for attribution cleanup, verbatim verification, 8-language approval and publication approval
+- [ ] schema/rule/trigger re-read confirms expected state through v10
+
+## D1 hard-guardrail gate
+- [ ] adapted insert/update cannot retain author_name/source_name/author_source/source_work/source_date
+- [ ] adapted attribution_status resolves to `not_required`
+- [ ] verbatim cannot transition to `verified` without complete verified source evidence
+- [ ] content approval cannot become `approved` before all 8 language versions exist
+- [ ] verbatim content approval additionally requires verified attribution + evidence
+- [ ] publication INSERT with status scheduled/publishing/published fails without approved content
+- [ ] publication UPDATE to scheduled/publishing/published fails without approved content
+- [ ] approved content permits publication state transition
 
 ## R2 + Workers AI gate
 - [ ] `MEDIA` R2 binding is present and public R2 access stays disabled

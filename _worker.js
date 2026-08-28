@@ -1,65 +1,26 @@
-const LANGS=['en','uk','ru','pl','sv','de','es'];
+const LANGS=['en','uk','ru','pl','sv','de','es','fr'];
 const MIGRATION_PATH='/_migration/4Vn8qR1xD6mK3tZ9pL2cH7wF5yS0bJ';
-function preferred(request){const h=(request.headers.get('Accept-Language')||'').toLowerCase();for(const l of ['uk','ru','pl','sv','de','es','en'])if(h.startsWith(l)||h.includes(','+l)||h.includes(' '+l))return l;return'en'}
-function json(data,status=200){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}
+function preferred(request){const h=(request.headers.get('Accept-Language')||'').toLowerCase();for(const l of ['uk','ru','pl','sv','de','es','fr','en'])if(h.startsWith(l)||h.includes(','+l)||h.includes(' '+l))return l;return'en'}
+function json(data,status=200,headers={}){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store',...headers}})}
+function esc(v=''){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function authorized(request,env){if(!env.ADMIN_TOKEN)return false;const h=request.headers.get('authorization')||'';return h===`Bearer ${env.ADMIN_TOKEN}`}
+function requireAdmin(request,env){return authorized(request,env)?null:json({ok:false,error:'unauthorized'},401)}
+async function body(request){try{return await request.json()}catch{return null}}
 
-async function loadMigration(request,env){
-  const manifestResponse=await env.ASSETS.fetch(new Request(new URL('/db/plain_migration/manifest.json',request.url)));
-  if(!manifestResponse.ok)throw new Error(`manifest unavailable (${manifestResponse.status})`);
-  const manifest=await manifestResponse.json();
-  if(!Number.isInteger(manifest.parts)||manifest.parts<1)throw new Error('invalid migration manifest');
-  const statements=[];
-  for(let i=0;i<manifest.parts;i++){
-    const name=`/db/plain_migration/part_${String(i).padStart(2,'0')}.json`;
-    const r=await env.ASSETS.fetch(new Request(new URL(name,request.url)));
-    if(!r.ok)throw new Error(`${name} unavailable (${r.status})`);
-    const part=await r.json();
-    if(!Array.isArray(part))throw new Error(`${name} is not an array`);
-    statements.push(...part);
-  }
-  if(statements.length!==manifest.statements)throw new Error(`statement count mismatch ${statements.length}/${manifest.statements}`);
-  return statements;
-}
+async function loadMigration(request,env){const m=await env.ASSETS.fetch(new Request(new URL('/db/plain_migration/manifest.json',request.url)));if(!m.ok)throw new Error(`manifest unavailable (${m.status})`);const manifest=await m.json();const statements=[];for(let i=0;i<manifest.parts;i++){const name=`/db/plain_migration/part_${String(i).padStart(2,'0')}.json`;const r=await env.ASSETS.fetch(new Request(new URL(name,request.url)));if(!r.ok)throw new Error(`${name} unavailable (${r.status})`);statements.push(...await r.json())}if(statements.length!==manifest.statements)throw new Error('statement count mismatch');return statements}
+async function migrationStatus(db){const tables=(await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all()).results||[];const names=tables.map(x=>x.name),counts={};for(const t of ['projects','languages','platforms','content_items','content_versions','platform_content','rules','validation_rules','social_accounts','publications','media_inbox','pinterest_creatives','telegram_subscribers'])if(names.includes(t))counts[t]=(await db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).first()).n;return{tables:names,counts}}
+async function runMigration(request,env){if(!env.DB)return json({ok:false,error:'DB binding unavailable'},500);const url=new URL(request.url);if(url.searchParams.get('run')!=='1')return json({ok:true,project:'wisequotesworld',...(await migrationStatus(env.DB))});const statements=await loadMigration(request,env);for(let i=0;i<statements.length;i+=12)await env.DB.batch(statements.slice(i,i+12).map(sql=>env.DB.prepare(sql)));return json({ok:true,migrated:true,statements:statements.length,...await migrationStatus(env.DB)})}
 
-async function migrationStatus(db){
-  const tables=(await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all()).results||[];
-  const names=tables.map(x=>x.name);
-  const counts={};
-  for(const t of ['projects','languages','platforms','content_items','content_versions','platform_content','rules','validation_rules','social_accounts','publications','import_rows']){
-    if(names.includes(t))counts[t]=(await db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).first()).n;
-  }
-  let progress=null,done=false;
-  if(names.includes('_migration_meta')){
-    progress=await db.prepare("SELECT v FROM _migration_meta WHERE k='progress'").first();
-    done=!!(await db.prepare("SELECT v FROM _migration_meta WHERE k='done'").first());
-  }
-  return {tables:names,counts,progress:progress?Number(progress.v):0,done};
-}
+async function listContent(env){const r=await env.DB.prepare(`SELECT id,content_key,title,status,created_at FROM content_items ORDER BY id DESC LIMIT 100`).all();return r.results||[]}
+async function createContent(request,env){const b=await body(request);if(!b?.quote) return json({ok:false,error:'quote required'},400);const type=b.quote_type==='verbatim'?'verbatim':'adapted';if(type==='verbatim'&&!b.author_name)return json({ok:false,error:'author required for verbatim quote'},400);const row=await env.DB.prepare(`INSERT INTO content_items(project_id,content_key,title,status,quote_type,original_quote,author_name,author_source,attribution_status,category_slug,created_at,updated_at) VALUES(1,?,?,?,?,?,?,?,?,?,?,?) RETURNING id`).bind(b.content_key||`WQ${Date.now()}`,b.title||b.quote.slice(0,80),'idea',type,b.quote,b.author_name||null,b.author_source||null,type==='verbatim'?'unverified':'not_required',b.category_slug||null,new Date().toISOString(),new Date().toISOString()).first();return json({ok:true,id:row.id})}
+async function getContent(env,id){const item=await env.DB.prepare(`SELECT * FROM content_items WHERE id=?`).bind(id).first();if(!item)return null;const versions=(await env.DB.prepare(`SELECT * FROM content_versions WHERE content_item_id=? ORDER BY language_id`).bind(id).all()).results||[];return{...item,versions}}
+async function updateContent(request,env,id){const b=await body(request);const current=await env.DB.prepare(`SELECT * FROM content_items WHERE id=?`).bind(id).first();if(!current)return json({ok:false,error:'not found'},404);const type=b.quote_type??current.quote_type;const author=('author_name'in b)?b.author_name:current.author_name;if(type==='verbatim'&&!author)return json({ok:false,error:'author required for verbatim quote'},400);await env.DB.prepare(`UPDATE content_items SET original_quote=?,author_name=?,author_source=?,quote_type=?,category_slug=?,attribution_status=?,updated_at=? WHERE id=?`).bind(b.quote??current.original_quote,author||null,b.author_source??current.author_source,type,b.category_slug??current.category_slug,b.attribution_status??current.attribution_status,new Date().toISOString(),id).run();return json({ok:true,item:await getContent(env,id)})}
 
-async function runMigration(request,env){
-  if(!env.DB)return json({ok:false,error:'DB binding unavailable'},500);
-  const url=new URL(request.url);
-  if(url.searchParams.get('run')!=='1')return json({ok:true,project:'wisequotesworld',...(await migrationStatus(env.DB))});
-  await env.DB.exec("CREATE TABLE IF NOT EXISTS _migration_meta (k TEXT PRIMARY KEY, v TEXT NOT NULL);");
-  const done=await env.DB.prepare("SELECT v FROM _migration_meta WHERE k='done'").first();
-  if(done)return json({ok:true,already_done:true,project:'wisequotesworld',...(await migrationStatus(env.DB))});
-  const statements=await loadMigration(request,env);
-  const row=await env.DB.prepare("SELECT v FROM _migration_meta WHERE k='progress'").first();
-  let start=row?Number(row.v):0;
-  const chunk=12;
-  for(let i=start;i<statements.length;i+=chunk){
-    const end=Math.min(statements.length,i+chunk);
-    const batch=statements.slice(i,end).map(sql=>env.DB.prepare(sql));
-    batch.push(env.DB.prepare("INSERT INTO _migration_meta(k,v) VALUES('progress',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v").bind(String(end)));
-    await env.DB.batch(batch);
-  }
-  await env.DB.prepare("INSERT INTO _migration_meta(k,v) VALUES('done','1') ON CONFLICT(k) DO UPDATE SET v='1'").run();
-  return json({ok:true,migrated:true,statements:statements.length,project:'wisequotesworld',...(await migrationStatus(env.DB))});
-}
+async function mediaList(env){if(!env.DB)return[];try{return (await env.DB.prepare(`SELECT * FROM media_inbox ORDER BY id DESC LIMIT 100`).all()).results||[]}catch{return[]}}
+async function mediaUpload(request,env){if(!env.MEDIA)return json({ok:false,error:'R2 binding MEDIA unavailable'},503);const form=await request.formData(),file=form.get('file');if(!file||typeof file==='string')return json({ok:false,error:'file required'},400);const key=`uploads/${new Date().toISOString().slice(0,10)}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;await env.MEDIA.put(key,await file.arrayBuffer(),{httpMetadata:{contentType:file.type||'application/octet-stream'}});let id=null;try{const r=await env.DB.prepare(`INSERT INTO media_inbox(project_id,r2_key,original_filename,asset_type,language_code,mime_type,size_bytes,status,uploaded_via,created_at,updated_at) VALUES(1,?,?,?,?,?,?,'unassigned','admin',?,?) RETURNING id`).bind(key,file.name,form.get('asset_type')||'unknown',form.get('language_code')||null,file.type||null,file.size,new Date().toISOString(),new Date().toISOString()).first();id=r.id}catch(e){return json({ok:false,error:'uploaded_to_r2_but_db_failed',key,detail:String(e.message||e)},500)}return json({ok:true,id,key,name:file.name})}
 
-export default{async fetch(request,env){
-  const url=new URL(request.url);
-  if(url.pathname===MIGRATION_PATH){try{return await runMigration(request,env)}catch(e){return json({ok:false,error:String(e?.message||e)},500)}}
-  if(url.pathname==='/'||url.pathname==='/index.html'){return Response.redirect(`${url.origin}/${preferred(request)}/`,302)}
-  return env.ASSETS.fetch(request)
-}};
+function adminHtml(){return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wise Quotes Admin</title><style>body{font-family:system-ui;margin:0;background:#f5f5f3;color:#171717}.wrap{max-width:1000px;margin:auto;padding:24px}section{background:white;padding:20px;border-radius:16px;margin:16px 0}input,select,textarea,button{font:inherit;padding:10px;margin:5px 0;box-sizing:border-box}input,select,textarea{width:100%}button{cursor:pointer}pre{white-space:pre-wrap;overflow:auto}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:650px){.grid{grid-template-columns:1fr}}</style></head><body><div class="wrap"><h1>Wise Quotes World — Admin</h1><section><label>Admin token</label><input id="token" type="password"><button onclick="loadAll()">Connect</button></section><section><h2>New quote</h2><div class="grid"><div><label>Content key</label><input id="key" placeholder="WQ006"></div><div><label>Type</label><select id="type"><option value="adapted">Adapted / own thought</option><option value="verbatim">Verbatim / attributed</option></select></div></div><label>Original quote</label><textarea id="quote" rows="4"></textarea><div class="grid"><div><label>Author (optional unless verbatim)</label><input id="author"></div><div><label>Original language</label><select id="olang">${LANGS.map(x=>`<option>${x}</option>`).join('')}</select></div></div><label>Author/source URL or bibliographic source</label><input id="source"><label>Category</label><input id="category"><button onclick="createQuote()">Save to D1</button><pre id="createOut"></pre></section><section><h2>Media Inbox</h2><div class="grid"><input id="media" type="file"><select id="mlang">${LANGS.map(x=>`<option>${x}</option>`).join('')}</select></div><select id="atype"><option value="video">Video</option><option value="pinterest">Pinterest</option><option value="image">Image</option></select><button onclick="upload()">Upload to R2</button><pre id="uploadOut"></pre></section><section><h2>Content</h2><button onclick="loadAll()">Refresh</button><pre id="content"></pre></section></div><script>const H=()=>({'authorization':'Bearer '+token.value,'content-type':'application/json'});async function loadAll(){let r=await fetch('/api/admin/content',{headers:H()});content.textContent=JSON.stringify(await r.json(),null,2)}async function createQuote(){let b={content_key:key.value,quote_type:type.value,quote:quote.value,author_name:author.value||null,author_source:source.value||null,category_slug:category.value||null,original_language:olang.value};let r=await fetch('/api/admin/content',{method:'POST',headers:H(),body:JSON.stringify(b)});createOut.textContent=JSON.stringify(await r.json(),null,2);loadAll()}async function upload(){let f=new FormData();f.append('file',media.files[0]);f.append('language_code',mlang.value);f.append('asset_type',atype.value);let r=await fetch('/api/admin/media',{method:'POST',headers:{authorization:'Bearer '+token.value},body:f});uploadOut.textContent=JSON.stringify(await r.json(),null,2)}</script></body></html>`}
+
+async function api(request,env,url){if(!env.DB)return json({ok:false,error:'DB binding unavailable'},503);if(url.pathname==='/api/health')return json({ok:true,project:'wisequotesworld',languages:LANGS,db:true,r2:!!env.MEDIA});if(url.pathname.startsWith('/api/admin/')){const deny=requireAdmin(request,env);if(deny)return deny;if(url.pathname==='/api/admin/content'&&request.method==='GET')return json({ok:true,items:await listContent(env)});if(url.pathname==='/api/admin/content'&&request.method==='POST')return createContent(request,env);const m=url.pathname.match(/^\/api\/admin\/content\/(\d+)$/);if(m&&request.method==='GET'){const x=await getContent(env,Number(m[1]));return x?json({ok:true,item:x}):json({ok:false,error:'not found'},404)}if(m&&request.method==='PATCH')return updateContent(request,env,Number(m[1]));if(url.pathname==='/api/admin/media'&&request.method==='GET')return json({ok:true,items:await mediaList(env)});if(url.pathname==='/api/admin/media'&&request.method==='POST')return mediaUpload(request,env)}return json({ok:false,error:'not found'},404)}
+
+export default{async fetch(request,env){const url=new URL(request.url);try{if(url.pathname===MIGRATION_PATH)return runMigration(request,env);if(url.pathname==='/admin'||url.pathname==='/admin/')return new Response(adminHtml(),{headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store'}});if(url.pathname.startsWith('/api/'))return api(request,env,url);if(url.pathname==='/'||url.pathname==='/index.html')return Response.redirect(`${url.origin}/${preferred(request)}/`,302);return env.ASSETS.fetch(request)}catch(e){return json({ok:false,error:String(e?.message||e)},500)}}};

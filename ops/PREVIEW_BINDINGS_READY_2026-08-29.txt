@@ -1,0 +1,9 @@
+Wise Quotes World automation-v3 preview runtime bindings configured in Cloudflare on 2026-08-29.
+Expected Preview runtime bindings after this deployment:
+- DB -> wisequotesworld
+- MEDIA -> wisequotesworld-media
+- AI -> Workers AI Catalog
+- ADMIN_TOKEN -> encrypted Preview secret
+
+This commit intentionally triggers a fresh Preview deployment so the new bindings become active.
+Next gate: /api/health must report db=true, r2=true, ai=true, admin_secret=true before any D1 migrations are executed.

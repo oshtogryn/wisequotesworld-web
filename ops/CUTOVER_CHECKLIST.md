@@ -12,6 +12,11 @@
 - [x] publication scheduled/publishing/published states require content approval in D1
 - [x] AI target dimensions are not stored as actual media dimensions
 - [x] FR website + Pinterest enabled; FR FB/IG/Threads/TikTok/YouTube remain pending until channels exist
+- [x] Pinterest visual-QA API/UI supports pending/approved/rejected
+- [x] D1 quote-page upsert API/UI implemented
+- [x] public `/<locale>/quotes/<slug>/` route renders published D1 quote pages
+- [x] dynamic sitemap + hreflang + canonical rendering implemented
+- [x] static site remains fallback when a D1 page does not exist
 
 ## Preview gate
 - [ ] newest automation-v3 deployment is green
@@ -19,6 +24,7 @@
 - [ ] `/admin/` loads with noindex/nofollow
 - [ ] unauthorized `/api/admin/*` returns 401
 - [ ] authorized `/api/admin/schema` reads the actual D1 schema
+- [ ] dynamic D1 quote route and sitemap verified against live preview
 
 ## Migration gate
 - [ ] live D1 base schema v2 exists
@@ -72,16 +78,17 @@
 - [x] Admin supports explicit approve/reject/pending workflow
 - [x] approval validates 8 language versions and verbatim source state
 - [x] no publication can transition to scheduled without approval at D1 level
-- [ ] Pinterest visual-QA endpoint/UI supports approve/reject after image inspection
+- [x] Pinterest visual-QA endpoint/UI supports approve/reject after image inspection
 - [ ] publisher records external platform ID, status, scheduled time and timezone after write/readback
 - [ ] analytics collection can attach platform metrics to the publication record
 - [x] FR website + Pinterest policy is explicit; other FR social channels remain disabled until connected
 
 ## Website gate
-- [ ] D1 quote page upsert/API implemented
-- [ ] public `/<locale>/quotes/<slug>/` reads published quote page from D1
-- [ ] dynamic sitemap/hreflang/canonical verified
-- [ ] static site remains fallback when D1 page does not exist
+- [x] D1 quote page upsert/API implemented
+- [x] public `/<locale>/quotes/<slug>/` reads published quote page from D1
+- [x] dynamic sitemap/hreflang/canonical implemented
+- [x] static site remains fallback when D1 page does not exist
+- [ ] live preview verifies quote-page publishing only after content approval
 
 ## Production gate
 - [ ] no unresolved preview errors

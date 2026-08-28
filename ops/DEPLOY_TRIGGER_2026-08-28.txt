@@ -1,3 +1,4 @@
 Wise Quotes World automation-v3 preview deployment trigger.
-Cloudflare bindings prepared: DB, MEDIA; ADMIN_TOKEN configured separately as encrypted secret.
-Timestamp: 2026-08-28.
+Cloudflare bindings expected: DB, MEDIA, ADMIN_TOKEN.
+Latest validation bundle: migrations v3-v7, Admin API, R2 Media Inbox, source verification, quote pages, approvals and required-output guardrails.
+Timestamp: 2026-08-28T21:15:00+02:00.

@@ -19,7 +19,7 @@ BEGIN
 END;
 
 CREATE TRIGGER IF NOT EXISTS trg_content_items_adapted_update_cleanup
-AFTER UPDATE OF quote_type,author_name,author_source,source_work,source_date,source_name ON content_items
+AFTER UPDATE OF quote_type,author_name,author_source,source_work,source_date,source_name,attribution_status ON content_items
 WHEN NEW.quote_type='adapted' AND (
   NEW.author_name IS NOT NULL OR NEW.author_source IS NOT NULL OR
   NEW.source_work IS NOT NULL OR NEW.source_date IS NOT NULL OR
@@ -36,7 +36,7 @@ BEGIN
   WHERE id=NEW.id;
 END;
 
--- A verbatim quote cannot be marked verified without complete source evidence.
+-- A verbatim quote cannot enter or remain in verified state without core attribution fields.
 CREATE TRIGGER IF NOT EXISTS trg_content_items_verbatim_verified_insert
 BEFORE INSERT ON content_items
 WHEN NEW.quote_type='verbatim' AND NEW.attribution_status='verified'
@@ -49,7 +49,7 @@ BEGIN
 END;
 
 CREATE TRIGGER IF NOT EXISTS trg_content_items_verbatim_verified_update
-BEFORE UPDATE OF attribution_status ON content_items
+BEFORE UPDATE OF quote_type,attribution_status,author_name,original_quote,original_language ON content_items
 WHEN NEW.quote_type='verbatim' AND NEW.attribution_status='verified'
 BEGIN
   SELECT CASE WHEN
@@ -72,7 +72,7 @@ BEGIN
   THEN RAISE(ABORT,'verbatim verification requires complete verified source evidence') END;
 END;
 
--- Explicit content approval cannot be granted to incomplete verbatim attribution.
+-- Explicit content approval cannot be granted to incomplete attribution or fewer than 8 locales.
 CREATE TRIGGER IF NOT EXISTS trg_content_approvals_verified_source_insert
 BEFORE INSERT ON content_approvals
 WHEN NEW.status='approved' AND NEW.approval_scope='content'
@@ -139,7 +139,7 @@ BEGIN
   ) < 8 THEN RAISE(ABORT,'content approval blocked: all 8 language versions are required') END;
 END;
 
--- No publication may enter scheduled/published state without explicit content approval.
+-- No publication may enter scheduled/publishing/published state without explicit content approval.
 CREATE TRIGGER IF NOT EXISTS trg_publications_require_approval_insert
 BEFORE INSERT ON publications
 WHEN NEW.status IN ('scheduled','publishing','published')

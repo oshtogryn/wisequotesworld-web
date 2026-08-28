@@ -1,0 +1,20 @@
+name: automation-v3-check
+
+on:
+  push:
+    branches: [automation-v3]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Worker JavaScript syntax
+        run: node --check _worker.js
+      - name: Run D1 migration and guardrail smoke tests
+        run: python3 tests/db_smoke.py

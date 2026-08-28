@@ -15,6 +15,8 @@ jobs:
         with:
           node-version: '22'
       - name: Check Worker JavaScript syntax
-        run: node --check _worker.js
+        run: |
+          node --check _worker.js
+          node --check lib/publication_core.js
       - name: Run D1 migration and guardrail smoke tests
         run: python3 tests/db_smoke.py

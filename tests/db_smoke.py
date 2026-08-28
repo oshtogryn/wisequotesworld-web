@@ -89,7 +89,39 @@ for lang in ['uk','ru','pl','en','sv','de','es','fr']:
 DB.execute("UPDATE content_approvals SET status='approved' WHERE content_item_id='TEST_VERBATIM' AND approval_scope='content'")
 assert DB.execute("SELECT status FROM content_approvals WHERE content_item_id='TEST_VERBATIM'").fetchone()[0] == 'approved'
 
-# Publications are blocked without approval and allowed after approval.
+# Approved content may enter the native publication queue.
+DB.execute("""
+INSERT INTO publications(id,content_version_id,platform_code,scheduled_at,timezone,status)
+VALUES('PUB_ALLOWED','TEST_VERBATIM_en_v1','facebook','2026-08-30T12:00:00+02:00','Europe/Stockholm','scheduled')
+""")
+assert DB.execute("SELECT status FROM publications WHERE id='PUB_ALLOWED'").fetchone()[0] == 'scheduled'
+DB.execute("UPDATE publications SET status='published',external_id='external-123',external_url='https://example.test/post',published_at='2026-08-30T12:01:00+02:00' WHERE id='PUB_ALLOWED'")
+DB.execute("INSERT INTO publication_attempts(publication_id,provider,external_id,status,attempted_at) VALUES('PUB_ALLOWED','native-api','external-123','published','2026-08-30T12:01:01+02:00')")
+assert DB.execute("SELECT external_id,status FROM publications WHERE id='PUB_ALLOWED'").fetchone() == ('external-123','published')
+
+# Latest-snapshot-per-publication aggregation must not double-count historical snapshots.
+DB.execute("""
+INSERT INTO analytics_snapshots(project_id,content_version_id,publication_id,platform_code,captured_at,checkpoint,views,likes,source)
+VALUES('wisequotesworld','TEST_VERBATIM_en_v1','PUB_ALLOWED','facebook','2026-08-30T13:00:00+02:00','1h',100,10,'test')
+""")
+DB.execute("""
+INSERT INTO analytics_snapshots(project_id,content_version_id,publication_id,platform_code,captured_at,checkpoint,views,likes,source)
+VALUES('wisequotesworld','TEST_VERBATIM_en_v1','PUB_ALLOWED','facebook','2026-08-30T14:00:00+02:00','2h',180,17,'test')
+""")
+DB.execute("""
+INSERT INTO analytics_snapshots(project_id,content_version_id,publication_id,platform_code,captured_at,checkpoint,views,likes,source)
+VALUES('wisequotesworld','TEST_VERBATIM_de_v1','PUB_SECOND','facebook','2026-08-30T14:05:00+02:00','2h',70,6,'test')
+""")
+latest = DB.execute("""
+WITH ranked AS (
+  SELECT a.*,ROW_NUMBER() OVER (PARTITION BY a.publication_id ORDER BY datetime(a.captured_at) DESC,a.id DESC) rn
+  FROM analytics_snapshots a WHERE a.project_id='wisequotesworld'
+)
+SELECT SUM(COALESCE(views,0)),SUM(COALESCE(likes,0)) FROM ranked WHERE rn=1 AND platform_code='facebook'
+""").fetchone()
+assert latest == (250, 23), latest
+
+# Publications are blocked without approval.
 DB.execute("""
 INSERT INTO content_items(id,project_id,content_type,canonical_title,source_text,status,created_at,updated_at,quote_type,original_quote,original_language,attribution_status)
 VALUES('TEST_UNAPPROVED','wisequotesworld','quote','U','U','idea',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,'adapted','U','en','not_required')
@@ -111,4 +143,4 @@ except sqlite3.IntegrityError:
     blocked = True
 assert blocked, 'content approval uniqueness must treat NULL language as one scope'
 
-print('D1 migration/guardrail smoke tests passed')
+print('D1 migration/guardrail/publication/analytics smoke tests passed')

@@ -37,9 +37,15 @@ async function assetText(request,env,path){
  if(!r.ok)throw new Error(`${path} unavailable (${r.status})`);
  return r.text();
 }
+function sanitizeSqlForD1(sql){
+ return String(sql||'')
+   .replace(/^\s*PRAGMA\s+foreign_keys\s*=\s*(?:ON|OFF|1|0)\s*;\s*$/gmi,'')
+   .trim();
+}
 async function applyFile(request,env,path){
- const sql=await assetText(request,env,path);
- if(!sql||sql.trim().length<10)throw new Error(`${path} empty`);
+ const raw=await assetText(request,env,path);
+ const sql=sanitizeSqlForD1(raw);
+ if(!sql||sql.length<10)throw new Error(`${path} empty after D1 sanitization`);
  await env.DB.exec(sql);
 }
 async function seedBase(db){

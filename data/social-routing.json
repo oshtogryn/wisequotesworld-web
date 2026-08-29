@@ -1,7 +1,7 @@
 {
   "updated_at": "2026-08-29",
-  "source_priority": ["Metricool connected account identifiers", "Google Sheet Accounts cross-check", "GitHub canonical rules"],
-  "pinterest_note": "Metricool and Google Sheets confirm board IDs for UK/RU/PL/EN/SV/DE/ES. Public board slugs were not independently verified, so start pages route Pinterest to the verified WiseQuotesWorld account rather than inventing board URLs.",
+  "source_priority": ["Metricool connected account identifiers", "D1 live/readback", "Google Sheet Accounts cross-check", "GitHub canonical rules"],
+  "pinterest_note": "Metricool confirms Pinterest board IDs for all eight locales. Public board slugs are not independently verified, so start pages route Pinterest to the verified WiseQuotesWorld account rather than inventing board URLs.",
   "locales": {
     "uk": {
       "metricool_brand_id": "6774540",
@@ -73,7 +73,7 @@
       "threads": null,
       "tiktok": null,
       "youtube": null,
-      "pinterest": {"account": "wisequotesworld", "board_id": null, "url": "https://www.pinterest.com/wisequotesworld/"}
+      "pinterest": {"account": "wisequotesworld", "board_id": "1089449034800171602", "url": "https://www.pinterest.com/wisequotesworld/"}
     }
   }
 }

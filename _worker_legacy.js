@@ -152,7 +152,7 @@ async function generatePinterest(request,env,id,lang){
  const jobId=crypto.randomUUID();
  await env.DB.prepare(`INSERT INTO ai_generation_jobs(id,project_id,content_item_id,content_version_id,language_code,job_type,provider,model,prompt,status,attempt_count,requested_at,started_at) VALUES(?,?,?,?,?,'pinterest_image','cloudflare-workers-ai',?,?,'running',1,?,?)`).bind(jobId,PROJECT_ID,id,v.id,lang,PIN_MODEL,prompt,now(),now()).run();
  try{
-  const result=await env.AI.run(PIN_MODEL,{prompt,seed:Math.floor(Math.random()*1000000)});if(!result?.image)throw new Error('model returned no image');
+  const result=await env.AI.run(PIN_MODEL,{prompt});if(!result?.image)throw new Error('model returned no image');
   const bytes=b64bytes(result.image),mediaId=crypto.randomUUID(),key=`generated/pinterest/${new Date().toISOString().slice(0,10)}/${id}-${lang}-${mediaId}.jpg`;
   await env.MEDIA.put(key,bytes,{httpMetadata:{contentType:'image/jpeg'}});
   try{

@@ -6,6 +6,7 @@ const PLATFORMS=['website','pinterest','facebook','instagram','threads','tiktok'
 
 function json(data,status=200){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}
 function authorized(request,env){return !!env.ADMIN_TOKEN&&(request.headers.get('authorization')||'')===`Bearer ${env.ADMIN_TOKEN}`}
+function now(){return new Date().toISOString()}
 async function tableNames(db){return ((await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all()).results||[]).map(x=>x.name)}
 async function columns(db,table){try{return ((await db.prepare(`PRAGMA table_info(${table})`).all()).results||[]).map(x=>x.name)}catch{return[]}}
 async function objectExists(db,type,name){try{return !!(await db.prepare("SELECT 1 AS ok FROM sqlite_master WHERE type=? AND name=? LIMIT 1").bind(type,name).first())}catch{return false}}
@@ -96,6 +97,48 @@ async function migrateOne(request,env){
  }
 }
 
+const WQ006={
+ uk:{quote:'Не кожне рішення змінює життя одразу. Але деякі тихо змінюють напрямок.',slug:'ne-kozhne-rishennia-zminiuie-zhyttia',concept:'Early morning in a quiet Ukrainian city street. A thoughtful adult reaches a calm pedestrian fork, pauses, then chooses the brighter side street. No triumph pose; the meaning is a subtle change of direction.'},
+ ru:{quote:'Не каждое решение сразу меняет жизнь. Но некоторые тихо меняют её направление.',slug:'ne-kazhdoe-reshenie-menyaet-zhizn',concept:'A quiet residential city path at dawn. One person reaches a fork between two ordinary routes and calmly chooses one. The visual should communicate a small decision that changes direction, not instant success.'},
+ pl:{quote:'Nie każda decyzja od razu zmienia życie. Niektóre po cichu zmieniają jego kierunek.',slug:'nie-kazda-decyzja-zmienia-zycie',concept:'Soft Warsaw-like morning atmosphere. A person walking alone reaches two diverging pedestrian paths and chooses one without drama. Subtle cinematic realism, the decision changes direction quietly.'},
+ en:{quote:'Not every decision changes your life at once. Some quietly change its direction.',slug:'not-every-decision-changes-your-life',concept:'Calm early-morning city walkway. A thoughtful person reaches an ordinary fork in the path and quietly chooses one direction. Cinematic realism, no instant victory, just a subtle directional change.'},
+ sv:{quote:'Alla beslut förändrar inte livet direkt. Men vissa ändrar stilla dess riktning.',slug:'alla-beslut-forandrar-inte-livet-direkt',concept:'Soft Scandinavian dawn on a clean pedestrian path. A person arrives at a quiet fork and chooses one route. Understated Swedish visual language, natural light, no dramatic victory.'},
+ de:{quote:'Nicht jede Entscheidung verändert dein Leben sofort. Manche verändern still seine Richtung.',slug:'nicht-jede-entscheidung-verandert-dein-leben',concept:'Quiet European city morning. A person reaches a simple fork between two walking paths and chooses one. Restrained cinematic realism; the idea is a quiet change of direction, not immediate transformation.'},
+ es:{quote:'No todas las decisiones cambian tu vida de inmediato. Algunas cambian su rumbo en silencio.',slug:'no-todas-las-decisiones-cambian-tu-vida',concept:'Warm but soft early-morning urban walkway. A person reaches a fork and calmly takes one route. Natural Spanish-city atmosphere, subtle and reflective, emphasizing direction rather than instant success.'},
+ fr:{quote:'Toutes les décisions ne changent pas une vie immédiatement. Certaines en changent discrètement la direction.',slug:'toutes-les-decisions-ne-changent-pas-une-vie',concept:'Quiet Parisian-style neighborhood morning without landmarks. A person reaches a modest fork in a pedestrian route and chooses one path. Elegant restrained realism; a silent change of direction rather than a dramatic breakthrough.'}
+};
+
+async function seedWQ006(env){
+ const s=await schemaStatus(env.DB);if(!s.ready)return json({ok:false,error:'schema not ready',schema:s},409);
+ const t=now(),canonical=WQ006.uk.quote;
+ await env.DB.prepare(`INSERT INTO content_items(id,project_id,content_type,sequence_no,category,priority,canonical_title,source_text,source_name,source_url,status,facts_verified,uniqueness_verified,monetization_status,notes,approved_at,created_at,updated_at,quote_type,original_quote,original_language,author_name,author_source,source_work,source_date,attribution_status,category_slug,source_verified_at,source_verification_notes)
+ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+ ON CONFLICT(id) DO UPDATE SET project_id=excluded.project_id,content_type=excluded.content_type,sequence_no=excluded.sequence_no,category=excluded.category,priority=excluded.priority,canonical_title=excluded.canonical_title,source_text=excluded.source_text,source_name=NULL,source_url=NULL,status=excluded.status,facts_verified=1,uniqueness_verified=1,notes=excluded.notes,updated_at=excluded.updated_at,quote_type='adapted',original_quote=excluded.original_quote,original_language='uk',author_name=NULL,author_source=NULL,source_work=NULL,source_date=NULL,attribution_status='not_required',category_slug=excluded.category_slug,source_verified_at=NULL,source_verification_notes=NULL`).bind(
+ 'WQ006',PROJECT_ID,'quote',6,'Decisions','normal',canonical,canonical,null,null,'prompt_ready',1,1,null,'Two-day validation topic. Adapted Wise Quotes original; no author attribution.',null,t,t,'adapted',canonical,'uk',null,null,null,null,'not_required','decisions',null,null).run();
+
+ for(const [lang,v] of Object.entries(WQ006)){
+   const vid=`WQ006_${lang}_v1`;
+   const prompt=`Create an 8-second vertical 9:16 cinematic Wise Quotes World video. Visual story: ${v.concept} Show ONLY the exact localized quote text: “${v.quote}”. Split the quote into two sequential text moments; never show both blocks simultaneously. Text in upper-middle safe area. Calm native-language voiceover matching the exact quote, soft piano/cinematic ambience below voice. Immediate visual hook, no black screen, no third-party logo, no watermark, no labels or extra text. Small Wise Quotes World ${lang.toUpperCase()} branding bottom-right is allowed.`;
+   await env.DB.prepare(`INSERT INTO content_versions(id,content_id,language_code,title,hook,adapted_text,line_breaks,key_facts,voiceover_text,video_concept,ai_prompt,on_screen_text,cta,status,language_check_status,approved,verification_date,source_urls,editor_notes,version)
+   VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+   ON CONFLICT(content_id,language_code,version) DO UPDATE SET title=excluded.title,hook=excluded.hook,adapted_text=excluded.adapted_text,line_breaks=excluded.line_breaks,key_facts=excluded.key_facts,voiceover_text=excluded.voiceover_text,video_concept=excluded.video_concept,ai_prompt=excluded.ai_prompt,on_screen_text=excluded.on_screen_text,cta=excluded.cta,status=excluded.status,language_check_status=excluded.language_check_status,approved=0,verification_date=excluded.verification_date,source_urls=excluded.source_urls,editor_notes=excluded.editor_notes`).bind(
+   vid,'WQ006',lang,'Quiet decisions change direction','A quiet decision can change direction.',v.quote,null,'Adapted original; no factual attribution required.',v.quote,v.concept,prompt,v.quote,null,'prompt_ready','prepared',0,t,null,'WQ006 preview validation version.',1).run();
+
+   const pageId=`WQ006_${lang}_page`;
+   const path=`/${lang}/quotes/${v.slug}/`;
+   await env.DB.prepare(`INSERT INTO quote_pages(id,project_id,content_item_id,content_version_id,language_code,slug,seo_title,meta_description,reflection_title,reflection_body,canonical_path,status,published_at,updated_at)
+   VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+   ON CONFLICT(content_version_id) DO UPDATE SET slug=excluded.slug,seo_title=excluded.seo_title,meta_description=excluded.meta_description,canonical_path=excluded.canonical_path,status='draft',published_at=NULL,updated_at=excluded.updated_at`).bind(
+   pageId,PROJECT_ID,'WQ006',vid,lang,v.slug,v.quote,`Wise Quotes World — ${v.quote}`,null,null,path,'draft',null,t).run();
+ }
+
+ await env.DB.prepare(`INSERT OR IGNORE INTO content_approvals(project_id,content_item_id,approval_scope,language_code,status,approved_by,notes,created_at,updated_at) VALUES(?,?,?,NULL,'pending',NULL,?,?,?)`).bind(PROJECT_ID,'WQ006','content','Preview validation: approval intentionally pending.',t,t).run();
+ const versions=await env.DB.prepare(`SELECT language_code,status,approved FROM content_versions WHERE content_id='WQ006' ORDER BY language_code`).all();
+ const pages=await env.DB.prepare(`SELECT language_code,canonical_path,status FROM quote_pages WHERE content_item_id='WQ006' ORDER BY language_code`).all();
+ const item=await env.DB.prepare(`SELECT id,quote_type,author_name,attribution_status,status,original_language FROM content_items WHERE id='WQ006'`).first();
+ return json({ok:true,test:'WQ006',item,versions:versions.results||[],pages:pages.results||[],version_count:(versions.results||[]).length,page_count:(pages.results||[]).length,ready_for_first_pinterest_test:(versions.results||[]).length===8&&(pages.results||[]).length===8&&item?.author_name==null});
+}
+
 export default{async fetch(request,env,ctx){
  const url=new URL(request.url);
  try{
@@ -107,6 +150,11 @@ export default{async fetch(request,env,ctx){
   if(url.pathname==='/api/admin/migrate'&&request.method==='POST'){
    if(!authorized(request,env))return json({ok:false,error:'unauthorized'},401);
    return migrateOne(request,env);
+  }
+  if(url.pathname==='/api/admin/test/wq006/seed'&&request.method==='POST'){
+   if(!authorized(request,env))return json({ok:false,error:'unauthorized'},401);
+   if(!env.DB)return json({ok:false,error:'DB binding unavailable'},503);
+   return seedWQ006(env);
   }
   return legacyWorker.fetch(request,env,ctx);
  }catch(e){return json({ok:false,error:String(e?.message||e),name:e?.name||null},500)}

@@ -1,0 +1,61 @@
+name: WQ011 live readback
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '_worker.js'
+      - 'lib/wq011_site_publish.js'
+      - '.github/workflows/wq011-readback.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for Pages deployment
+        run: sleep 35
+      - name: Verify 8 localized WQ011 URLs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          report=ops/readback/WQ011-live.txt
+          : > "$report"
+          urls=(
+            'https://wisequotesworld.com/uk/quotes/shcho-mene-ne-vbyvaie-robyt-sylnishym-nitsshe/'
+            'https://wisequotesworld.com/ru/quotes/chto-menya-ne-ubivaet-delaet-silnee-nicshe/'
+            'https://wisequotesworld.com/pl/quotes/co-mnie-nie-zabija-czyni-silniejszym-nietzsche/'
+            'https://wisequotesworld.com/en/quotes/what-does-not-kill-me-makes-me-stronger-nietzsche/'
+            'https://wisequotesworld.com/sv/quotes/det-som-inte-dodar-mig-gor-mig-starkare-nietzsche/'
+            'https://wisequotesworld.com/de/quotes/was-mich-nicht-umbringt-macht-mich-staerker-nietzsche/'
+            'https://wisequotesworld.com/es/quotes/lo-que-no-me-mata-me-hace-mas-fuerte-nietzsche/'
+            'https://wisequotesworld.com/fr/quotes/ce-qui-ne-me-tue-pas-me-rend-plus-fort-nietzsche/'
+          )
+          ok=1
+          for u in "${urls[@]}"; do
+            out=$(mktemp)
+            code=$(curl -L -sS -o "$out" -w '%{http_code}' --retry 8 --retry-all-errors --retry-delay 5 "$u" || true)
+            bytes=$(wc -c < "$out" | tr -d ' ')
+            if [[ "$code" == "200" ]] && [[ "$bytes" -ge 700 ]] && grep -qi 'Nietzsche' "$out" && grep -qi 'Wise Quotes World' "$out"; then
+              echo "PASS 200 bytes=$bytes $u" | tee -a "$report"
+            else
+              echo "FAIL code=$code bytes=$bytes $u" | tee -a "$report"
+              ok=0
+            fi
+          done
+          echo "checked_at=$(date -u +%FT%TZ)" | tee -a "$report"
+          if [[ "$ok" != "1" ]]; then echo "overall=FAIL" | tee -a "$report"; exit 1; else echo "overall=PASS" | tee -a "$report"; fi
+      - name: Commit readback report
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/WQ011-live.txt
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record WQ011 live website readback'
+          git push

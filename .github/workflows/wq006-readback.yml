@@ -1,0 +1,50 @@
+name: WQ006 live readback
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '_worker.js'
+      - 'admin/site/**'
+      - '.github/workflows/wq006-readback.yml'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Pages deployment
+        run: sleep 25
+      - name: Verify 8 localized WQ006 URLs
+        shell: bash
+        run: |
+          set -euo pipefail
+          urls=(
+            'https://wisequotesworld.com/uk/quotes/my-doroslishayemo-batkivskyi-dim/'
+            'https://wisequotesworld.com/ru/quotes/my-vzrosleem-roditelskiy-dom/'
+            'https://wisequotesworld.com/pl/quotes/dorastamy-rodzinny-dom-rodzice/'
+            'https://wisequotesworld.com/en/quotes/we-grow-up-leave-home-parents/'
+            'https://wisequotesworld.com/sv/quotes/vi-vaxer-upp-flyttar-hemifran-foraldrar/'
+            'https://wisequotesworld.com/de/quotes/wir-werden-erwachsen-von-zu-hause-ausziehen-eltern/'
+            'https://wisequotesworld.com/es/quotes/crecemos-hogar-familiar-padres/'
+            'https://wisequotesworld.com/fr/quotes/on-grandit-foyer-familial-parents/'
+          )
+          for u in "${urls[@]}"; do
+            out=$(mktemp)
+            code=$(curl -L -sS -o "$out" -w '%{http_code}' --retry 5 --retry-all-errors --retry-delay 5 "$u")
+            bytes=$(wc -c < "$out" | tr -d ' ')
+            if [[ "$code" != "200" ]]; then
+              echo "FAIL $code $u"
+              sed -n '1,20p' "$out"
+              exit 1
+            fi
+            if [[ "$bytes" -lt 500 ]]; then
+              echo "FAIL short-body=$bytes $u"
+              exit 1
+            fi
+            if ! grep -qi 'Wise Quotes World' "$out"; then
+              echo "FAIL missing-brand $u"
+              exit 1
+            fi
+            echo "PASS 200 bytes=$bytes $u"
+          done

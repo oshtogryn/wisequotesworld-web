@@ -30,8 +30,18 @@ async function schemaStatus(db){
  return{tables,user_tables:userTables,empty,v2,v3,partial_v3,project_ready,v4,v5,v6,v7,v8,v9,v10,ready:v2&&v3&&v4&&v5&&v6&&v7&&v8&&v9&&v10,content_items_columns:ci};
 }
 
-async function assetText(request,env,path){const r=await env.ASSETS.fetch(new Request(new URL(path,request.url)));if(!r.ok)throw new Error(`${path} unavailable (${r.status})`);return r.text()}
-async function applyFile(request,env,path){await env.DB.exec(await assetText(request,env,path))}
+async function assetText(request,env,path){
+ if(!env.ASSETS)throw new Error('ASSETS binding unavailable');
+ const u=new URL(request.url);u.pathname=path;u.search='';u.hash='';
+ const r=await env.ASSETS.fetch(u.toString());
+ if(!r.ok)throw new Error(`${path} unavailable (${r.status})`);
+ return r.text();
+}
+async function applyFile(request,env,path){
+ const sql=await assetText(request,env,path);
+ if(!sql||sql.trim().length<10)throw new Error(`${path} empty`);
+ await env.DB.exec(sql);
+}
 async function seedBase(db){
  await db.prepare("INSERT OR IGNORE INTO projects(id,name,timezone,active) VALUES(?,?,?,1)").bind(PROJECT_ID,'Wise Quotes World','Europe/Stockholm').run();
  for(const [code,name,nativeName] of LANGS)await db.prepare("INSERT OR IGNORE INTO languages(code,name,native_name,active) VALUES(?,?,?,1)").bind(code,name,nativeName).run();
@@ -39,37 +49,52 @@ async function seedBase(db){
  for(const [code] of LANGS)await db.prepare("INSERT OR IGNORE INTO project_languages(project_id,language_code,active) VALUES(?,?,1)").bind(PROJECT_ID,code).run();
 }
 
-async function migrate(request,env){
- if(!env.DB)return json({ok:false,error:'DB binding unavailable'},503);
- let s=await schemaStatus(env.DB),before=s,applied=[];
- if(!s.v2){
-  if(!s.empty)return json({ok:false,error:'non-empty D1 without recognized schema v2; automatic bootstrap refused',schema:s},409);
-  await applyFile(request,env,'/db/schema_v2.sql');applied.push('v2');
-  await seedBase(env.DB);applied.push('base_seed');
-  s=await schemaStatus(env.DB);
-  if(!s.v2)return json({ok:false,error:'schema v2 bootstrap did not validate',before,applied,schema:s},500);
- }else if(!s.project_ready){await seedBase(env.DB);applied.push('base_seed');s=await schemaStatus(env.DB)}
- if(s.partial_v3)return json({ok:false,error:'partial schema v3 detected; automatic ALTER replay refused',before,applied,schema:s},409);
- const steps=[['v3','/db/schema_v3.sql'],['v4','/db/migration4_prepare_fr_and_cutover.sql'],['v5','/db/migration5_content_origin.sql'],['v6','/db/migration6_quote_pages_and_versions.sql'],['v7','/db/migration7_seed_required_outputs.sql'],['v8','/db/migration8_ai_generation.sql'],['v9','/db/migration9_runtime_hardening.sql'],['v10','/db/migration10_database_guardrails.sql']];
- for(const [key,path] of steps){if(!s[key]){await applyFile(request,env,path);applied.push(key);s=await schemaStatus(env.DB);if(s.partial_v3)return json({ok:false,error:'migration left partial v3 state; stopped',before,applied,schema:s},409)}}
- return json({ok:true,before,applied,schema:s});
-}
+const STEPS=[
+ ['v2','/db/schema_v2.sql'],
+ ['v3','/db/schema_v3.sql'],
+ ['v4','/db/migration4_prepare_fr_and_cutover.sql'],
+ ['v5','/db/migration5_content_origin.sql'],
+ ['v6','/db/migration6_quote_pages_and_versions.sql'],
+ ['v7','/db/migration7_seed_required_outputs.sql'],
+ ['v8','/db/migration8_ai_generation.sql'],
+ ['v9','/db/migration9_runtime_hardening.sql'],
+ ['v10','/db/migration10_database_guardrails.sql']
+];
 
-function diagnosticsPage(){return new Response(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Wise Quotes Diagnostics</title><style>body{font-family:system-ui;margin:0;background:#f4f4f2;color:#111}.w{max-width:760px;margin:auto;padding:24px}.card{background:#fff;border-radius:24px;padding:22px;margin:18px 0}input,button{font:inherit;width:100%;box-sizing:border-box;padding:15px;border-radius:14px;border:1px solid #ccc;margin:8px 0}button{font-weight:700;background:#111;color:#fff}.status{padding:16px;border-radius:14px;background:#eee;font-weight:700;white-space:pre-wrap}.ok{background:#dff7e6}.bad{background:#ffe1e1}pre{white-space:pre-wrap;word-break:break-word;font-size:13px;background:#111;color:#eee;padding:14px;border-radius:14px}</style></head><body><div class="w"><h1>Wise Quotes — Diagnostics</h1><div class="card"><label>Preview ADMIN_TOKEN</label><input id="t" type="password" autocomplete="off" placeholder="Token"><button onclick="schema()">1. Connect / schema</button><button onclick="migrate()">2. Apply migrations</button><div id="s" class="status">Waiting for action…</div></div><div class="card"><h2>Raw response</h2><pre id="o">—</pre></div></div><script>const s=document.getElementById('s'),o=document.getElementById('o'),t=document.getElementById('t');function h(){return {'authorization':'Bearer '+t.value}}async function go(path,method){if(!t.value){s.className='status bad';s.textContent='TOKEN MISSING';return}s.className='status';s.textContent='Working…';o.textContent='—';try{const r=await fetch(path,{method,headers:h()});const x=await r.json();o.textContent=JSON.stringify(x,null,2);if(r.ok){s.className='status ok';s.textContent='SUCCESS HTTP '+r.status+(x.schema?.ready?' — SCHEMA READY':'')}else{s.className='status bad';s.textContent='ERROR HTTP '+r.status+' — '+(x.error||'unknown error')}}catch(e){s.className='status bad';s.textContent='NETWORK/JS ERROR — '+e;o.textContent=String(e)}}function schema(){go('/api/admin/schema','GET')}function migrate(){go('/api/admin/migrate','POST')}</script></body></html>`,{headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store'}})}
+async function migrateOne(request,env){
+ if(!env.DB)return json({ok:false,error:'DB binding unavailable'},503);
+ const before=await schemaStatus(env.DB);
+ if(before.ready)return json({ok:true,done:true,message:'schema already ready',before,schema:before});
+ if(before.partial_v3)return json({ok:false,error:'partial schema v3 detected; automatic ALTER replay refused',schema:before},409);
+ let next=null;
+ for(const [key,path] of STEPS){if(!before[key]){next={key,path};break}}
+ if(!next)return json({ok:false,error:'no migration step resolved',schema:before},409);
+ if(next.key==='v2'&&!before.empty)return json({ok:false,error:'non-empty D1 without recognized schema v2; automatic bootstrap refused',schema:before},409);
+ if(next.key==='v4'&&!before.project_ready)return json({ok:false,error:`project row ${PROJECT_ID} missing; migration4 refused`,schema:before},409);
+ try{
+   await applyFile(request,env,next.path);
+   if(next.key==='v2')await seedBase(env.DB);
+   const after=await schemaStatus(env.DB);
+   if(!after[next.key])return json({ok:false,error:`${next.key} executed but validation failed`,step:next,before,schema:after},500);
+   return json({ok:true,step:next.key,path:next.path,before,schema:after,next:after.ready?null:STEPS.find(([k])=>!after[k])?.[0]||null});
+ }catch(e){
+   let after=null;try{after=await schemaStatus(env.DB)}catch{}
+   return json({ok:false,error:String(e?.message||e),name:e?.name||null,step:next,before,schema:after},500);
+ }
+}
 
 export default{async fetch(request,env,ctx){
  const url=new URL(request.url);
  try{
-  if((url.pathname==='/admin/diagnostics'||url.pathname==='/admin/diagnostics/'))return diagnosticsPage();
   if(url.pathname==='/api/admin/schema'&&request.method==='GET'){
    if(!authorized(request,env))return json({ok:false,error:'unauthorized'},401);
    if(!env.DB)return json({ok:false,error:'DB binding unavailable'},503);
-   return json({ok:true,schema:await schemaStatus(env.DB),bindings:{db:!!env.DB,r2:!!env.MEDIA,ai:!!env.AI,admin_secret:!!env.ADMIN_TOKEN}});
+   return json({ok:true,schema:await schemaStatus(env.DB),bindings:{db:!!env.DB,r2:!!env.MEDIA,ai:!!env.AI,assets:!!env.ASSETS,admin_secret:!!env.ADMIN_TOKEN}});
   }
   if(url.pathname==='/api/admin/migrate'&&request.method==='POST'){
    if(!authorized(request,env))return json({ok:false,error:'unauthorized'},401);
-   return migrate(request,env);
+   return migrateOne(request,env);
   }
   return legacyWorker.fetch(request,env,ctx);
- }catch(e){return json({ok:false,error:String(e?.message||e)},500)}
+ }catch(e){return json({ok:false,error:String(e?.message||e),name:e?.name||null},500)}
 }};

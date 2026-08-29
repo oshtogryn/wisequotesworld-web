@@ -12,7 +12,8 @@ async function objectExists(db,type,name){try{return !!(await db.prepare("SELECT
 
 async function schemaStatus(db){
  const tables=await tableNames(db),ci=tables.includes('content_items')?await columns(db,'content_items'):[];
- const empty=tables.length===0;
+ const userTables=tables.filter(name=>!name.startsWith('_cf_'));
+ const empty=userTables.length===0;
  const v2=tables.includes('projects')&&tables.includes('languages')&&tables.includes('rules')&&tables.includes('content_items')&&tables.includes('content_versions');
  const v3Columns=['quote_type','original_quote','original_language','author_name','author_source','source_work','source_date','attribution_status','category_slug'];
  const v3Tables=['workflow_steps','required_outputs','language_style_profiles','automation_integrations','media_inbox','media_usage','quote_categories','authors','pinterest_creatives','publication_attempts','ai_query_log'];
@@ -26,7 +27,7 @@ async function schemaStatus(db){
  const v8=tables.includes('ai_generation_jobs');
  const v9=tables.includes('rules')?!!(await db.prepare("SELECT 1 AS ok FROM rules WHERE project_id=? AND rule_key='free_ai_budget' LIMIT 1").bind(PROJECT_ID).first()):false;
  const v10=await objectExists(db,'trigger','trg_publications_require_approval_insert');
- return{tables,empty,v2,v3,partial_v3,project_ready,v4,v5,v6,v7,v8,v9,v10,ready:v2&&v3&&v4&&v5&&v6&&v7&&v8&&v9&&v10,content_items_columns:ci};
+ return{tables,user_tables:userTables,empty,v2,v3,partial_v3,project_ready,v4,v5,v6,v7,v8,v9,v10,ready:v2&&v3&&v4&&v5&&v6&&v7&&v8&&v9&&v10,content_items_columns:ci};
 }
 
 async function assetText(request,env,path){const r=await env.ASSETS.fetch(new Request(new URL(path,request.url)));if(!r.ok)throw new Error(`${path} unavailable (${r.status})`);return r.text()}

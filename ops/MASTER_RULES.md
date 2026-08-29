@@ -2,7 +2,7 @@
 
 Останнє оновлення: 2026-08-29
 Статус: CANONICAL
-Версія: database-first v4
+Версія: database-first v4.1
 
 ## 1. Джерела істини
 1. `ops/MASTER_RULES.md` — канонічне джерело операційних правил.
@@ -47,29 +47,33 @@ FR активна на website і Pinterest. Для Facebook/Instagram/Threads/T
 
 Не ставити `scheduled/published` без зовнішнього readback. Не публікувати без `approved`.
 
-## 6. Gemini video prompt — production standard v4
+## 6. Gemini video prompt — production standard v4.1
+Це правило адаптоване з актуального MASTER RULES Sweden No Sugar і є mandatory.
+
 Базові вимоги:
 - vertical 9:16;
 - target duration — до актуального максимуму Gemini, зараз до 10 секунд;
 - immediate visual hook з першого кадру; без black intro/fade-in/fade-out;
 - одна зрозуміла cinematic story, не перевантажувати prompt другорядними деталями;
-- natural native-language voiceover;
-- VOICEOVER починається не раніше приблизно 0.6–0.8 s і повністю закінчується щонайменше за 0.8–1.0 s до кінця відео;
-- останнє слово ніколи не обрізати;
-- не прискорювати голос для вміщення тексту; якщо повна цитата фізично не вкладається природно — скорочувати тільки відеоформат/розбивати творчу подачу, але не спотворювати канонічну цитату;
+- готове AI-video ОБОВ'ЯЗКОВО містить точний затверджений localized quote text на екрані;
+- готове AI-video ОБОВ'ЯЗКОВО містить natural native-language voiceover цієї самої цитати;
+- одночасно показувати один короткий завершений текстовий блок;
+- якщо цитата довга — дозволено 2 послідовні блоки; попередній повністю зникає перед наступним; між ними короткий clean no-text gap;
+- ніколи не використовувати typewriter/word-by-word animation або automatic subtitles;
+- locked quote text не перекладати, не перефразовувати, не autocorrect, не міняти пунктуацію чи літери;
+- текст має бути повністю видимий, без обрізаних першого/останнього слова і без виходу за safe area;
+- voiceover не повинен втрачати перше або останнє слово; залишати достатній audio headroom/tail;
+- останнє слово повністю вимовляється до завершення відео;
+- не прискорювати голос неприродно; якщо текст довгий, використовувати весь доступний duration і компактні 2 text blocks;
 - music/ambience тихіше voiceover;
-- NO generated on-screen quote text;
-- NO generated subtitles/captions;
-- NO generated letters, signage, UI, labels or readable background text;
-- NO Wise Quotes World logo/branding inside AI-generated video;
+- NO instruction labels, random letters, fake UI, unrelated readable background text або automatic captions;
+- NO Wise Quotes World logo, brand mark або generated branding inside AI video;
 - NO third-party logos/watermarks;
-- quote typography і Wise Quotes World logo додаються користувачем окремо в CapCut після генерації.
+- Wise Quotes World logo користувач додає окремо в CapCut після генерації.
 
-Причина правила `NO generated text`: генеративне відео ненадійно відтворює орфографію і пунктуацію. Точний текст цитати є locked editorial asset і повинен накладатися окремо під час монтажу.
+Кожен Gemini prompt повинен містити: format/duration, language, first-frame hook, setting, subject, action/timeline, camera, lighting/mood, EXACT LOCKED TEXT, strict text timing, native voiceover, audio, explicit NO LOGO/NO EXTRA TEXT constraints, clean final hold.
 
-Кожен Gemini prompt повинен містити: format/duration, language, first-frame hook, setting, subject, action/timeline, camera, lighting/mood, exact voiceover quote, audio, explicit `NO TEXT / NO LOGO`, clean final hold.
-
-Промт не повинен бути довшим за необхідне для стабільної генерації. Заборонено дублювати одні й ті самі вимоги кілька разів або давати суперечливі instructions.
+Промт не повинен дублювати або суперечити сам собі. Фінальна перевірка prompt повинна прямо вимагати: spelling/punctuation exact, all words visible, first and last spoken words complete, zero logo/branding.
 
 ### Візуальна стратегія для `adapted`
 Cinematic symbolic human story, яка передає сенс цитати без мелодрами.
@@ -79,17 +83,16 @@ Premium author-specific treatment: tasteful statue/bust/engraving або symboli
 
 ## 7. CapCut finalization — mandatory
 Після Gemini:
-1. перевірити, що voiceover починається/закінчується повністю;
-2. відкинути generation з обірваною озвучкою, випадковими буквами, watermark або дефектами;
-3. у CapCut додати точну localized quote typography;
-4. у CapCut додати правильний Wise Quotes World language logo;
-5. текст розміщувати у safe area, читабельно, без перевантаження;
-6. якщо цитата довга — дозволено 2 послідовні блоки, але не одночасно;
-7. фінальний export 9:16 перевірити перед Media Inbox upload.
+1. перевірити точність написання ВСІХ слів і пунктуації у generated quote text;
+2. перевірити, що voiceover містить перше й останнє слово повністю;
+3. відкинути generation з орфографічною помилкою, обрізаним текстом/голосом, випадковими буквами, watermark або generated logo;
+4. у CapCut додати ТІЛЬКИ правильний Wise Quotes World language logo;
+5. не дублювати цитату другим CapCut-текстом, якщо AI-generated quote уже правильний;
+6. фінальний export 9:16 перевірити перед Media Inbox upload.
 
 ## 8. Pinterest visual
 Pinterest image базується на тій самій semantic visual concept/story, що й video.
-Canonical format: portrait 2:3, target 1000×1500, clean area for exact quote typography, author only when verified, mobile safe margins, no generated text/logo/watermark. Quote typography та branding бажано накладати контрольовано після generation.
+Canonical format: portrait 2:3, target 1000×1500, exact localized quote, author only when verified, mobile safe margins, no unrelated text/third-party watermark. Wise Quotes World branding допускається лише якщо користувач явно хоче його на Pinterest asset.
 
 Автоматична AI-генерація Pinterest ЗАМОРОЖЕНА. Система готує 8 image prompts → користувач генерує вручну → Admin upload → R2 → QA → approval.
 
@@ -97,7 +100,7 @@ Canonical format: portrait 2:3, target 1000×1500, clean area for exact quote ty
 Для кожного content item зберігати:
 - localized quote;
 - full Gemini video prompt;
-- exact voiceover text;
+- exact voiceover/on-screen text;
 - Pinterest image prompt;
 - Facebook copy;
 - Instagram copy;
@@ -197,7 +200,7 @@ Store platform/source and metric definition. Checkpoints: 24h, 72h, 7d, 30d. Ana
 2. select next topic;
 3. source verification for verbatim;
 4. 8 native localizations;
-5. 8 stable Gemini prompts за v4 standard без generated text/logo;
+5. 8 stable Gemini prompts за v4.1: exact generated quote text + exact voiceover + NO generated logo/branding;
 6. 8 Pinterest prompts;
 7. full-length platform copy + localized article URLs;
 8. substantive website article/reflection 250–500 words per active language;

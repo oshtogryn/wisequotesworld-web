@@ -4,6 +4,7 @@ import {siteV2} from './lib/site_v2.js';
 import {productionConsoleApi} from './lib/production_console_api.js';
 
 let rulesSynced=false;
+let wq006PublishChecked=false;
 
 function json(data,status=200){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}
 function adminAuth(request,env){return !!env.ADMIN_TOKEN&&(request.headers.get('authorization')||'')===`Bearer ${env.ADMIN_TOKEN}`}
@@ -32,6 +33,17 @@ async function hardResetPreparedTopic(request,env,id){
   const failed=Object.entries(steps).filter(([,v])=>!v.ok);
   if(after||failed.length)return json({ok:false,error:'hard reset incomplete',id,before,after:after||null,failed,steps},409);
   return json({ok:true,id,before,deleted:true,steps});
+}
+
+async function publishExplicitWQ006(env){
+  if(wq006PublishChecked||!env.DB)return;
+  wq006PublishChecked=true;
+  const approved=await env.DB.prepare(`SELECT 1 ok FROM content_approvals WHERE content_item_id='WQ006' AND approval_scope='content' AND language_code IS NULL AND status='approved' LIMIT 1`).first();
+  if(!approved)return;
+  const ready=await env.DB.prepare(`SELECT COUNT(*) n FROM quote_pages WHERE project_id='wisequotesworld' AND content_item_id='WQ006' AND language_code IN ('uk','ru','pl','en','sv','de','es','fr') AND status IN ('ready','published')`).first();
+  if(Number(ready?.n||0)!==8)return;
+  const ts=new Date().toISOString();
+  await env.DB.prepare(`UPDATE quote_pages SET status='published',published_at=COALESCE(published_at,?),updated_at=? WHERE project_id='wisequotesworld' AND content_item_id='WQ006' AND language_code IN ('uk','ru','pl','en','sv','de','es','fr') AND status IN ('ready','published')`).bind(ts,ts).run();
 }
 
 function mediaKindSql(kind){
@@ -65,6 +77,7 @@ export default {
         await syncCanonicalRules(env);
         rulesSynced=true;
       }
+      await publishExplicitWQ006(env);
       if(url.pathname==='/admin'||url.pathname==='/admin/'){
         return Response.redirect(`${url.origin}/admin/console/`,302);
       }

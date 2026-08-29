@@ -1,25 +1,40 @@
 -- Wise Quotes World migration7 — required outputs + workflow guardrails
 -- 2026-08-28
-PRAGMA foreign_keys=ON;
+-- D1-safe version: avoid large compound SELECT/UNION chains.
 
--- Seed required output matrix for every prepared locale.
+-- Seed required output matrix for every prepared locale using simple statements.
 INSERT OR IGNORE INTO required_outputs(project_id,output_key,platform_key,language_code,required,active)
-SELECT 'wisequotesworld',o.output_key,o.platform_key,l.code,1,1
-FROM languages l
-JOIN (
-  SELECT 'localized_quote' AS output_key,NULL AS platform_key UNION ALL
-  SELECT 'video_prompt',NULL UNION ALL
-  SELECT 'voiceover',NULL UNION ALL
-  SELECT 'website_page','website' UNION ALL
-  SELECT 'pinterest_image','pinterest' UNION ALL
-  SELECT 'pinterest_copy','pinterest' UNION ALL
-  SELECT 'facebook_copy','facebook' UNION ALL
-  SELECT 'instagram_copy','instagram' UNION ALL
-  SELECT 'threads_copy','threads' UNION ALL
-  SELECT 'tiktok_copy','tiktok' UNION ALL
-  SELECT 'youtube_copy','youtube'
-) o
-WHERE l.code IN ('uk','ru','pl','en','sv','de','es','fr');
+SELECT 'wisequotesworld','localized_quote',NULL,code,1,1 FROM languages WHERE code IN ('uk','ru','pl','en','sv','de','es','fr');
+
+INSERT OR IGNORE INTO required_outputs(project_id,output_key,platform_key,language_code,required,active)
+SELECT 'wisequotesworld','video_prompt',NULL,code,1,1 FROM languages WHERE code IN ('uk','ru','pl','en','sv','de','es','fr');
+
+INSERT OR IGNORE INTO required_outputs(project_id,output_key,platform_key,language_code,required,active)
+SELECT 'wisequotesworld','voiceover',NULL,code,1,1 FROM languages WHERE code IN ('uk','ru','pl','en','sv','de','es','fr');
+
+INSERT OR IGNORE INTO required_outputs(project_id,output_key,platform_key,language_code,required,active)
+SELECT 'wisequotesworld','website_page','website',code,1,1 FROM languages WHERE code IN ('uk','ru','pl','en','sv','de','es','fr');
+
+INSERT OR IGNORE INTO required_outputs(project_id,output_key,platform_key,language_code,required,active)
+SELECT 'wisequotesworld','pinterest_image','pinterest',code,1,1 FROM languages WHERE code IN ('uk','ru','pl','en','sv','de','es','fr');
+
+INSERT OR IGNORE INTO required_outputs(project_id,output_key,platform_key,language_code,required,active)
+SELECT 'wisequotesworld','pinterest_copy','pinterest',code,1,1 FROM languages WHERE code IN ('uk','ru','pl','en','sv','de','es','fr');
+
+INSERT OR IGNORE INTO required_outputs(project_id,output_key,platform_key,language_code,required,active)
+SELECT 'wisequotesworld','facebook_copy','facebook',code,1,1 FROM languages WHERE code IN ('uk','ru','pl','en','sv','de','es','fr');
+
+INSERT OR IGNORE INTO required_outputs(project_id,output_key,platform_key,language_code,required,active)
+SELECT 'wisequotesworld','instagram_copy','instagram',code,1,1 FROM languages WHERE code IN ('uk','ru','pl','en','sv','de','es','fr');
+
+INSERT OR IGNORE INTO required_outputs(project_id,output_key,platform_key,language_code,required,active)
+SELECT 'wisequotesworld','threads_copy','threads',code,1,1 FROM languages WHERE code IN ('uk','ru','pl','en','sv','de','es','fr');
+
+INSERT OR IGNORE INTO required_outputs(project_id,output_key,platform_key,language_code,required,active)
+SELECT 'wisequotesworld','tiktok_copy','tiktok',code,1,1 FROM languages WHERE code IN ('uk','ru','pl','en','sv','de','es','fr');
+
+INSERT OR IGNORE INTO required_outputs(project_id,output_key,platform_key,language_code,required,active)
+SELECT 'wisequotesworld','youtube_copy','youtube',code,1,1 FROM languages WHERE code IN ('uk','ru','pl','en','sv','de','es','fr');
 
 -- Critical machine-readable publishing rules.
 INSERT INTO rules(project_id,scope_type,rule_group,rule_key,rule_value,notes,mandatory,status,version,effective_from)

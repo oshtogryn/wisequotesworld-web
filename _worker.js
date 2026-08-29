@@ -1,6 +1,7 @@
 import legacyWorker from './_worker_legacy.js';
 import {syncCanonicalRules} from './lib/canonical_rules.js';
 import {siteV2} from './lib/site_v2.js';
+import {productionConsoleApi} from './lib/production_console_api.js';
 
 let rulesSynced=false;
 
@@ -15,6 +16,8 @@ export default {
       if(url.pathname==='/admin'||url.pathname==='/admin/'){
         return Response.redirect(`${url.origin}/admin/console/`,302);
       }
+      const productionResponse=await productionConsoleApi(request,env);
+      if(productionResponse)return productionResponse;
       const publicResponse=await siteV2(request,env);
       if(publicResponse)return publicResponse;
       return legacyWorker.fetch(request,env,ctx);

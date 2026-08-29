@@ -38,9 +38,16 @@ async function assetText(request,env,path){
  return r.text();
 }
 function sanitizeSqlForD1(sql){
- return String(sql||'')
-   .replace(/^\s*PRAGMA\s+foreign_keys\s*=\s*(?:ON|OFF|1|0)\s*;\s*$/gmi,'')
-   .trim();
+ const lines=String(sql||'').replace(/\r\n?/g,'\n').split('\n');
+ const cleaned=[];
+ for(const line of lines){
+   const t=line.trim();
+   if(!t)continue;
+   if(t.startsWith('--'))continue;
+   if(/^PRAGMA\s+foreign_keys\s*=\s*(?:ON|OFF|1|0)\s*;?$/i.test(t))continue;
+   cleaned.push(t);
+ }
+ return cleaned.join(' ').replace(/\s+/g,' ').trim();
 }
 async function applyFile(request,env,path){
  const raw=await assetText(request,env,path);

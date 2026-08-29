@@ -2,9 +2,11 @@ import legacyWorker from './_worker_legacy.js';
 import {syncCanonicalRules} from './lib/canonical_rules.js';
 import {siteV2} from './lib/site_v2.js';
 import {productionConsoleApi} from './lib/production_console_api.js';
+import {ensureLegacyContentMigrated} from './lib/legacy_content_migration.js';
 
 let rulesSynced=false;
 let wq006PublishChecked=false;
+let legacyMigrationChecked=false;
 
 function json(data,status=200){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}
 function adminAuth(request,env){return !!env.ADMIN_TOKEN&&(request.headers.get('authorization')||'')===`Bearer ${env.ADMIN_TOKEN}`}
@@ -76,6 +78,10 @@ export default {
       if(env.DB && !rulesSynced){
         await syncCanonicalRules(env);
         rulesSynced=true;
+      }
+      if(env.DB && !legacyMigrationChecked){
+        await ensureLegacyContentMigrated(env);
+        legacyMigrationChecked=true;
       }
       await publishExplicitWQ006(env);
       if(url.pathname==='/admin'||url.pathname==='/admin/'){

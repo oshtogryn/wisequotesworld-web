@@ -1,0 +1,99 @@
+# WQ006 — Parents / Family — production package
+
+Status: PREPARED FOR MEDIA GENERATION
+Type: adapted / Wise Quotes World original thought
+Category: parents-family
+Author: none
+Languages: uk, ru, pl, en, sv, de, es, fr
+Scheduler: Metricool after media QA + approval
+Pinterest AI: frozen; user generates images manually from prompts below
+Video duration: up to 10 seconds / maximum supported Gemini duration
+
+## Canonical meaning
+Growing up happens twice: first when daily dependence on parents fades; later when we understand how important they actually were to us.
+
+## Localized quotes
+- UK: Ми дорослішаємо двічі: спочатку — коли перестаємо потребувати батьків щодня, а потім — коли розуміємо, як сильно вони були нам потрібні.
+- RU: Мы взрослеем дважды: сначала — когда перестаём нуждаться в родителях каждый день, а потом — когда понимаем, как сильно они были нам нужны.
+- PL: Dorastamy dwa razy: najpierw, gdy przestajemy potrzebować rodziców na co dzień, a potem, gdy rozumiemy, jak bardzo byli nam potrzebni.
+- EN: We grow up twice: first when we stop needing our parents every day, and then when we realize how much we needed them.
+- SV: Vi växer upp två gånger: först när vi slutar behöva våra föräldrar varje dag, och sedan när vi förstår hur mycket vi faktiskt behövde dem.
+- DE: Wir werden zweimal erwachsen: zuerst, wenn wir unsere Eltern nicht mehr jeden Tag brauchen, und später, wenn wir begreifen, wie sehr wir sie gebraucht haben.
+- ES: Crecemos dos veces: primero, cuando dejamos de necesitar a nuestros padres cada día; después, cuando comprendemos cuánto los necesitábamos.
+- FR: On grandit deux fois : d’abord quand on cesse d’avoir besoin de ses parents au quotidien, puis quand on comprend à quel point on avait besoin d’eux.
+
+---
+
+## Gemini video prompts
+
+### UK
+GENERATE THE FINISHED VIDEO IMMEDIATELY. Create a premium photorealistic vertical 9:16 cinematic short for Wise Quotes World UA, using up to 10 seconds or the maximum duration currently supported by Gemini without rushing the narration. Language: native Ukrainian from Ukraine. Mood: tender, mature, restrained, reflective; never sentimental or melodramatic. Start with an immediate visual hook in the first frame: a young adult in their early twenties closes the door of the family home and walks away confidently with a backpack while an older parent remains quietly in the doorway. Use one elegant cinematic transition to the same person years later, now around forty, entering the same home and noticing the parent has visibly aged. The emotional turn is subtle: the adult slows down, looks at an old family photograph on a shelf, then embraces the parent naturally. Camera: intimate 35–50 mm cinematic feel, shallow depth of field, slow controlled tracking and one soft match-cut across time. Lighting: warm natural morning light in the first phase, softer late-afternoon amber light in the second phase. No exaggerated tears, no hospital imagery, no death implication, no cliché montage.
+
+The finished video must display only the approved Ukrainian quote and the stable Wise Quotes World UA brand mark. Shortly after the first frame, show the exact first sentence segment as one complete stable block in the upper-middle safe zone: «Ми дорослішаємо двічі: спочатку — коли перестаємо потребувати батьків щодня,» Keep it visible while the first part is spoken, then remove it completely. Leave a brief clean moment with no text. Then show the exact second segment as one complete stable block: «а потім — коли розуміємо, як сильно вони були нам потрібні.» Never show both blocks at once. No typewriter effect, no word-by-word animation, no automatic subtitles. Use elegant highly legible warm-white typography with perfect Ukrainian Cyrillic. Native Ukrainian voice, calm and warm, approximately 40–50 years old, says the complete quote exactly once, naturally and without paraphrasing. Original felt piano, warm cello and subtle room ambience, always quieter than the voice. No other readable words, instruction labels, random letters, third-party logos or watermarks. Finish on the quiet embrace and a short held frame after the final word.
+
+### RU
+GENERATE THE FINISHED VIDEO IMMEDIATELY. Create a premium photorealistic vertical 9:16 cinematic short for Wise Quotes World RU, up to 10 seconds or the maximum Gemini duration supported without unnatural speech compression. Native Russian language. Open immediately on a young adult leaving the family apartment with confident energy while an older parent watches from the doorway. Transition elegantly across years to the same person returning as an adult, noticing the parent's age in small visual details: slower movement, silver hair, familiar coat hanging by the door, an old family photo. The adult pauses, softens, then embraces the parent naturally. Tone: mature, emotionally controlled, never melodramatic. Camera: cinematic 35–50 mm lens feel, gentle handheld stability or slow tracking, shallow depth of field, one smooth match-cut connecting departure and return. Lighting changes from cool morning independence to warm late-afternoon reconciliation. No funeral, illness, hospital, crying close-up, religious symbolism or sentimental cliché.
+
+Only the approved Russian quote and stable Wise Quotes World RU branding may be readable. Show first as one complete stable upper-middle text block: «Мы взрослеем дважды: сначала — когда перестаём нуждаться в родителях каждый день,» Keep it while spoken, remove fully, leave a brief no-text gap, then show: «а потом — когда понимаем, как сильно они были нам нужны.» Zero overlap. No typewriter, labels or auto-captions. Use flawless Russian Cyrillic. Native Russian voice around 40–50, calm, deep, warm and reflective, speaks the full quote exactly once with no changed words. Original felt piano, cello and soft cinematic ambience below the voice. No additional text, random signage, third-party logo or watermark. End on the embrace, held briefly after the final word.
+
+### PL
+GENERATE THE FINISHED VIDEO IMMEDIATELY. Create a premium photorealistic vertical 9:16 Wise Quotes World PL cinematic short, up to 10 seconds / maximum supported Gemini duration. Native Polish. First-frame hook: a young person leaves a modest Central-European family home with a suitcase, energetic and independent, while a parent stands quietly at the doorway. Use a refined match-cut to several years later: the same person returns, now older, and notices the parent's aging face and hands. They see a small family photograph, pause, then warmly embrace the parent. Emotion must stay restrained and credible. Camera: 35–50 mm cinematic perspective, shallow depth of field, slow tracking, no fast montage. Light: crisp morning at departure, warm golden interior light at return. Avoid melodrama, illness, death, tears-for-effect and stereotypical family imagery.
+
+The only readable text is the exact approved Polish quote plus stable Wise Quotes World PL branding. Show first block in the upper-middle safe area: «Dorastamy dwa razy: najpierw, gdy przestajemy potrzebować rodziców na co dzień,» Keep it stable during corresponding narration, remove it fully, leave a short clean gap, then show: «a potem, gdy rozumiemy, jak bardzo byli nam potrzebni.» Never overlap. No word-by-word animation. Perfect Polish diacritics. Native Polish voice around 40–50, warm, calm and reflective, speaks the exact quote once. Original felt piano, warm cello and subtle home ambience lower than voice. No subtitles, labels, random letters, third-party logos or watermark. End on a subtle embrace and calm eye contact.
+
+### EN
+GENERATE THE FINISHED VIDEO IMMEDIATELY. Create a premium photorealistic vertical 9:16 cinematic short for Wise Quotes World EN, using up to 10 seconds or the maximum Gemini duration supported without rushing the voice. Native natural English. First-frame hook: a young adult steps out of the family home carrying a backpack, visibly excited by independence; a parent remains in the doorway, smiling quietly. Use one elegant match-cut across years to the same person returning older and more composed. They notice the parent's silver hair and slower movement, glance at an old family photo, then move into a genuine restrained embrace. The story must communicate realization rather than tragedy. Camera: refined 35–50 mm cinematic look, shallow depth of field, slow tracking, natural facial acting, no dramatic zooms. Lighting moves from bright cool morning to warm amber evening. No hospital, funeral, illness, exaggerated crying, inspirational cliché or fake nostalgia filters.
+
+Only the approved English quote and the stable Wise Quotes World EN brand mark may be readable. Show one stable upper-middle text block: “We grow up twice: first when we stop needing our parents every day,” Keep it while that phrase is spoken, remove it completely, leave a brief no-text gap, then show: “and then when we realize how much we needed them.” Never overlap the blocks. No typewriter effect or automatic subtitles. Native English voice around 40–50, calm, warm, reflective and unhurried, says the complete quote exactly once. Original felt piano, cello and soft room ambience below voice. No other words, signage, labels, random text, third-party logos or watermark. End with the embrace held for a quiet final beat.
+
+### SV
+GENERATE THE FINISHED VIDEO IMMEDIATELY. Create a premium Scandinavian photorealistic vertical 9:16 cinematic short for Wise Quotes World SV, up to 10 seconds or the maximum current Gemini duration. Native Swedish. Begin immediately with a young adult leaving a clean understated Swedish family home on a cool morning, carrying a bag and moving with confident independence while a parent remains by the doorway. Match-cut years forward: the adult returns to the same home, sees the parent older, notices a familiar framed family photograph and pauses. The parent and adult share a restrained natural embrace. Nordic realism, emotional understatement, no sentimental performance. Camera: clean 35–50 mm cinematic lens feel, slow stabilized movement, shallow depth of field, soft natural textures. Light changes from pale Nordic morning to warm indoor evening glow. No illness, funeral, dramatic crying or advertising-like acting.
+
+Readable text is limited to the approved Swedish quote plus stable Wise Quotes World SV branding. Upper-middle first block: “Vi växer upp två gånger: först när vi slutar behöva våra föräldrar varje dag,” Then fully remove it, leave a short clean gap, and show: “och sedan när vi förstår hur mycket vi faktiskt behövde dem.” No overlap, no word-by-word animation. Native Swedish voice, around 40–50, calm, warm and reflective, speaks the exact quote once. Original felt piano, subtle cello and restrained Nordic room ambience below voice. No extra captions, labels, random text, third-party logos or watermark. Final frame: quiet embrace in warm light.
+
+### DE
+GENERATE THE FINISHED VIDEO IMMEDIATELY. Create a premium photorealistic vertical 9:16 cinematic short for Wise Quotes World DE, using up to 10 seconds / maximum supported Gemini duration. Native German. First frame: a young adult leaves a family home with purposeful independence, closing the front door gently while a parent watches. Use an elegant cinematic time transition to the same person years later returning. The parent is visibly older in subtle realistic ways. The adult notices an old framed family photograph, pauses, then embraces the parent. Emotion is mature and restrained, not melodramatic. Camera: 35–50 mm cinema lens feel, controlled slow tracking, shallow depth of field, precise composition. Lighting: bright morning for departure, warm late-afternoon interior light for return. No illness, funeral, exaggerated crying or sentimental cliché.
+
+Only the exact German quote and stable Wise Quotes World DE branding may appear as readable text. First upper-middle block: “Wir werden zweimal erwachsen: zuerst, wenn wir unsere Eltern nicht mehr jeden Tag brauchen,” Then remove completely, brief clean no-text gap, second block: “und später, wenn wir begreifen, wie sehr wir sie gebraucht haben.” Zero overlap, no typewriter effect. Native German voice 40–50, calm, deep, natural, warm and reflective, says the complete quote exactly once. Original felt piano, warm cello and subtle ambience lower than voice. No other captions, instruction words, random letters, third-party logos or watermark. End on the quiet embrace.
+
+### ES
+GENERATE THE FINISHED VIDEO IMMEDIATELY. Create a premium photorealistic vertical 9:16 cinematic short for Wise Quotes World ES, using up to 10 seconds or the maximum Gemini duration available without rushing narration. Native neutral Spanish. Begin immediately on a young adult leaving a warm Mediterranean-family home with confidence and a travel bag, while a parent remains at the doorway. Transition elegantly years later to the adult returning, noticing the parent has aged. A small family photograph provides a subtle visual bridge. The adult pauses, looks at the parent differently, then embraces them naturally. Keep the emotion warm and restrained, never soap-opera dramatic. Camera: cinematic 35–50 mm feel, shallow depth of field, slow tracking, natural skin texture and acting. Light: soft morning departure, warm golden late-afternoon return. No illness, funeral, religious symbolism, exaggerated tears or cliché.
+
+Only the approved Spanish quote and stable Wise Quotes World ES brand may be readable. First upper-middle block: “Crecemos dos veces: primero, cuando dejamos de necesitar a nuestros padres cada día;” Remove fully, short clean gap, then second block: “después, cuando comprendemos cuánto los necesitábamos.” Never overlap. No typewriter or auto subtitles. Native neutral-Spanish voice 40–50, calm, warm and reflective, speaks the complete quote exactly once. Original felt piano, warm cello and subtle ambience below voice. No other readable signs, captions, labels, third-party logos or watermark. Finish on the quiet embrace.
+
+### FR
+GENERATE THE FINISHED VIDEO IMMEDIATELY. Create a premium photorealistic vertical 9:16 cinematic short for Wise Quotes World FR, using up to 10 seconds or the maximum duration currently supported by Gemini without rushing speech. Native French. Immediate visual hook: a young adult exits a quiet French family home with a bag, full of confidence and independence, while a parent watches from the doorway. Use one elegant match-cut across years. The same person returns older, notices the parent's silver hair and slower gestures, sees an old family photograph and pauses. The realization is shown through subtle facial expression before a restrained warm embrace. Camera: sophisticated 35–50 mm cinema look, shallow depth of field, gentle controlled movement, elegant composition. Lighting shifts from fresh morning light to warm late-afternoon interior amber. Avoid melodrama, illness, funeral imagery, excessive tears and cliché nostalgia.
+
+The only readable text is the exact French adaptation plus stable Wise Quotes World FR branding. First upper-middle block: «On grandit deux fois : d’abord quand on cesse d’avoir besoin de ses parents au quotidien,» Remove fully, leave a brief clean gap, then show: «puis quand on comprend à quel point on avait besoin d’eux.» No overlap. No typewriter or automatic subtitles. Native French voice around 40–50, calm, warm, mature and reflective, says the complete quote exactly once. Original felt piano, subtle cello and room ambience below narration. No extra text, labels, signage, third-party logos or watermark. End on the embrace with a short quiet hold.
+
+---
+
+## Pinterest image prompts — manual generation
+
+### UK
+Create a premium photorealistic vertical 2:3 Pinterest image, target 1000×1500. Emotional family story across generations: foreground shows an adult around forty gently embracing an aging parent in a warm home; in the background or reflected subtly in glass, suggest the memory of the same person leaving home as a young adult years earlier. Elegant warm natural light, cinematic depth, restrained emotion, editorial photography quality. Reserve clean upper-middle negative space for the Ukrainian quote to be added accurately later and a small lower-right area for Wise Quotes World UA branding. No generated text, no letters, no logos, no watermark, no funeral or hospital cues.
+
+### RU
+Create a premium photorealistic vertical 2:3 Pinterest background, target 1000×1500. Mature adult returning home and warmly embracing an older parent; subtle visual echo of younger self leaving years earlier through a framed photo or reflection. Warm evening interior, restrained emotion, editorial cinematic photography, realistic family details. Preserve uncluttered upper-middle space for later Russian typography and lower-right branding area. No generated text, letters, logos or watermark.
+
+### PL
+Create a premium photorealistic vertical 2:3 Pinterest background. Central-European family home, adult child around forty with aging parent, natural warm embrace; subtle old family photograph suggests the earlier period of independence. Cinematic editorial realism, soft golden light, natural textures. Clear upper-middle negative space for Polish quote overlay, lower-right clean branding zone. No generated text, typography, logos or watermark.
+
+### EN
+Create a premium vertical 2:3 Pinterest background, photorealistic editorial cinema. Adult child returning home and quietly embracing an aging parent; subtle framed photograph shows earlier youthful departure without making the composition busy. Sophisticated warm amber light, shallow depth of field, believable restrained emotion. Leave large clean upper-middle area for exact English quote typography and lower-right area for Wise Quotes World EN branding. No text, letters, logo or watermark generated by AI.
+
+### SV
+Create a premium vertical 2:3 Scandinavian editorial photograph. Minimal Swedish family home, adult child embracing an aging parent in soft warm indoor light; a subtle family photograph suggests passing years. Understated Nordic emotion, clean composition, muted natural palette. Preserve generous upper-middle negative space for Swedish quote overlay and lower-right branding area. No generated text, letters, logos or watermark.
+
+### DE
+Create a premium photorealistic vertical 2:3 Pinterest background. Quiet Central-European home, mature adult reconnecting with aging parent through a restrained embrace, old family photograph as subtle symbol of time. Elegant cinematic lighting, precise composition, realistic skin and fabric textures. Keep upper-middle uncluttered for German typography, lower-right clean for branding. No generated text, letters, logo or watermark.
+
+### ES
+Create a premium photorealistic vertical 2:3 Pinterest image. Warm Mediterranean family interior, adult child returning and embracing an aging parent, subtle framed family image hinting at the years when independence felt easy. Warm but restrained emotional tone, editorial cinematic photography. Leave clean upper-middle area for Spanish quote and lower-right branding space. No generated text, letters, logos or watermark.
+
+### FR
+Create a premium photorealistic vertical 2:3 Pinterest background. Elegant quiet French family home, mature adult gently embracing an aging parent, subtle old family photograph indicating the passage of years. Refined editorial cinema, warm natural late-afternoon light, restrained emotion. Preserve upper-middle negative space for exact French quote typography and small lower-right branding zone. No generated text, letters, logos or watermark.
+
+## Website
+Suggested localized theme title: Growing up twice / Parents and family.
+Article intent: reflective evergreen quote page about adulthood, parents, distance, gratitude and perspective. No attribution because this is adapted Wise Quotes World content.

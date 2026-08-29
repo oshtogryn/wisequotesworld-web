@@ -1,0 +1,79 @@
+{
+  "updated_at": "2026-08-29",
+  "source_priority": ["Metricool connected account identifiers", "Google Sheet Accounts cross-check", "GitHub canonical rules"],
+  "pinterest_note": "Metricool and Google Sheets confirm board IDs for UK/RU/PL/EN/SV/DE/ES. Public board slugs were not independently verified, so start pages route Pinterest to the verified WiseQuotesWorld account rather than inventing board URLs.",
+  "locales": {
+    "uk": {
+      "metricool_brand_id": "6774540",
+      "facebook": {"page_id": "878404672024804", "url": "https://www.facebook.com/878404672024804"},
+      "instagram": {"username": "wisequotes.ua", "url": "https://www.instagram.com/wisequotes.ua/"},
+      "threads": {"username": "wisequotes.ua", "url": "https://www.threads.com/@wisequotes.ua"},
+      "tiktok": {"username": "wisequotes.ua", "url": "https://www.tiktok.com/@wisequotes.ua"},
+      "youtube": {"channel_id": "UCh1HcI0nmrm_ddAPfVvyCSg", "url": "https://www.youtube.com/channel/UCh1HcI0nmrm_ddAPfVvyCSg"},
+      "pinterest": {"account": "wisequotesworld", "board_id": "1089449034799859638", "url": "https://www.pinterest.com/wisequotesworld/"}
+    },
+    "ru": {
+      "metricool_brand_id": "6774520",
+      "facebook": {"page_id": "840438055830136", "url": "https://www.facebook.com/840438055830136"},
+      "instagram": {"username": "wisequotes.ru", "url": "https://www.instagram.com/wisequotes.ru/"},
+      "threads": {"username": "wisequotes.ru", "url": "https://www.threads.com/@wisequotes.ru"},
+      "tiktok": {"username": "wisequotes.ru", "url": "https://www.tiktok.com/@wisequotes.ru"},
+      "youtube": {"channel_id": "UCV7RTZl4bfpRal8yq4fWrww", "url": "https://www.youtube.com/channel/UCV7RTZl4bfpRal8yq4fWrww"},
+      "pinterest": {"account": "wisequotesworld", "board_id": "1089449034799859640", "url": "https://www.pinterest.com/wisequotesworld/"}
+    },
+    "pl": {
+      "metricool_brand_id": "6774565",
+      "facebook": {"page_id": "1114233325116588", "url": "https://www.facebook.com/1114233325116588"},
+      "instagram": {"username": "wisequotes.pl", "url": "https://www.instagram.com/wisequotes.pl/"},
+      "threads": {"username": "wisequotes.pl", "url": "https://www.threads.com/@wisequotes.pl"},
+      "tiktok": {"username": "wisequotes.pl", "url": "https://www.tiktok.com/@wisequotes.pl"},
+      "youtube": {"channel_id": "UCQYOdpJO52DNZg3r8Rpnb2Q", "url": "https://www.youtube.com/channel/UCQYOdpJO52DNZg3r8Rpnb2Q"},
+      "pinterest": {"account": "wisequotesworld", "board_id": "1089449034800153643", "url": "https://www.pinterest.com/wisequotesworld/"}
+    },
+    "en": {
+      "metricool_brand_id": "6774568",
+      "facebook": {"page_id": "908076919052977", "url": "https://www.facebook.com/908076919052977"},
+      "instagram": {"username": "wisequotes.en", "url": "https://www.instagram.com/wisequotes.en/"},
+      "threads": {"username": "wisequotes.en", "url": "https://www.threads.com/@wisequotes.en"},
+      "tiktok": {"username": "wisequotes.en", "url": "https://www.tiktok.com/@wisequotes.en"},
+      "youtube": {"channel_id": "UCMwuq1k0jrz8dh2ocozUz1Q", "url": "https://www.youtube.com/channel/UCMwuq1k0jrz8dh2ocozUz1Q"},
+      "pinterest": {"account": "wisequotesworld", "board_id": "1089449034799859639", "url": "https://www.pinterest.com/wisequotesworld/"}
+    },
+    "sv": {
+      "metricool_brand_id": "6774579",
+      "facebook": {"page_id": "929364273586587", "url": "https://www.facebook.com/929364273586587"},
+      "instagram": {"username": "wisequotes.se", "url": "https://www.instagram.com/wisequotes.se/"},
+      "threads": {"username": "wisequotes.se", "url": "https://www.threads.com/@wisequotes.se"},
+      "tiktok": {"username": "wisequotes.se", "url": "https://www.tiktok.com/@wisequotes.se"},
+      "youtube": {"channel_id": "UCHnu9TFYxibDvSEOEfQykhg", "url": "https://www.youtube.com/channel/UCHnu9TFYxibDvSEOEfQykhg"},
+      "pinterest": {"account": "wisequotesworld", "board_id": "1089449034799859641", "url": "https://www.pinterest.com/wisequotesworld/"}
+    },
+    "de": {
+      "metricool_brand_id": "6774582",
+      "facebook": {"page_id": "1151007124763146", "url": "https://www.facebook.com/1151007124763146"},
+      "instagram": {"username": "wisequotes.de", "url": "https://www.instagram.com/wisequotes.de/"},
+      "threads": {"username": "wisequotes.de", "url": "https://www.threads.com/@wisequotes.de"},
+      "tiktok": {"username": "wisequotes.de", "url": "https://www.tiktok.com/@wisequotes.de"},
+      "youtube": {"channel_id": "UCNy384R9H91PAIPWAHppvzw", "url": "https://www.youtube.com/channel/UCNy384R9H91PAIPWAHppvzw"},
+      "pinterest": {"account": "wisequotesworld", "board_id": "1089449034800153645", "url": "https://www.pinterest.com/wisequotesworld/"}
+    },
+    "es": {
+      "metricool_brand_id": "6774586",
+      "facebook": {"page_id": "1064990903375476", "url": "https://www.facebook.com/1064990903375476"},
+      "instagram": {"username": "wisequotes.es", "url": "https://www.instagram.com/wisequotes.es/"},
+      "threads": {"username": "wisequotes.es", "url": "https://www.threads.com/@wisequotes.es"},
+      "tiktok": {"username": "wisequotes.es", "url": "https://www.tiktok.com/@wisequotes.es"},
+      "youtube": {"channel_id": "UCnFTJvWS7lpYYC2zJYG925Q", "url": "https://www.youtube.com/channel/UCnFTJvWS7lpYYC2zJYG925Q"},
+      "pinterest": {"account": "wisequotesworld", "board_id": "1089449034800153646", "url": "https://www.pinterest.com/wisequotesworld/"}
+    },
+    "fr": {
+      "metricool_brand_id": null,
+      "facebook": null,
+      "instagram": null,
+      "threads": null,
+      "tiktok": null,
+      "youtube": null,
+      "pinterest": {"account": "wisequotesworld", "board_id": null, "url": "https://www.pinterest.com/wisequotesworld/"}
+    }
+  }
+}

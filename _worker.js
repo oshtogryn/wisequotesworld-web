@@ -7,9 +7,13 @@ let rulesSynced=false;
 export default {
   async fetch(request,env,ctx){
     try{
+      const url=new URL(request.url);
       if(env.DB && !rulesSynced){
         await syncCanonicalRules(env);
         rulesSynced=true;
+      }
+      if(url.pathname==='/admin'||url.pathname==='/admin/'){
+        return Response.redirect(`${url.origin}/admin/console/`,302);
       }
       const publicResponse=await siteV2(request,env);
       if(publicResponse)return publicResponse;

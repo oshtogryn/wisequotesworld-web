@@ -6,105 +6,282 @@ Category: philosophy-strength
 Author: Friedrich Nietzsche
 Original language: German
 Canonical original quote: Was mich nicht umbringt, macht mich stärker.
-Canonical work/context already established in project chat: Götzen-Dämmerung oder Wie man mit dem Hammer philosophiert; section “Sprüche und Pfeile”; aphorism 8; contextual lead-in: “Aus der Kriegsschule des Lebens.”
-Attribution policy: do not publish until D1 evidence row is marked verified.
+Canonical work/context: *Götzen-Dämmerung oder Wie man mit dem Hammer philosophiert*; “Sprüche und Pfeile”; aphorism 8; lead-in: “Aus der Kriegsschule des Lebens.”
+Verified public source: https://www.gutenberg.org/cache/epub/7203/pg7203-images.html
+Attribution gate: source independently verified against Project Gutenberg; publication still requires the D1 evidence row to be marked verified.
 Languages: uk, ru, pl, en, sv, de, es, fr
-Scheduler: Metricool after source verification + media QA + approval
-Pinterest AI: frozen; user generates manually from prompts below
-Video duration: up to 10 seconds / maximum supported Gemini duration
+Scheduler: Metricool only after D1 source verification + website gate + media QA + final approval.
+Pinterest: user generates manually from prompts below, then Admin upload → R2 → QA → approval.
+Prompt standard: MASTER_RULES v4.3.
 
-## Localized quote adaptations
-These are natural native-language renderings of the verified German original, not translations chained through English.
+## Quote-length gate
+All localized versions are short enough for natural, unhurried narration within the current short-video generation window. Do not accelerate speech. If a specific Gemini/Veo interface exposes a shorter maximum duration, preserve exact verbatim wording and reduce visual pacing rather than shortening the quote.
 
-- DE original: Was mich nicht umbringt, macht mich stärker.
-- UK: Те, що мене не вбиває, робить мене сильнішим.
-- RU: То, что меня не убивает, делает меня сильнее.
-- PL: Co mnie nie zabija, czyni mnie silniejszym.
-- EN: What does not kill me makes me stronger.
-- SV: Det som inte dödar mig gör mig starkare.
-- ES: Lo que no me mata me hace más fuerte.
-- FR: Ce qui ne me tue pas me rend plus fort.
+## Canonical localized text
+These are direct native-language renderings of the verified German original, not chained translations.
 
-Author display: Friedrich Nietzsche — only with verified attribution.
+- DE — Was mich nicht umbringt, macht mich stärker.
+- UK — Те, що мене не вбиває, робить мене сильнішим.
+- RU — То, что меня не убивает, делает меня сильнее.
+- PL — Co mnie nie zabija, czyni mnie silniejszym.
+- EN — What does not kill me makes me stronger.
+- SV — Det som inte dödar mig gör mig starkare.
+- ES — Lo que no me mata me hace más fuerte.
+- FR — Ce qui ne me tue pas me rend plus fort.
 
----
+Author display:
+- UK — Фрідріх Ніцше
+- RU — Фридрих Ницше
+- PL/EN/SV/DE/ES/FR — Friedrich Nietzsche
 
 ## Visual strategy
-This is a verified-author quote, so use a distinct premium philosopher treatment rather than the ordinary symbolic-story format. Preferred concept: a dignified marble or dark bronze bust inspired by late-19th-century Nietzsche portraiture in a museum-like environment. The sculpture slowly rotates or the camera orbits around it while the quote is spoken. The visual must never claim to be authentic historical footage. Alternative visual can be an engraved portrait or symbolic alpine/study environment associated with philosophical reflection. No kitsch, no lightning, no superhero imagery.
+Verified-author treatment: a dignified dark bronze philosopher bust inspired by late-19th-century Nietzsche portraiture in a refined museum gallery. Slow controlled orbit, warm gallery key light, subtle cool rim light, charcoal stone background, restrained atmosphere. Never imply authentic historical footage; no living impersonator, no fantasy, no lightning, no superhero or motivational-ad treatment.
 
 ---
 
-## Gemini video prompts
+# Gemini / Veo video prompts — PRODUCTION STANDARD v4.3
 
-### DE — original
-GENERATE THE FINISHED VIDEO IMMEDIATELY. Create a premium vertical 9:16 cinematic Wise Quotes World DE short using up to 10 seconds or the maximum currently supported Gemini duration. Language: native German. This is a verified Friedrich Nietzsche quotation and the visual treatment must be elegant, museum-like and intellectually serious. First-frame hook: an extreme close-up of a dark bronze philosopher bust emerging from controlled gallery light, showing the distinctive moustache and late-19th-century European sculptural character without pretending this is authentic footage. The camera begins a slow orbit as the bust rotates almost imperceptibly on a pedestal. Background: deep charcoal gallery, subtle stone texture, narrow warm key light, soft cool rim light, faint suspended dust. No crowd, no modern signage, no fantasy effects.
+## DE
+Create a premium photorealistic vertical 9:16 cinematic video in German.
 
-Only the exact German quote, the verified author name and stable Wise Quotes World DE branding may be readable. Show the quote as one complete stable upper-middle block because it is short: “Was mich nicht umbringt, macht mich stärker.” Keep it visible while the narration is spoken, then remove it cleanly before the final frame. After a short clean gap, show “Friedrich Nietzsche” discreetly beneath or near the sculpture, smaller than the quote, only if attribution is verified. No quotation marks rendered. No word-by-word animation, labels, prompt words or auto-captions. Native German male voice, mature 45–60, calm, deep, reflective, restrained, speaks the exact quote once. Original sparse felt piano, low cello resonance and subtle gallery ambience below voice. Camera ends in a composed three-quarter view of the bust. Absolutely no third-party watermark, random letters, dates, fake archival captions or claims of authentic recording.
+A dark bronze philosopher bust inspired by Friedrich Nietzsche stands in a refined museum gallery. Start immediately on a close three-quarter view, then use a slow controlled orbit around the sculpture. Warm gallery light shapes the face and moustache, a subtle cool rim separates it from a deep charcoal stone background, and faint dust catches the light. Serious, elegant, timeless.
 
-### UK
-GENERATE THE FINISHED VIDEO IMMEDIATELY. Create a premium photorealistic vertical 9:16 cinematic Wise Quotes World UA short, up to 10 seconds / maximum Gemini duration. Native Ukrainian. This is a verified Friedrich Nietzsche quotation, so use a distinguished philosopher-specific visual rather than an everyday symbolic scene. Open immediately on a close-up of a dark bronze or marble bust inspired by Nietzsche in a quiet museum gallery. The sculpture slowly turns or the camera performs a slow controlled orbit, revealing the face, moustache and severe thoughtful expression. Environment: dark charcoal stone, warm directional gallery light, subtle cool rim light, very faint dust in the beam. No fake documentary footage, no speaking human actor impersonation, no fantasy lightning, no heroic cliché.
+Render only these two German text cards exactly as written. No other visible text.
 
-The finished video may show only the exact Ukrainian quote, the verified author name and stable Wise Quotes World UA branding. Display the complete quote as one stable upper-middle block: «Те, що мене не вбиває, робить мене сильнішим.» Keep it visible during the voiceover, then remove fully. Leave a short clean moment and then show «Фрідріх Ніцше» discreetly, smaller than the quote, only because attribution is verified. No quotation marks in rendered text, no typewriter effect, no subtitles. Native Ukrainian male voice 45–60, deep, calm, intelligent, reflective and restrained, speaks exactly the quote once. Original sparse felt piano, low cello resonance and subtle museum ambience below narration. End on a composed three-quarter sculpture view with light grazing the face. No extra text, dates, labels, random letters, third-party logos or watermarks.
+TEXT CARD 1:
+Was mich nicht umbringt, macht mich stärker.
 
-### RU
-GENERATE THE FINISHED VIDEO IMMEDIATELY. Create a premium vertical 9:16 cinematic Wise Quotes World RU short using up to 10 seconds / current Gemini maximum. Native Russian. Verified Friedrich Nietzsche quote. First frame: a dignified dark bronze bust inspired by Nietzsche appears from shadow in a museum-like room. Slow orbit around the sculpture, subtle turn of the pedestal, controlled gallery lighting with warm key and cool rim, quiet suspended dust. Intellectual, severe, elegant, not theatrical. Do not create fake archival footage or a living talking-head imitation. No lightning, smoke drama, war imagery or motivational cliché.
+Then remove the first text completely.
 
-Only the exact Russian quote, verified author name and stable Wise Quotes World RU branding may be readable. Upper-middle stable text: «То, что меня не убивает, делает меня сильнее.» Keep it visible while spoken, remove it completely, leave a brief clean gap, then show «Фридрих Ницше» smaller and discreet. No rendered quotation marks, no automatic captions, no word-by-word animation. Native Russian male voice 45–60, calm, deep, reflective and intellectually restrained, says the exact quote once. Original sparse felt piano, low cello and subtle gallery ambience below voice. Final frame: three-quarter view of the bust, steady and quiet. No dates, instruction words, random letters, third-party logos or watermark.
+TEXT CARD 2:
+Friedrich Nietzsche
 
-### PL
-GENERATE THE FINISHED VIDEO IMMEDIATELY. Create a premium photorealistic vertical 9:16 Wise Quotes World PL cinematic short, up to 10 seconds / maximum Gemini duration. Native Polish. This is a verified Friedrich Nietzsche quotation. Immediate hook: close-up on a museum-quality bronze bust inspired by Nietzsche, emerging from a dark refined gallery. The camera performs a slow smooth orbit as subtle warm light reveals the face and famous moustache; cool rim light separates the sculpture from the background. Fine stone texture, slight dust in the light beam, restrained museum atmosphere. Do not imitate authentic historical film, do not make the statue cartoonishly talk, no fantasy or superhero treatment.
+Use clean, large, elegant typography in the upper-middle safe area. Show one complete stable card at a time. No individual word or letter animation.
 
-Only the exact Polish quote, the verified author name and stable Wise Quotes World PL branding may be readable. Show the complete stable quote in the upper-middle: «Co mnie nie zabija, czyni mnie silniejszym.» Keep it while spoken, remove it, leave a short no-text gap, then display «Friedrich Nietzsche» smaller and discreet. No quotation marks rendered, no typewriter effect or subtitles. Native Polish male voice 45–60, calm, deep, thoughtful and natural, says the exact quote once. Original sparse felt piano, low cello resonance and quiet gallery ambience below narration. End with the bust in a composed three-quarter view. No extra words, dates, labels, random letters, third-party logos or watermark.
+Audio: a calm native German male narrator reads the two text cards naturally and completely. Use restrained felt piano and low cello below the voice.
 
-### EN
-GENERATE THE FINISHED VIDEO IMMEDIATELY. Create a premium photorealistic vertical 9:16 cinematic Wise Quotes World EN short, using up to 10 seconds or the maximum duration currently supported by Gemini. Native natural English. This is a verified Friedrich Nietzsche quote and should have a distinct philosopher treatment. First-frame visual hook: a museum-grade dark bronze bust inspired by Nietzsche appears in a narrow beam of warm gallery light. The camera slowly orbits while the sculpture rotates almost imperceptibly, revealing a severe thoughtful face and characteristic moustache. Background is charcoal stone with a subtle cool rim light and barely visible dust. Sophisticated, restrained, timeless. Do not present this as authentic archival footage or a real recording. No fantasy lightning, smoke spectacle or motivational-advertisement style.
+No subtitles. No captions. No emoji. No decorative symbols. No logo. No branding. No watermark. No other readable text.
 
-Only the exact English quote, verified author name and stable Wise Quotes World EN branding may be readable. Show the quote as one stable upper-middle block: “What does not kill me makes me stronger.” Keep it visible during narration, then remove it completely. After a brief clean gap, show “Friedrich Nietzsche” smaller and discreet. Do not render quotation marks, instruction labels, subtitles or word-by-word animation. Native English male voice 45–60, deep, calm, reflective, intelligent and restrained, speaks exactly the quote once. Original sparse felt piano, low cello resonance and subtle gallery ambience below the voice. Final frame: controlled three-quarter composition of the bust. No dates, random text, fake archival captions, third-party logos or watermark.
+End on a quiet composed three-quarter view of the bust.
 
-### SV
-GENERATE THE FINISHED VIDEO IMMEDIATELY. Create a premium Scandinavian-style vertical 9:16 cinematic Wise Quotes World SV short, up to 10 seconds / maximum current Gemini duration. Native Swedish. Verified Friedrich Nietzsche quote. Open instantly on a dark bronze philosopher bust inspired by Nietzsche in a minimalist museum environment. Slow precise orbit, understated pedestal movement, warm narrow key light across the face, cool subtle rim light, charcoal stone background, faint dust. Nordic restraint: no dramatic spectacle, no fake archival film, no fantasy or advertising feel.
+## UK
+Create a premium photorealistic vertical 9:16 cinematic video in Ukrainian.
 
-Only the exact Swedish quote, verified author name and stable Wise Quotes World SV branding may be readable. Stable upper-middle quote block: “Det som inte dödar mig gör mig starkare.” Keep it visible while spoken, remove fully, short clean gap, then show “Friedrich Nietzsche” smaller and discreet. No quotation marks rendered, no typewriter or captions. Native Swedish male voice 45–60, calm, low, thoughtful and natural, speaks exactly the quote once. Original sparse felt piano, cello resonance and subtle gallery ambience below narration. End with a composed three-quarter sculpture frame. No additional words, dates, labels, random characters, third-party logo or watermark.
+A dark bronze philosopher bust inspired by Friedrich Nietzsche stands in a quiet museum gallery. Open immediately on the face and distinctive moustache, then move in a slow smooth orbit. Warm directional gallery light, a subtle cool rim, deep charcoal stone background and faint dust create an intelligent, restrained atmosphere.
 
-### ES
-GENERATE THE FINISHED VIDEO IMMEDIATELY. Create a premium photorealistic vertical 9:16 cinematic Wise Quotes World ES short, using up to 10 seconds / maximum supported Gemini duration. Native neutral Spanish. This is a verified Friedrich Nietzsche quote. Begin immediately with a close-up of a dark bronze or marble bust inspired by Nietzsche in an elegant museum gallery. Slow cinematic orbit reveals the face and moustache while restrained warm key light and cool rim light sculpt the form. Deep charcoal stone backdrop, subtle dust, quiet philosophical atmosphere. No fake historical footage, no exaggerated talking statue, no fantasy lightning, no motivational-commercial style.
+Render only these two Ukrainian text cards exactly as written. No other visible text.
 
-Only the exact Spanish quote, verified author and stable Wise Quotes World ES branding may be readable. Show one stable upper-middle text block: «Lo que no me mata me hace más fuerte.» Keep it visible while the voice speaks, remove completely, brief no-text gap, then show «Friedrich Nietzsche» smaller and discreet. No quotation marks rendered, no subtitles or word-by-word animation. Native neutral-Spanish male voice 45–60, calm, deep, reflective and restrained, says the quote exactly once. Original sparse felt piano, low cello resonance and subtle gallery ambience below voice. End in an elegant three-quarter view. No dates, labels, random text, third-party logos or watermark.
+TEXT CARD 1:
+Те, що мене не вбиває, робить мене сильнішим.
 
-### FR
-GENERATE THE FINISHED VIDEO IMMEDIATELY. Create a premium photorealistic vertical 9:16 cinematic Wise Quotes World FR short, using up to 10 seconds or the maximum Gemini duration available. Native French. Verified Friedrich Nietzsche quote. Immediate visual hook: a refined museum-quality bronze bust inspired by Nietzsche emerges from darkness under precise gallery lighting. The camera slowly orbits, revealing the stern contemplative face and moustache. Warm key light, cool rim light, deep charcoal stone background, a trace of dust in the beam. Elegant, intellectual and restrained. Do not imply authentic historical footage, do not use a living impersonator, no fantasy, no dramatic lightning or motivational-ad aesthetics.
+Then remove the first text completely.
 
-Only the exact French quote, verified author name and stable Wise Quotes World FR branding may be readable. Show the quote as one complete stable upper-middle block: «Ce qui ne me tue pas me rend plus fort.» Keep it visible during narration, remove fully, brief clean gap, then show «Friedrich Nietzsche» discreetly in smaller type. No quotation marks rendered, no typewriter, no auto subtitles. Native French male voice 45–60, calm, deep, intelligent and reflective, speaks exactly the quote once. Original sparse felt piano, low cello resonance and subtle gallery ambience below voice. End with a quiet three-quarter sculpture frame. No dates, labels, random letters, third-party logos or watermark.
+TEXT CARD 2:
+Фрідріх Ніцше
+
+Use clean, large, elegant typography in the upper-middle safe area. Show one complete stable card at a time. No individual word or letter animation.
+
+Audio: a calm native Ukrainian male narrator reads the two text cards naturally and completely. Use restrained felt piano and low cello below the voice.
+
+No subtitles. No captions. No emoji. No decorative symbols. No logo. No branding. No watermark. No other readable text.
+
+End on a composed three-quarter sculpture view with soft light across the face.
+
+## RU
+Create a premium photorealistic vertical 9:16 cinematic video in Russian.
+
+A dignified dark bronze philosopher bust inspired by Friedrich Nietzsche appears immediately in a refined museum gallery. The camera performs a slow controlled orbit while warm key light reveals the face and moustache. A subtle cool rim light separates the sculpture from a charcoal stone background with faint suspended dust. Intellectual, severe, elegant.
+
+Render only these two Russian text cards exactly as written. No other visible text.
+
+TEXT CARD 1:
+То, что меня не убивает, делает меня сильнее.
+
+Then remove the first text completely.
+
+TEXT CARD 2:
+Фридрих Ницше
+
+Use clean, large, elegant typography in the upper-middle safe area. Show one complete stable card at a time. No individual word or letter animation.
+
+Audio: a calm native Russian male narrator reads the two text cards naturally and completely. Use restrained felt piano and low cello below the voice.
+
+No subtitles. No captions. No emoji. No decorative symbols. No logo. No branding. No watermark. No other readable text.
+
+End on a steady three-quarter view of the bust.
+
+## PL
+Create a premium photorealistic vertical 9:16 cinematic video in Polish.
+
+A museum-quality dark bronze philosopher bust inspired by Friedrich Nietzsche stands on a simple pedestal in a dark refined gallery. Start close, then orbit slowly and smoothly. Warm gallery light reveals the face and moustache, a restrained cool rim separates the sculpture from a charcoal stone background, and faint dust adds depth.
+
+Render only these two Polish text cards exactly as written. No other visible text.
+
+TEXT CARD 1:
+Co mnie nie zabija, czyni mnie silniejszym.
+
+Then remove the first text completely.
+
+TEXT CARD 2:
+Friedrich Nietzsche
+
+Use clean, large, elegant typography in the upper-middle safe area. Show one complete stable card at a time. No individual word or letter animation.
+
+Audio: a calm native Polish male narrator reads the two text cards naturally and completely. Use restrained felt piano and low cello below the voice.
+
+No subtitles. No captions. No emoji. No decorative symbols. No logo. No branding. No watermark. No other readable text.
+
+End on a composed three-quarter view of the bust.
+
+## EN
+Create a premium photorealistic vertical 9:16 cinematic video in English.
+
+A museum-grade dark bronze philosopher bust inspired by Friedrich Nietzsche stands in a sophisticated gallery. Open immediately on a close three-quarter view, then use a slow controlled orbit. Warm gallery light shapes the face and moustache, a subtle cool rim separates the sculpture from a deep charcoal stone background, and faint dust moves through the light. Restrained and timeless.
+
+Render only these two English text cards exactly as written. No other visible text.
+
+TEXT CARD 1:
+What does not kill me makes me stronger.
+
+Then remove the first text completely.
+
+TEXT CARD 2:
+Friedrich Nietzsche
+
+Use clean, large, elegant typography in the upper-middle safe area. Show one complete stable card at a time. No individual word or letter animation.
+
+Audio: a calm native English male narrator reads the two text cards naturally and completely. Use restrained felt piano and low cello below the voice.
+
+No subtitles. No captions. No emoji. No decorative symbols. No logo. No branding. No watermark. No other readable text.
+
+End on a quiet composed three-quarter view of the bust.
+
+## SV
+Create a premium photorealistic vertical 9:16 cinematic video in Swedish.
+
+A dark bronze philosopher bust inspired by Friedrich Nietzsche stands in a minimalist museum gallery. Begin immediately on the face, then perform a slow precise orbit. Warm narrow key light crosses the sculpture, a subtle cool rim separates it from a charcoal stone wall, and faint dust creates depth. Scandinavian restraint, serious and timeless.
+
+Render only these two Swedish text cards exactly as written. No other visible text.
+
+TEXT CARD 1:
+Det som inte dödar mig gör mig starkare.
+
+Then remove the first text completely.
+
+TEXT CARD 2:
+Friedrich Nietzsche
+
+Use clean, large, elegant typography in the upper-middle safe area. Show one complete stable card at a time. No individual word or letter animation.
+
+Audio: a calm native Swedish male narrator reads the two text cards naturally and completely. Use restrained felt piano and low cello below the voice.
+
+No subtitles. No captions. No emoji. No decorative symbols. No logo. No branding. No watermark. No other readable text.
+
+End on a composed three-quarter sculpture frame.
+
+## ES
+Create a premium photorealistic vertical 9:16 cinematic video in Spanish.
+
+A refined dark bronze philosopher bust inspired by Friedrich Nietzsche stands in an elegant museum gallery. Open immediately on a close view and move into a slow cinematic orbit. Warm key light shapes the face and moustache, a subtle cool rim separates the sculpture from a charcoal stone background, and faint dust catches the light. Serious, elegant, philosophical.
+
+Render only these two Spanish text cards exactly as written. No other visible text.
+
+TEXT CARD 1:
+Lo que no me mata me hace más fuerte.
+
+Then remove the first text completely.
+
+TEXT CARD 2:
+Friedrich Nietzsche
+
+Use clean, large, elegant typography in the upper-middle safe area. Show one complete stable card at a time. No individual word or letter animation.
+
+Audio: a calm native Spanish male narrator reads the two text cards naturally and completely. Use restrained felt piano and low cello below the voice.
+
+No subtitles. No captions. No emoji. No decorative symbols. No logo. No branding. No watermark. No other readable text.
+
+End on an elegant three-quarter view of the bust.
+
+## FR
+Create a premium photorealistic vertical 9:16 cinematic video in French.
+
+A museum-quality dark bronze philosopher bust inspired by Friedrich Nietzsche emerges immediately under precise gallery lighting. The camera slowly orbits the stern contemplative face and moustache. Warm key light, a subtle cool rim, deep charcoal stone and faint dust create a refined intellectual atmosphere.
+
+Render only these two French text cards exactly as written. No other visible text.
+
+TEXT CARD 1:
+Ce qui ne me tue pas me rend plus fort.
+
+Then remove the first text completely.
+
+TEXT CARD 2:
+Friedrich Nietzsche
+
+Use clean, large, elegant typography in the upper-middle safe area. Show one complete stable card at a time. No individual word or letter animation.
+
+Audio: a calm native French male narrator reads the two text cards naturally and completely. Use restrained felt piano and low cello below the voice.
+
+No subtitles. No captions. No emoji. No decorative symbols. No logo. No branding. No watermark. No other readable text.
+
+End on a quiet three-quarter sculpture frame.
 
 ---
 
-## Pinterest image prompts — manual generation
+# Pinterest prompts — finished image standard
 
-### DE
-Create a premium vertical 2:3 Pinterest background, target 1000×1500, museum editorial style. Dark bronze Nietzsche-inspired bust in three-quarter view on a stone pedestal, dramatic but restrained warm gallery key light and cool rim light, deep charcoal stone wall, faint dust, elegant intellectual atmosphere. Reserve clean upper-middle negative space for exact German quote and small lower area for “Friedrich Nietzsche” plus Wise Quotes World DE branding to be added later. No generated text, letters, dates, logos or watermark.
+General rule: premium photorealistic vertical 2:3 image, target 1000×1500. The finished image itself must contain the exact localized quote and verified author name. No Wise Quotes World logo is generated by AI. Typography must be large, elegant and mobile-readable. No other readable text.
 
-### UK
-Create a premium vertical 2:3 Pinterest background, target 1000×1500. Dignified bronze philosopher bust inspired by Friedrich Nietzsche in a dark refined museum gallery, warm directional light across face and moustache, cool rim light, charcoal stone background, subtle dust. Intellectual, timeless, restrained. Large clean upper-middle space for Ukrainian quote and smaller clean lower zone for verified author + Wise Quotes World UA branding. No generated text, letters, logos or watermark.
+## DE
+Create a premium photorealistic vertical 2:3 Pinterest image, target 1000×1500. Dark bronze philosopher bust inspired by Friedrich Nietzsche in a refined museum gallery, three-quarter view, warm directional key light, subtle cool rim light, deep charcoal stone wall, faint dust, restrained intellectual atmosphere. Render EXACT German quote: „Was mich nicht umbringt, macht mich stärker.“ Render author below in smaller type: Friedrich Nietzsche. No other text. NO logo, branding or watermark.
 
-### RU
-Create a premium vertical 2:3 Pinterest background. Museum-quality dark bronze Nietzsche-inspired bust, refined gallery lighting, warm face highlights, cool rim, deep charcoal background, subtle dust, serious philosophical atmosphere. Preserve upper-middle negative space for Russian quote and lower area for author + Wise Quotes World RU branding. No generated text, letters, dates, logos or watermark.
+## UK
+Create a premium photorealistic vertical 2:3 Pinterest image, target 1000×1500. Dignified dark bronze philosopher bust inspired by Friedrich Nietzsche in a refined museum gallery, warm directional light across the face and moustache, subtle cool rim, charcoal stone background, faint dust, timeless intellectual mood. Render EXACT Ukrainian quote: «Те, що мене не вбиває, робить мене сильнішим.» Render author below in smaller type: Фрідріх Ніцше. No other text. NO logo, branding or watermark.
 
-### PL
-Create a premium vertical 2:3 Pinterest image, editorial museum aesthetic. Bronze bust inspired by Friedrich Nietzsche, three-quarter angle, dark stone gallery, precise warm key light, cool rim light, restrained dramatic contrast. Keep upper-middle clean for Polish quote and lower clean zone for author and Wise Quotes World PL branding. No generated text, letters, logos or watermark.
+## RU
+Create a premium photorealistic vertical 2:3 Pinterest image, target 1000×1500. Museum-quality dark bronze philosopher bust inspired by Friedrich Nietzsche, elegant three-quarter composition, warm face highlights, subtle cool rim light, deep charcoal gallery background, restrained philosophical atmosphere. Render EXACT Russian quote: «То, что меня не убивает, делает меня сильнее.» Render author below in smaller type: Фридрих Ницше. No other text. NO logo, branding or watermark.
 
-### EN
-Create a premium vertical 2:3 Pinterest background, target 1000×1500. Museum-grade dark bronze bust inspired by Friedrich Nietzsche, elegant three-quarter composition, narrow warm gallery light, subtle cool rim, charcoal stone wall and faint dust. Sophisticated philosophical editorial mood. Reserve generous upper-middle space for exact English quote and lower area for author + Wise Quotes World EN branding. No generated text, letters, dates, logos or watermark.
+## PL
+Create a premium photorealistic vertical 2:3 Pinterest image, target 1000×1500. Dark bronze philosopher bust inspired by Friedrich Nietzsche in an elegant museum gallery, three-quarter angle, precise warm key light, subtle cool rim, charcoal stone wall, serious editorial atmosphere. Render EXACT Polish quote: „Co mnie nie zabija, czyni mnie silniejszym.“ Render author below in smaller type: Friedrich Nietzsche. No other text. NO logo, branding or watermark.
 
-### SV
-Create a premium vertical 2:3 Scandinavian-minimal museum background. Dark bronze Nietzsche-inspired bust on simple pedestal, precise warm light, muted cool rim, charcoal wall, restrained Nordic composition and subtle texture. Large clean upper-middle area for Swedish quote, smaller lower area for author and Wise Quotes World SV branding. No generated text, letters, logos or watermark.
+## EN
+Create a premium photorealistic vertical 2:3 Pinterest image, target 1000×1500. Museum-grade dark bronze philosopher bust inspired by Friedrich Nietzsche, sophisticated three-quarter composition, narrow warm gallery light, subtle cool rim, charcoal stone wall and faint dust, timeless philosophical editorial mood. Render EXACT English quote: “What does not kill me makes me stronger.” Render author below in smaller type: Friedrich Nietzsche. No other text. NO logo, branding or watermark.
 
-### ES
-Create a premium vertical 2:3 Pinterest background. Refined museum portrait of a dark bronze bust inspired by Friedrich Nietzsche, warm gallery key light, cool rim, charcoal stone environment, elegant intellectual mood, no theatrical effects. Preserve upper-middle clean area for Spanish quote and lower zone for author + Wise Quotes World ES branding. No generated text, letters, dates, logos or watermark.
+## SV
+Create a premium photorealistic vertical 2:3 Pinterest image, target 1000×1500. Dark bronze philosopher bust inspired by Friedrich Nietzsche in a minimalist museum gallery, precise warm light, muted cool rim, charcoal wall, restrained Scandinavian composition and subtle texture. Render EXACT Swedish quote: ”Det som inte dödar mig gör mig starkare.” Render author below in smaller type: Friedrich Nietzsche. No other text. NO logo, branding or watermark.
 
-### FR
-Create a premium vertical 2:3 Pinterest background, target 1000×1500. Elegant dark bronze Nietzsche-inspired bust in a sophisticated museum gallery, warm directional face light, subtle cool rim, deep charcoal stone texture, refined philosophical atmosphere. Reserve generous upper-middle negative space for French quote and lower clean zone for verified author + Wise Quotes World FR branding. No generated text, letters, logos or watermark.
+## ES
+Create a premium photorealistic vertical 2:3 Pinterest image, target 1000×1500. Refined dark bronze philosopher bust inspired by Friedrich Nietzsche in an elegant museum gallery, warm gallery key light, subtle cool rim, charcoal stone environment, serious intellectual mood. Render EXACT Spanish quote: «Lo que no me mata me hace más fuerte.» Render author below in smaller type: Friedrich Nietzsche. No other text. NO logo, branding or watermark.
 
-## Website
-Author page: Friedrich Nietzsche
-Category: Philosophy / Strength
-Quote page should include the original German wording, localized rendering, work/context metadata, source evidence status, and a short reflection on resilience without turning the quote into simplistic motivational advice.
+## FR
+Create a premium photorealistic vertical 2:3 Pinterest image, target 1000×1500. Elegant dark bronze philosopher bust inspired by Friedrich Nietzsche in a sophisticated museum gallery, warm directional face light, subtle cool rim, deep charcoal stone texture and faint dust, refined philosophical atmosphere. Render EXACT French quote: «Ce qui ne me tue pas me rend plus fort.» Render author below in smaller type: Friedrich Nietzsche. No other text. NO logo, branding or watermark.
+
+---
+
+## Media QA
+QA happens after generation, never inside the generation prompt.
+
+Reject video for:
+- wrong or missing quote/author text;
+- broken diacritics or punctuation;
+- quote and author visible at the same time when the intended card transition failed;
+- first card not fully removed before second card;
+- clipped first/last spoken word;
+- rushed narration;
+- subtitles, captions, random letters or extra readable text;
+- generated logo, branding or watermark;
+- scene implying authentic historical footage.
+
+After video PASS, add only the correct Wise Quotes World language logo manually in CapCut. Do not add duplicate quote text.
+
+Reject Pinterest for:
+- any deviation from exact localized quote or author;
+- unreadable/mobile-small typography;
+- random letters, extra text, logo, branding or watermark;
+- visual treatment contradicting the serious author-specific concept.
+
+## Website/source gate
+Author page: Friedrich Nietzsche.
+Category: Philosophy / Strength.
+Quote page must include the original German wording, localized rendering, work/context metadata and verified source evidence. Reflection should discuss resilience carefully and avoid reducing Nietzsche’s aphorism to simplistic “suffering is always good” motivational advice.
+
+Do not publish or schedule WQ011 until the D1 evidence row is verified and all ordinary website/media/final-approval gates pass.

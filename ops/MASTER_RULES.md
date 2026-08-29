@@ -2,221 +2,195 @@
 
 Останнє оновлення: 2026-08-29
 Статус: CANONICAL
-Версія: database-first v4.1
+Версія: database-first v4.2
 
 ## 1. Джерела істини
 1. `ops/MASTER_RULES.md` — канонічне джерело операційних правил.
 2. D1 — канонічне джерело ВСІХ операційних даних: цитати, локалізації, платформні тексти, workflow, media, website, publications, analytics.
 3. D1 `rules` — машинно-читана копія критичних правил.
-4. Google Sheets використовується лише як тимчасове джерело міграції. Після контрольного cutover операційний workflow від Google Sheets повністю відмовляється; таблиця не є fallback і не може перезаписувати D1/MASTER_RULES.
-5. GitHub/Cloudflare зберігають код, шаблони та assets; новий контент після database-first не повинен вимагати deployment.
-6. Наданий експорт `WiseQuotes — Content System` використовується як migration/audit source для історичних цитат, мовних версій, prompt-ів, platform copy, media, scheduling, accounts та legacy rules. Він не може автоматично скасовувати новіші explicit user decisions або поточний MASTER_RULES.
-7. Перед підготовкою нової теми реально читати актуальний MASTER_RULES, а не покладатися лише на пам'ять чату.
+4. Google Sheets — лише migration source/archive; не fallback і не може перезаписувати D1/MASTER_RULES.
+5. GitHub/Cloudflare зберігають код, шаблони та assets; новий database-first контент не повинен вимагати deployment.
+6. `WiseQuotes — Content System` — migration/audit source; новіші explicit user decisions і MASTER_RULES мають пріоритет.
+7. Перед підготовкою нової теми реально читати актуальний MASTER_RULES.
 
 ## 2. Мови
-Система працює на 8 мовах: uk, ru, pl, en, sv, de, es, fr.
-FR активна на website і Pinterest. Для Facebook/Instagram/Threads/TikTok/YouTube FR контент готується і зберігається, але зовнішнє планування не виконується до підключення FR каналів.
+8 мов: uk, ru, pl, en, sv, de, es, fr. FR активна на website і Pinterest; social outputs готуються, але не плануються до підключення FR каналів.
 
-## 3. Модель і ротація контенту
-Одна думка/цитата = один `content_id` (WQxxx). Мовні версії — окремі `content_versions` для всіх 8 мов.
+## 3. Контент-модель
+Одна думка/цитата = один `content_id` (WQxxx), 8 `content_versions`.
+Ротація: `adapted` Wise Quotes thought без автора / `verbatim` перевірена авторська цитата.
 
-Контент чергується між:
-- `adapted` — авторська/перефразована думка Wise Quotes World без автора;
-- `verbatim` — справжня, перевірена цитата відомої людини.
+### Native-language rule — mandatory
+Кожна локалізація проходить ДВА окремі QA:
+1. semantic fidelity — збережено сенс master quote;
+2. native naturalness — фраза звучить так, як її реально сформулював би носій мови.
 
-Кожна мовна версія проходить semantic fidelity + native naturalness QA. Переклади не є механічними. Для `verbatim` усі мовні версії створюються безпосередньо з перевіреного оригіналу мовою джерела.
+Literal translation заборонений, якщо він створює неприродний, двозначний або емоційно неправильний сенс. Дозволено змінювати конструкцію, займенники й ідіоми, але не центральну думку. Перед production локалізації перечитуються окремо для uk/ru/pl/en/sv/de/es/fr.
 
-## 4. Тип цитати та автор — критичне правило
+## 4. Тип цитати та автор
 Поля: `original_quote`, `original_language`, `author_name`, `author_source`, `source_work`, `source_date`, `source_url`, `attribution_status`.
+Для `adapted`: author порожній, автора ніде не показувати.
+Для `verbatim`: реальний автор + надійне джерело + мова оригіналу + точний original wording; локалізації лише з оригіналу. Непідтверджену attribution не публікувати.
 
-Для `adapted`: author порожній і автора НЕ показувати у prompt, відео, Pinterest або website attribution.
+## 5. Quote-length gate — mandatory BEFORE production
+До написання prompts/copy кожну цитату перевірити на придатність до короткого відео.
+- Цитата повинна природно читатися/озвучуватися в межах актуального максимуму Gemini (зараз до 10 секунд), без тараторіння.
+- Потрібен час на чистий початок, природні паузи, перехід між text blocks і завершення останнього слова.
+- Якщо adapted quote задовга — спочатку скоротити/відредагувати master quote, зберігши сенс, потім заново адаптувати всі 8 мов.
+- Не намагатися рятувати надто довгу цитату прискоренням voiceover, дрібним шрифтом або надмірною кількістю text blocks.
+- Для verbatim exact wording не скорочувати як нібито дослівну цитату; якщо вона не підходить формату, вибрати іншу verified quote або інший формат.
 
-Для `verbatim`:
-1. встановити реального автора і первинне/надійне джерело;
-2. встановити мову оригіналу;
-3. зберегти оригінальний текст саме мовою джерела;
-4. лише після цього робити локалізації;
-5. не використовувати популярний переклад як master, якщо доступний оригінал;
-6. якщо attribution не підтверджена — не публікувати як цитату конкретної людини.
-
-`author_name = empty` → NO AUTHOR у всіх outputs.
-`author_name != empty` + `attribution_status=verified` → author показується там, де це редакційно доречно.
-
-## 5. Workflow
-`idea -> source_check -> quote_ready -> localized -> prompt_ready -> copy_ready -> website_ready -> pinterest_ready -> media_pending -> media_ready -> approved -> scheduled -> published -> analytics`
-
+## 6. Workflow
+`idea -> source_check -> quote_length_qa -> quote_ready -> localized -> native_language_qa -> prompt_ready -> copy_ready -> website_ready -> pinterest_ready -> media_pending -> media_ready -> approved -> scheduled -> published -> analytics`
 Не ставити `scheduled/published` без зовнішнього readback. Не публікувати без `approved`.
 
-## 6. Gemini video prompt — production standard v4.1
-Це правило адаптоване з актуального MASTER RULES Sweden No Sugar і є mandatory.
+## 7. Gemini video prompt — production standard v4.2
+Mandatory:
+- vertical 9:16, до актуального максимуму Gemini, зараз до 10 s;
+- immediate visual hook, no black intro/fade-in/fade-out;
+- одна проста cinematic story, яка читається за секунди; не перевантажувати prompt декораціями/мікродеталями;
+- готове AI-video ОБОВ'ЯЗКОВО містить EXACT approved localized quote text на екрані;
+- natural native-language voiceover вимовляє ТОЙ САМИЙ exact quote;
+- для двох речень/довшої цитати: максимум 2 завершені text blocks; block 1 повністю зникає → короткий clean no-text gap → block 2;
+- ніколи не показувати два blocks одночасно;
+- text upper-middle safe area, великий mobile-readable type;
+- NO typewriter, word-by-word animation, automatic subtitles/captions;
+- locked quote не перекладати, не перефразовувати, не autocorrect, не змінювати літери/діакритику/пунктуацію;
+- усі слова повністю видимі; voiceover містить повністю перше й останнє слово;
+- останнє слово закінчується ДО кінця відео; після нього короткий clean final hold;
+- natural voice pace; не прискорювати для вміщення тексту;
+- music/ambience нижче voiceover;
+- NO instruction labels, random letters, fake UI, unrelated readable background text;
+- ABSOLUTELY NO Wise Quotes World logo, brand mark або generated branding inside AI video;
+- NO third-party watermark/logo;
+- Wise Quotes World language logo користувач додає ТІЛЬКИ в CapCut після генерації.
 
-Базові вимоги:
-- vertical 9:16;
-- target duration — до актуального максимуму Gemini, зараз до 10 секунд;
-- immediate visual hook з першого кадру; без black intro/fade-in/fade-out;
-- одна зрозуміла cinematic story, не перевантажувати prompt другорядними деталями;
-- готове AI-video ОБОВ'ЯЗКОВО містить точний затверджений localized quote text на екрані;
-- готове AI-video ОБОВ'ЯЗКОВО містить natural native-language voiceover цієї самої цитати;
-- одночасно показувати один короткий завершений текстовий блок;
-- якщо цитата довга — дозволено 2 послідовні блоки; попередній повністю зникає перед наступним; між ними короткий clean no-text gap;
-- ніколи не використовувати typewriter/word-by-word animation або automatic subtitles;
-- locked quote text не перекладати, не перефразовувати, не autocorrect, не міняти пунктуацію чи літери;
-- текст має бути повністю видимий, без обрізаних першого/останнього слова і без виходу за safe area;
-- voiceover не повинен втрачати перше або останнє слово; залишати достатній audio headroom/tail;
-- останнє слово повністю вимовляється до завершення відео;
-- не прискорювати голос неприродно; якщо текст довгий, використовувати весь доступний duration і компактні 2 text blocks;
-- music/ambience тихіше voiceover;
-- NO instruction labels, random letters, fake UI, unrelated readable background text або automatic captions;
-- NO Wise Quotes World logo, brand mark або generated branding inside AI video;
-- NO third-party logos/watermarks;
-- Wise Quotes World logo користувач додає окремо в CapCut після генерації.
+Кожен prompt містить: format/duration, language, first-frame hook, setting, subject, action/timeline, camera, lighting/mood, EXACT LOCKED TEXT, block timing, exact native voiceover, audio, NO LOGO/NO EXTRA TEXT, clean final hold.
 
-Кожен Gemini prompt повинен містити: format/duration, language, first-frame hook, setting, subject, action/timeline, camera, lighting/mood, EXACT LOCKED TEXT, strict text timing, native voiceover, audio, explicit NO LOGO/NO EXTRA TEXT constraints, clean final hold.
+### Prompt simplicity rule
+Якість виконання важливіша за кількість слів у prompt. Не дублювати однакові інструкції багато разів і не задавати надмірно складну 10-секундну сцену. Пріоритет Gemini: 1) correct exact text; 2) complete voiceover; 3) coherent visual story; 4) clean technical output. Якщо prompt complexity шкодить цим чотирьом пунктам — спростити prompt.
 
-Промт не повинен дублювати або суперечити сам собі. Фінальна перевірка prompt повинна прямо вимагати: spelling/punctuation exact, all words visible, first and last spoken words complete, zero logo/branding.
+### adapted visual
+Cinematic symbolic human story, яка передає сенс без мелодрами.
+### verbatim visual
+Premium author-specific treatment: tasteful statue/bust/engraving або symbolic scene; без fake documentary claims.
 
-### Візуальна стратегія для `adapted`
-Cinematic symbolic human story, яка передає сенс цитати без мелодрами.
+## 8. Generated-video QA + CapCut — mandatory
+Generation REJECT, якщо є хоча б одне:
+- помилка/заміна/пропуск у quote text;
+- неправильна діакритика або пунктуація;
+- обрізане перше/останнє слово тексту;
+- voiceover починається/закінчується обрізано;
+- неприродно прискорена озвучка;
+- зайвий readable text/random letters/auto captions;
+- AI-generated logo/branding/watermark;
+- візуальна сцена суперечить сенсу.
 
-### Візуальна стратегія для `verbatim`
-Premium author-specific treatment: tasteful statue/bust/engraving або symbolic scene, без fake documentary claims. Автор не повинен виглядати як фальшивий архівний запис.
+Після PASS у CapCut додати ТІЛЬКИ правильний Wise Quotes World language logo. Не дублювати цитату другим CapCut-текстом, якщо generated quote правильний. Фінальний 9:16 export перевірити перед Media Inbox upload.
 
-## 7. CapCut finalization — mandatory
-Після Gemini:
-1. перевірити точність написання ВСІХ слів і пунктуації у generated quote text;
-2. перевірити, що voiceover містить перше й останнє слово повністю;
-3. відкинути generation з орфографічною помилкою, обрізаним текстом/голосом, випадковими буквами, watermark або generated logo;
-4. у CapCut додати ТІЛЬКИ правильний Wise Quotes World language logo;
-5. не дублювати цитату другим CapCut-текстом, якщо AI-generated quote уже правильний;
-6. фінальний export 9:16 перевірити перед Media Inbox upload.
+## 9. Pinterest image prompt — production standard
+Pinterest asset — готова content image, а НЕ blank visual/template.
+- portrait 2:3, target 1000×1500;
+- та сама semantic visual concept/story, що й video, але композиція оптимізована для статичного кадру;
+- MUST render EXACT localized quote directly on the generated image;
+- exact spelling, punctuation, accents/diacritics;
+- typography highly legible on mobile, з safe margins і достатнім contrast;
+- author тільки для verified verbatim, якщо editorially appropriate;
+- NO unrelated text, random letters, third-party watermark;
+- за замовчуванням NO generated Wise Quotes World logo/branding; branding користувач додає окремо, якщо потрібно;
+- НЕ писати `reserve negative space for quote to be added later`, якщо користувач не попросив blank template explicitly.
 
-## 8. Pinterest visual
-Pinterest image базується на тій самій semantic visual concept/story, що й video.
-Canonical format: portrait 2:3, target 1000×1500, exact localized quote, author only when verified, mobile safe margins, no unrelated text/third-party watermark. Wise Quotes World branding допускається лише якщо користувач явно хоче його на Pinterest asset.
+Автоматична Pinterest AI generation ЗАМОРОЖЕНА: система готує 8 prompts → user generates manually → Admin upload → R2 → QA → approval.
 
-Автоматична AI-генерація Pinterest ЗАМОРОЖЕНА. Система готує 8 image prompts → користувач генерує вручну → Admin upload → R2 → QA → approval.
+## 10. Required outputs per language
+Для кожного content item: localized quote; full Gemini prompt; exact voiceover/on-screen text; Pinterest prompt; Facebook; Instagram; 3 Threads; TikTok; YouTube Shorts title+description; Pinterest title+SEO description; localized topic article URL; substantive website reflection/article body. FR outputs теж готувати повністю.
 
-## 9. Required outputs per language
-Для кожного content item зберігати:
-- localized quote;
-- full Gemini video prompt;
-- exact voiceover/on-screen text;
-- Pinterest image prompt;
-- Facebook copy;
-- Instagram copy;
-- Threads copy;
-- TikTok copy;
-- YouTube Shorts title + description;
-- Pinterest title + SEO description;
-- localized topic article URL;
-- substantive website reflection/article body.
+## 11. Social funnel, article links and working length — mandatory
+Canonical funnel: `social post -> localized quote article -> deeper reflection + more Wise Quotes`.
+Кожен active-language URL: `https://wisequotesworld.com/<locale>/quotes/<slug>/`. Ніколи не вести на homepage, якщо article існує; ніколи не вести на іншу мову.
 
-Для FR готувати всі outputs навіть до створення соціальних акаунтів.
-
-## 10. Social funnel, article links and working length — mandatory
-Правило адаптоване з canonical Sweden No Sugar MASTER RULES: social post має давати самостійну користь, topic URL має вести на конкретну локалізовану article page, а технічний character maximum не є цільовою довжиною.
-
-Канонічна воронка Wise Quotes World:
-`social post -> localized quote article -> deeper reflection + more Wise Quotes`.
-
-Кожна active-language article URL: `https://wisequotesworld.com/<locale>/quotes/<slug>/`.
-Ніколи не вести на homepage, якщо topic article існує. Ніколи не вести на article іншою мовою.
+### Editorial principle
+Пост НЕ є просто підписом до цитати. Він має самостійно дати читачеві думку/емоцію/цінність навіть без кліку. CTA веде читача до глибшого розбору, а не замінює зміст поста. Текст не розтягувати водою: потрібні конкретна інтерпретація, людський контекст і сильний висновок.
 
 ### Facebook
-1 основний пост. Структура: hook/quote → 2–4 речення осмислення → питання/висновок → CTA → localized article URL → hashtags. Робочий орієнтир зазвичай 550–1000 знаків, але naturalness важливіша за механічне число.
-CTA природно: `Більше про сенс цієї цитати та інші думки: <URL>` або нативний еквівалент мовою посту.
+1 основний пост: hook/quote → 2–4+ змістовні речення → людський контекст/інтерпретація → питання або висновок → CTA → exact localized article URL → hashtags. Орієнтир 550–1000 знаків; natural editorial quality важливіша за число.
+CTA типу: `Більше про сенс цієї цитати та інші думки: <URL>` нативною мовою.
 
 ### Instagram
-Пост не повинен бути одним реченням. Структура: короткий hook → осмислення → емоційний/філософський висновок → CTA `детальніше за посиланням у профілі` або прямий URL, якщо поточний publisher робить його практично корисним → 3–5 релевантних hashtags. Орієнтир 400–800 знаків.
+Hook → змістовне осмислення → емоційний/філософський takeaway → CTA → 3–5 hashtags. Орієнтир 400–800 знаків. Не один рядок і не порожній motivational caption.
 
 ### Threads
-Готувати 3 незалежні Threads posts на тему: 1) hook/meaning; 2) deeper interpretation; 3) question/action/reflection. Це не три частини одного тексту. Кожен має самостійний сенс і за можливості localized topic URL. Не робити hashtag wall.
+3 незалежні posts: 1) hook/meaning; 2) deeper interpretation; 3) question/action/reflection. Кожен самодостатній. За можливості localized topic URL. Без hashtag wall.
 
 ### TikTok
-Caption має бути коротшим за Facebook, але не порожнім: quote hook + 1–2 речення сенсу + CTA до profile/article + 3–5 hashtags. Орієнтир 250–500 знаків.
+Quote hook + 1–2 змістовні речення + CTA + 3–5 hashtags. Орієнтир 250–500 знаків. Не залишати лише цитату.
 
 ### YouTube Shorts
-Title природний, не clickbait. Description: 2–4 змістовні речення про сенс цитати + localized article URL + 3–5 hashtags. Description не може складатися лише з цитати.
+Natural non-clickbait title. Description: 2–4 змістовні речення + exact localized article URL + 3–5 hashtags.
 
-### Pinterest
-Title SEO-natural. Description 2–4 речення: сенс/тема цитати + кому вона може відгукнутися + CTA з direct localized article URL. Keywords використовувати природно.
+### Pinterest copy
+SEO-natural title. Description 2–4 речення: сенс/тема + кому відгукнеться + direct localized article URL. Keywords природно.
 
 ### Character QA
-Перед scheduling перевіряти актуальні limits конкретного publisher/Metricool. Якщо текст перевищує limit — переписати природно, не обрізати механічно. Якщо текст настільки короткий, що не дає самостійної користі — доповнити.
+Перед scheduling перевірити actual publisher/Metricool limits. Перевищення переписати природно, не обрізати механічно. Надто короткий/порожній текст доповнити змістом.
 
-## 11. Website article/reflection — substantive editorial standard
-Quote detail page не може бути лише цитатою + одним абзацом.
+## 12. Website article/reflection — substantive editorial standard
+Quote detail page НЕ може бути лише цитатою + одним коротким абзацом. Це окремий editorial asset.
 
-Кожна мовна article page повинна мати щонайменше:
-1. цитату;
+Кожна мовна page повинна мати:
+1. quote;
 2. attribution/source для verified verbatim;
-3. `Що означають ці слова?` — нормальне пояснення сенсу;
-4. `Чому це важливо` — 1–2 абзаци ширшої мудрої думки/контексту;
-5. `Як це проявляється в житті` — конкретний людський приклад або практична рефлексія;
-6. `Висновок` — короткий сильний editorial takeaway;
-7. CTA: `Більше цитат і думок — Wise Quotes World` + внутрішні посилання на archive/category/author.
+3. `Що означають ці слова?` / native equivalent — чітке пояснення;
+4. `Чому це важливо` — ширша мудра думка/контекст;
+5. `Як це проявляється в житті` — конкретний людський приклад або рефлексія;
+6. `Висновок` — сильний, але не банальний takeaway;
+7. CTA `Більше цитат і думок — Wise Quotes World` + internal links archive/category/author.
 
-Робочий орієнтир article reflection/body: приблизно 250–500 слів мовою сторінки для звичайної теми. Для дуже простої цитати допускається коротше, але не менше змістовного multi-paragraph explanation. Не розтягувати текст водою.
+Орієнтир body: 250–500 слів мовою сторінки. Для простої думки може бути коротше, але все одно multi-paragraph і substantive. Не додавати воду заради word count. Website copy локалізується нативно, а не дослівно.
 
-Website content локалізується нативно, а не перекладається дослівно.
+### Emotional quality benchmark
+WQ006 (Parents / Family, final native-polished version) є editorial quality benchmark для adapted emotional topics: цитата коротка й придатна для 10 s; social copy самодостатній і людяний; article реально розкриває думку; video та Pinterest передають одну емоційну історію; контент може викликати сильну емоцію без дешевого пафосу або мелодрами. Наступні emotional topics мають прагнути цього рівня, але НЕ копіювати сюжет WQ006 механічно.
 
-## 12. Website — database-first
-Target model: `content_items -> content_versions -> quote_pages -> Worker -> wisequotesworld.com`.
-Новий контент після запису/approval у D1 не повинен вимагати ручного deploy.
+## 13. Website — database-first
+`content_items -> content_versions -> quote_pages -> Worker -> wisequotesworld.com`. Новий approved D1 content не повинен вимагати manual deploy. Обов'язкові 8 homepages, full archive, quote pages, category pages, verified author pages, sitemap, hreflang, canonical, SEO internal links. French website active.
 
-Обов'язкові surfaces: 8 localized homepages, FULL published archive, quote detail pages, live category pages, verified author pages, sitemap, hreflang, canonical metadata, SEO internal links.
+## 14. Media Inbox / R2
+Canonical binary storage: Cloudflare R2; D1 stores metadata/usage. Upload once, reuse. Admin individual+batch upload. Default transient retention 30 days; evergreen may use keep_forever.
 
-Routes:
-- `/<locale>/`
-- `/<locale>/quotes/`
-- `/<locale>/quotes/<slug>/`
-- `/<locale>/category/<slug>/`
-- `/<locale>/author/<slug>/` when applicable.
+## 15. Admin Console
+Create/edit topic, 8 localizations, prompts, platform copy, article/URL, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Empty author = NO AUTHOR everywhere.
 
-French website ACTIVE.
+## 16. Scheduling
+Metricool PRIMARY during stabilization. D1 = prepared content/status source. After every scheduling write perform Planner readback before `scheduled`. No FR social scheduling until accounts connected.
+Before scheduling: article URL exists/opens; social CTA route correct; media QA PASS; approval approved; network/date/time/timezone/text/media confirmed by readback.
 
-## 13. Media Inbox / R2
-Canonical binary media storage: Cloudflare R2. D1 stores metadata and usage links. Upload once, reuse for scheduling/site/QA. Admin supports individual and batch upload. Default retention transient media: 30 days; evergreen assets may use keep_forever.
+## 17. Analytics
+Checkpoints 24h/72h/7d/30d. Analyze language/platform/category/quote_type/author/creative concept/publication time.
 
-## 14. Admin Console
-Admin must support create/edit topic, 8 localizations, prompts, all platform copy, article content/URL, media upload, media QA, approval/reject, workflow/status/errors, planning/readback and analytics. Empty author propagates as NO AUTHOR everywhere.
-
-## 15. Scheduling
-Metricool is PRIMARY scheduler during stabilization. D1 is the source of prepared content/status. After every scheduling write, perform Planner readback before marking `scheduled`. No FR external social scheduling until FR accounts are connected.
-
-Перед scheduling обов'язково перевірити:
-1. localized article URL існує і відкривається;
-2. social copy містить правильний CTA/route;
-3. потрібне media пройшло QA;
-4. approval = approved;
-5. network/date/time/timezone/text/media після write підтверджені readback.
-
-## 16. Analytics
-Store platform/source and metric definition. Checkpoints: 24h, 72h, 7d, 30d. Analyze by language/platform/category/quote_type/author/creative concept/publication time.
-
-## 17. Standard command protocol
-`наступна цитата`, `готуй наступну`, `працюємо по правилах` означає:
+## 18. Standard command protocol
+`наступна цитата`, `готуй наступну`, `працюємо по правилах` =
 1. read MASTER_RULES + D1 rules;
-2. select next topic;
-3. source verification for verbatim;
-4. 8 native localizations;
-5. 8 stable Gemini prompts за v4.1: exact generated quote text + exact voiceover + NO generated logo/branding;
-6. 8 Pinterest prompts;
-7. full-length platform copy + localized article URLs;
-8. substantive website article/reflection 250–500 words per active language;
+2. select topic/source verify verbatim;
+3. quote-length QA BEFORE localization;
+4. 8 native localizations + separate semantic/native QA;
+5. 8 Gemini prompts v4.2: exact generated text + exact voiceover + NO generated logo;
+6. 8 Pinterest prompts with exact localized quote ON image + NO generated logo by default;
+7. full-length native platform copy + exact localized article URLs;
+8. substantive native website article/reflection;
 9. save to D1;
-10. media link/QA;
-11. user approval;
-12. Metricool schedule + readback;
-13. analytics.
+10. user generates media manually and uploads via Admin;
+11. media QA;
+12. user approval;
+13. Metricool schedule + readback;
+14. analytics.
 
 Не питати повторно про відомі brand/platform/language/format rules.
 
-## 18. Validation protocol
-Validate both content modes: adapted without author and verbatim with verified author/source/original language. Both must pass full 8-language preparation, website, Admin, media and approval workflow.
+## 19. Validation protocol
+Validate adapted without author and verbatim with verified author/source/original language. Both must pass 8-language prep, website, Admin, media, approval workflow. A technically complete package that fails native-language, emotional/editorial, exact-text or media QA is NOT production-ready.
 
-## 19. Fail-safe
+## 20. Fail-safe
 If connector/API unavailable, preserve completed D1 state, mark only blocked step, do not invent external status, resume from last confirmed state.
 
-## 20. Shared foundation with Sweden No Sugar
-Wise Quotes World і Sweden No Sugar — окремі продукти. Infrastructure patterns may be reused after compatibility review, but all operational records, credentials, mappings, content, CTA, taxonomy and analytics remain isolated by project_id/language/platform. Mature universal workflow rules may be adapted; brand-specific content is never copied automatically.
+## 21. Shared foundation with Sweden No Sugar
+Wise Quotes World and Sweden No Sugar are separate products. Reuse mature infrastructure/workflow patterns only after compatibility review. Operational records, credentials, mappings, content, CTA, taxonomy and analytics remain isolated by project_id/language/platform. Brand-specific content is never copied automatically.

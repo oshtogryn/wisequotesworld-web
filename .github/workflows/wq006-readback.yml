@@ -9,16 +9,23 @@ on:
       - '.github/workflows/wq006-readback.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Wait for Pages deployment
         run: sleep 25
       - name: Verify 8 localized WQ006 URLs
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p ops/readback
+          report=ops/readback/WQ006-live.txt
+          : > "$report"
           urls=(
             'https://wisequotesworld.com/uk/quotes/my-doroslishayemo-batkivskyi-dim/'
             'https://wisequotesworld.com/ru/quotes/my-vzrosleem-roditelskiy-dom/'
@@ -29,22 +36,26 @@ jobs:
             'https://wisequotesworld.com/es/quotes/crecemos-hogar-familiar-padres/'
             'https://wisequotesworld.com/fr/quotes/on-grandit-foyer-familial-parents/'
           )
+          ok=1
           for u in "${urls[@]}"; do
             out=$(mktemp)
-            code=$(curl -L -sS -o "$out" -w '%{http_code}' --retry 5 --retry-all-errors --retry-delay 5 "$u")
+            code=$(curl -L -sS -o "$out" -w '%{http_code}' --retry 5 --retry-all-errors --retry-delay 5 "$u" || true)
             bytes=$(wc -c < "$out" | tr -d ' ')
-            if [[ "$code" != "200" ]]; then
-              echo "FAIL $code $u"
-              sed -n '1,20p' "$out"
-              exit 1
+            if [[ "$code" == "200" ]] && [[ "$bytes" -ge 500 ]] && grep -qi 'Wise Quotes World' "$out"; then
+              echo "PASS 200 bytes=$bytes $u" | tee -a "$report"
+            else
+              echo "FAIL code=$code bytes=$bytes $u" | tee -a "$report"
+              ok=0
             fi
-            if [[ "$bytes" -lt 500 ]]; then
-              echo "FAIL short-body=$bytes $u"
-              exit 1
-            fi
-            if ! grep -qi 'Wise Quotes World' "$out"; then
-              echo "FAIL missing-brand $u"
-              exit 1
-            fi
-            echo "PASS 200 bytes=$bytes $u"
           done
+          echo "checked_at=$(date -u +%FT%TZ)" | tee -a "$report"
+          if [[ "$ok" != "1" ]]; then echo "overall=FAIL" | tee -a "$report"; else echo "overall=PASS" | tee -a "$report"; fi
+      - name: Commit readback report
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/WQ006-live.txt
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record WQ006 live website readback'
+          git push

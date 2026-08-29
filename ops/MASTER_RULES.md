@@ -2,7 +2,7 @@
 
 Останнє оновлення: 2026-08-29
 Статус: CANONICAL
-Версія: database-first v4.3
+Версія: database-first v4.4
 
 ## 1. Джерела істини
 1. `ops/MASTER_RULES.md` — канонічне джерело операційних правил.
@@ -14,7 +14,7 @@
 7. Перед новою темою читати актуальний MASTER_RULES.
 
 ## 2. Мови
-uk, ru, pl, en, sv, de, es, fr. FR active website/Pinterest; social не планувати до підключення FR каналів.
+uk, ru, pl, en, sv, de, es, fr. FR active website/Pinterest; FB/IG/Threads/TikTok/YouTube не планувати до підключення FR каналів. Pinterest для FR активний і є обов’язковим так само, як для інших мов.
 
 ## 3. Контент
 Одна думка = один content_id, 8 localizations. `adapted` без автора; `verbatim` тільки verified author/source/original wording.
@@ -71,6 +71,8 @@ QA happens AFTER generation, not inside prompt. REJECT for wrong/missing text, b
 ## 8. Pinterest
 2:3 target 1000×1500; finished image contains exact localized quote; mobile-readable typography; no unrelated text/random letters/watermark; no generated Wise Quotes World logo by default. Same anti-leak rule: no letter-by-letter diagnostics or lists of misspellings. User generates manually → Admin upload → R2 → QA → approval.
 
+Pinterest is a MANDATORY publication channel for every approved Wise Quotes World topic in all 8 languages. Each locale must have its own Pinterest image, localized SEO title, localized description, exact same-language article destination, and correct locale board. FR Pinterest remains active even while FR FB/IG/Threads/TikTok/YouTube are disabled.
+
 ## 9. Required outputs
 For each language: localized quote, Gemini/Veo prompt, voiceover/on-screen text, Pinterest prompt, Facebook, Instagram, 3 Threads, TikTok, YouTube title+description, Pinterest title+description, localized article URL, substantive website reflection. FR prepared fully.
 
@@ -91,13 +93,22 @@ R2 canonical binaries; D1 metadata. Upload once/reuse. User generates video/Pint
 Create/edit topic, 8 localizations, prompts, copy, article/URL, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Empty author = NO AUTHOR everywhere.
 
 ## 15. Scheduling
-Metricool PRIMARY during stabilization. No `scheduled` without Planner readback. No FR social until channels connected. Before scheduling verify article opens, CTA, media QA PASS, approval, network/date/time/timezone/text/media.
+Metricool PRIMARY during stabilization. No `scheduled` without Planner readback. Before scheduling verify article opens, CTA, media QA PASS, approval, network/date/time/timezone/text/media.
+
+### Pinterest scheduling gate — HARD
+- Every approved topic must be checked for Pinterest before the topic can be considered fully scheduled.
+- Required Pinterest coverage is **8/8 locales: uk, ru, pl, en, sv, de, es, fr**.
+- FR exception applies only to FB/IG/Threads/TikTok/YouTube; it NEVER disables Pinterest.
+- Use the exact locale board ID/name from canonical routing and the exact live same-language D1 article URL as `pinLink`.
+- Use the approved Pinterest image from R2/D1 media, not the social video frame unless explicitly approved as the Pinterest creative.
+- Planner readback must confirm every Pinterest post. A topic with social posts scheduled but missing Pinterest is **NOT fully scheduled**.
+- When reporting a completed scheduling batch, report Pinterest separately and include its 8/8 status.
 
 ## 16. Analytics
 24h/72h/7d/30d by language/platform/category/quote_type/author/creative/time.
 
 ## 17. Standard command protocol
-`наступна цитата` / `готуй наступну` / `працюємо по правилах` = read MASTER_RULES + D1 → source/quote QA → duration gate → 8 native localizations → 8 Gemini/Veo prompts using v4.3 simple template → 8 Pinterest prompts → full social copy + localized URLs → website reflection → D1 → user media generation/upload → media QA outside prompt → approval → Metricool schedule/readback → analytics.
+`наступна цитата` / `готуй наступну` / `працюємо по правилах` = read MASTER_RULES + D1 → source/quote QA → duration gate → 8 native localizations → 8 Gemini/Veo prompts using v4.3 simple template → 8 Pinterest prompts → full social copy + localized URLs → website reflection → D1 → user media generation/upload → media QA outside prompt → approval → Metricool schedule including Pinterest 8/8 → Planner readback for all networks including Pinterest → analytics.
 
 ## 18. Validation/fail-safe
 Adapted no author; verbatim verified author/source/original. Technically complete but failed native/exact-text/editorial/media QA = NOT production-ready. If API unavailable, preserve confirmed D1 state and mark only blocked step.

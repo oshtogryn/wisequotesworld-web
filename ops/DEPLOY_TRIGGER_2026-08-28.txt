@@ -1,4 +1,5 @@
 Wise Quotes World automation-v3 preview deployment trigger.
-Cloudflare bindings expected: DB, MEDIA, ADMIN_TOKEN.
-Latest validation bundle: migrations v3-v7, Admin API, R2 Media Inbox, source verification, quote pages, approvals and required-output guardrails.
-Timestamp: 2026-08-28T21:15:00+02:00.
+Cloudflare bindings expected: DB, MEDIA, ADMIN_TOKEN, AI.
+Latest validation bundle: schema v2-v10 ready, WQ006 seeded 8/8 languages + 8/8 quote pages, first EN Pinterest AI generation succeeded and stored in R2 with QA pending.
+Next validation: secure Admin R2 media review for visual QA.
+Timestamp: 2026-08-29T03:50:00+02:00.

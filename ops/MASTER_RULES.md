@@ -10,6 +10,7 @@
 3. D1 `rules` — машинно-читана копія критичних правил.
 4. Google Sheets використовується лише як тимчасове джерело міграції. Після контрольного cutover операційний workflow від Google Sheets повністю відмовляється; таблиця не є fallback і не може перезаписувати D1/MASTER_RULES.
 5. GitHub/Cloudflare зберігають код, шаблони та assets; новий контент після database-first не повинен вимагати deployment.
+6. Наданий експорт `WiseQuotes — Content System` використовується як migration/audit source для історичних цитат, мовних версій, prompt-ів, platform copy, media, scheduling, accounts та legacy rules. Він не може автоматично скасовувати новіші explicit user decisions або поточний MASTER_RULES.
 
 ## 2. Мови
 Система працює на 8 мовах:
@@ -93,6 +94,10 @@ FR активна на website і Pinterest уже зараз. Для Facebook/I
 12. branding;
 13. explicit negative constraints;
 14. фінальний кадр/емоційний результат.
+
+Кожен мовний prompt є самодостатнім і повинен містити повну структуру без посилань на окремий master prompt: `GENERATE IMMEDIATELY -> FORMAT/DURATION/LANGUAGE/STYLE/MOOD -> CORE IDEA -> EXACT LOCKED TEXT -> STRICT TEXT TIMING -> TEXT POSITION -> VOICEOVER -> VISUAL STORY -> CAMERA -> ORIGINAL MUSIC -> ABSOLUTELY NO OTHER TEXT -> FINAL CHECK`.
+
+Locked text rule: точна затверджена локалізація переноситься в on-screen text і voiceover без translate/paraphrase/rewrite/autocorrect/change punctuation. Для довших цитат дозволено TEXT 1 / TEXT 2 лише як інструкційні поняття в prompt; самі labels ніколи не рендеряться у відео. Блоки не перекриваються; між ними короткий чистий no-text gap; без typewriter/word-by-word animation.
 
 ### Візуальна стратегія для `adapted`
 Переважно cinematic symbolic story: люди, рішення, стосунки, природа, розвиток, робота, час, дорога, вибір тощо. Відео повинно передавати думку ще до повного прочитання тексту.
@@ -206,14 +211,14 @@ Native scheduler development is deferred until Admin + database-first website + 
 No FR external social scheduling until FR accounts are explicitly connected.
 
 ## 15. Analytics
-Store platform/source and metric definition. Checkpoints: 24h, 72h, 7d and later aggregate analysis. Analyze by language/platform/category/quote_type/author/creative concept/publication time.
+Store platform/source and metric definition. Checkpoints: 24h, 72h, 7d and 30d, plus later aggregate analysis. Analyze by language/platform/category/quote_type/author/creative concept/publication time.
 
 ## 16. Standard command protocol
 Commands such as `наступна цитата`, `готуй наступну`, `працюємо по правилах` mean:
 1. read current MASTER_RULES + D1 rules;
 2. choose next content item with deliberate adapted/verbatim rotation;
 3. if verbatim: verify author, source, work/context and original language first;
-4. prepare natural native-level adaptations for all 8 languages;
+4. prepare natural native-level adaptations for all 8 languages with double QA: semantic fidelity + native naturalness;
 5. create 8 full production Gemini prompts up to the current Gemini max duration;
 6. create 8 Pinterest image prompts;
 7. create all platform copy;
@@ -235,3 +240,10 @@ Both must pass full 8-language preparation, website, Admin, media and approval w
 
 ## 18. Fail-safe
 If an external connector/API is unavailable, preserve completed D1 workflow state, mark only the blocked step, do not invent external status, and resume from the last confirmed state when access returns.
+
+## 19. Shared foundation with Sweden No Sugar
+Wise Quotes World і Sweden No Sugar є окремими продуктами, але майбутня infrastructure/control-plane може бути спільною: admin patterns, scheduler engine, publication adapters, readback, analytics collectors, health/diagnostics, media pipeline, queue/retry/error handling, permissions та deployment patterns можуть повторно використовуватися між проєктами.
+
+Обов'язкова межа: спільний код НЕ означає спільні операційні дані. Кожен content/media/publication/account/rule/analytics record повинен бути scoped by `project_id`, language і platform за потреби. Credentials/account mappings також проєктно ізольовані. Заборонено cross-project defaulting або автоматичне перенесення контенту між Wise Quotes World та Sweden No Sugar.
+
+Якщо в MASTER_RULES Sweden No Sugar є зріле технічне правило, яке універсально покращує scheduler/admin/media/analytics/website infrastructure, його дозволено адаптувати для Wise Quotes World після перевірки сумісності. Контентні правила, CTA, brand voice, taxonomy, platform accounts і мовна політика ніколи не копіюються автоматично.

@@ -34,6 +34,29 @@ async function hardResetPreparedTopic(request,env,id){
   return json({ok:true,id,before,deleted:true,steps});
 }
 
+function mediaKindSql(kind){
+  return kind==='video'
+    ? `(LOWER(COALESCE(m.asset_type,'')) LIKE '%video%' OR LOWER(COALESCE(m.mime_type,'')) LIKE 'video/%')`
+    : `(LOWER(COALESCE(m.asset_type,'')) LIKE '%pinterest%' OR LOWER(COALESCE(m.asset_type,'')) LIKE '%image%' OR LOWER(COALESCE(m.mime_type,'')) LIKE 'image/%')`;
+}
+async function approvedMedia(request,env,id,lang,kind){
+  if(!env.DB||!env.MEDIA)return json({ok:false,error:'media delivery unavailable'},503);
+  const approved=await env.DB.prepare(`SELECT 1 ok FROM content_approvals WHERE content_item_id=? AND approval_scope='content' AND language_code IS NULL AND status='approved' LIMIT 1`).bind(id).first();
+  if(!approved)return json({ok:false,error:'content not approved'},404);
+  const sql=`SELECT m.r2_key,m.mime_type,m.original_filename,m.created_at FROM media_inbox m JOIN media_reviews r ON r.media_inbox_id=m.id WHERE m.project_id='wisequotesworld' AND m.content_item_id=? AND m.language_code=? AND r.qa_status='approved' AND ${mediaKindSql(kind)} ORDER BY m.created_at DESC LIMIT 1`;
+  const row=await env.DB.prepare(sql).bind(id,lang).first();
+  if(!row?.r2_key)return json({ok:false,error:'approved media not found'},404);
+  const obj=await env.MEDIA.get(row.r2_key);
+  if(!obj)return json({ok:false,error:'R2 object missing'},404);
+  const headers=new Headers();
+  obj.writeHttpMetadata(headers);
+  headers.set('content-type',row.mime_type||headers.get('content-type')||'application/octet-stream');
+  headers.set('cache-control','public, max-age=86400, immutable');
+  headers.set('content-disposition',`inline; filename="${String(row.original_filename||kind).replace(/["\r\n]/g,'_')}"`);
+  headers.set('x-robots-tag','noindex,nofollow,noarchive');
+  return new Response(obj.body,{headers});
+}
+
 export default {
   async fetch(request,env,ctx){
     try{
@@ -45,6 +68,8 @@ export default {
       if(url.pathname==='/admin'||url.pathname==='/admin/'){
         return Response.redirect(`${url.origin}/admin/console/`,302);
       }
+      const approvedMediaMatch=url.pathname.match(/^\/media\/approved\/([A-Za-z0-9_-]+)\/(uk|ru|pl|en|sv|de|es|fr)\/(video|pinterest)$/);
+      if(approvedMediaMatch&&request.method==='GET')return approvedMedia(request,env,approvedMediaMatch[1],approvedMediaMatch[2],approvedMediaMatch[3]);
       const reset=url.pathname.match(/^\/api\/admin\/prepared\/reset\/(WQ006|WQ011)$/);
       if(reset&&request.method==='POST')return hardResetPreparedTopic(request,env,reset[1]);
       const productionResponse=await productionConsoleApi(request,env);

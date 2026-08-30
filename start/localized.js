@@ -1,14 +1,14 @@
 (()=>{
   const l=document.documentElement.lang||'en';
   const T={
-    uk:{sub:'Мудрість, до якої хочеться повертатися.',latest:'Останні цитати та роздуми',latestSmall:'Нові публікації Wise Quotes World',channels:'Офіційні канали',site:'Сайт',change:'Змінити мову',foot:'Wise Quotes World — позачасові слова, вдумливо зібрані.',pending:'Незабаром'},
-    ru:{sub:'Мудрость, к которой хочется возвращаться.',latest:'Последние цитаты и размышления',latestSmall:'Новые публикации Wise Quotes World',channels:'Официальные каналы',site:'Сайт',change:'Сменить язык',foot:'Wise Quotes World — вечные слова, собранные с вниманием.',pending:'Скоро'},
-    pl:{sub:'Mądrość, do której chce się wracać.',latest:'Najnowsze cytaty i refleksje',latestSmall:'Nowe publikacje Wise Quotes World',channels:'Oficjalne kanały',site:'Strona',change:'Zmień język',foot:'Wise Quotes World — ponadczasowe słowa, starannie wybrane.',pending:'Wkrótce'},
-    en:{sub:'Wisdom worth returning to.',latest:'Latest quotes and reflections',latestSmall:'New Wise Quotes World posts',channels:'Official channels',site:'Website',change:'Change language',foot:'Wise Quotes World — timeless words, thoughtfully curated.',pending:'Coming soon'},
-    sv:{sub:'Visdom att återvända till.',latest:'Senaste citaten och reflektionerna',latestSmall:'Nya inlägg från Wise Quotes World',channels:'Officiella kanaler',site:'Webbplats',change:'Byt språk',foot:'Wise Quotes World — tidlösa ord, omsorgsfullt utvalda.',pending:'Kommer snart'},
-    de:{sub:'Weisheit, zu der man gern zurückkehrt.',latest:'Neueste Zitate und Gedanken',latestSmall:'Neue Beiträge von Wise Quotes World',channels:'Offizielle Kanäle',site:'Website',change:'Sprache ändern',foot:'Wise Quotes World — zeitlose Worte, sorgfältig ausgewählt.',pending:'Demnächst'},
-    es:{sub:'Sabiduría a la que merece la pena volver.',latest:'Últimas citas y reflexiones',latestSmall:'Nuevas publicaciones de Wise Quotes World',channels:'Canales oficiales',site:'Sitio web',change:'Cambiar idioma',foot:'Wise Quotes World — palabras atemporales, cuidadosamente seleccionadas.',pending:'Próximamente'},
-    fr:{sub:'Une sagesse à laquelle revenir.',latest:'Dernières citations et réflexions',latestSmall:'Nouvelles publications de Wise Quotes World',channels:'Canaux officiels',site:'Site web',change:'Changer de langue',foot:'Wise Quotes World — des mots intemporels, choisis avec soin.',pending:'Bientôt disponible'}
+    uk:{sub:'Мудрість, до якої хочеться повертатися.',latest:'Останні цитати та роздуми',latestSmall:'Нові публікації Wise Quotes World',channels:'Офіційні канали',site:'Сайт',change:'Змінити мову',foot:'Wise Quotes World — позачасові слова, вдумливо зібрані.',community:'Наша спільнота',total:'Разом',followers:'підписників'},
+    ru:{sub:'Мудрость, к которой хочется возвращаться.',latest:'Последние цитаты и размышления',latestSmall:'Новые публикации Wise Quotes World',channels:'Официальные каналы',site:'Сайт',change:'Сменить язык',foot:'Wise Quotes World — вечные слова, собранные с вниманием.',community:'Наше сообщество',total:'Всего',followers:'подписчиков'},
+    pl:{sub:'Mądrość, do której chce się wracać.',latest:'Najnowsze cytaty i refleksje',latestSmall:'Nowe publikacje Wise Quotes World',channels:'Oficjalne kanały',site:'Strona',change:'Zmień język',foot:'Wise Quotes World — ponadczasowe słowa, starannie wybrane.',community:'Nasza społeczność',total:'Łącznie',followers:'obserwujących'},
+    en:{sub:'Wisdom worth returning to.',latest:'Latest quotes and reflections',latestSmall:'New Wise Quotes World posts',channels:'Official channels',site:'Website',change:'Change language',foot:'Wise Quotes World — timeless words, thoughtfully curated.',community:'Our community',total:'Total',followers:'followers / subscribers'},
+    sv:{sub:'Visdom att återvända till.',latest:'Senaste citaten och reflektionerna',latestSmall:'Nya inlägg från Wise Quotes World',channels:'Officiella kanaler',site:'Webbplats',change:'Byt språk',foot:'Wise Quotes World — tidlösa ord, omsorgsfullt utvalda.',community:'Vår gemenskap',total:'Totalt',followers:'följare / prenumeranter'},
+    de:{sub:'Weisheit, zu der man gern zurückkehrt.',latest:'Neueste Zitate und Gedanken',latestSmall:'Neue Beiträge von Wise Quotes World',channels:'Offizielle Kanäle',site:'Website',change:'Sprache ändern',foot:'Wise Quotes World — zeitlose Worte, sorgfältig ausgewählt.',community:'Unsere Community',total:'Gesamt',followers:'Follower / Abonnenten'},
+    es:{sub:'Sabiduría a la que merece la pena volver.',latest:'Últimas citas y reflexiones',latestSmall:'Nuevas publicaciones de Wise Quotes World',channels:'Canales oficiales',site:'Sitio web',change:'Cambiar idioma',foot:'Wise Quotes World — palabras atemporales, cuidadosamente seleccionadas.',community:'Nuestra comunidad',total:'Total',followers:'seguidores / suscriptores'},
+    fr:{sub:'Une sagesse à laquelle revenir.',latest:'Dernières citations et réflexions',latestSmall:'Nouvelles publications de Wise Quotes World',channels:'Canaux officiels',site:'Site web',change:'Changer de langue',foot:'Wise Quotes World — des mots intemporels, choisis avec soin.',community:'Notre communauté',total:'Total',followers:'abonnés'}
   };
   const R={
     uk:{facebook:'https://www.facebook.com/878404672024804',instagram:'https://www.instagram.com/wisequotes.ua/',threads:'https://www.threads.com/@wisequotes.ua',tiktok:'https://www.tiktok.com/@wisequotes.ua',youtube:'https://www.youtube.com/channel/UCh1HcI0nmrm_ddAPfVvyCSg',pinterest:'https://www.pinterest.com/wisequotesworld/'},
@@ -18,14 +18,21 @@
     sv:{facebook:'https://www.facebook.com/929364273586587',instagram:'https://www.instagram.com/wisequotes.se/',threads:'https://www.threads.com/@wisequotes.se',tiktok:'https://www.tiktok.com/@wisequotes.se',youtube:'https://www.youtube.com/channel/UCHnu9TFYxibDvSEOEfQykhg',pinterest:'https://www.pinterest.com/wisequotesworld/'},
     de:{facebook:'https://www.facebook.com/1151007124763146',instagram:'https://www.instagram.com/wisequotes.de/',threads:'https://www.threads.com/@wisequotes.de',tiktok:'https://www.tiktok.com/@wisequotes.de',youtube:'https://www.youtube.com/channel/UCNy384R9H91PAIPWAHppvzw',pinterest:'https://www.pinterest.com/wisequotesworld/'},
     es:{facebook:'https://www.facebook.com/1064990903375476',instagram:'https://www.instagram.com/wisequotes.es/',threads:'https://www.threads.com/@wisequotes.es',tiktok:'https://www.tiktok.com/@wisequotes.es',youtube:'https://www.youtube.com/channel/UCnFTJvWS7lpYYC2zJYG925Q',pinterest:'https://www.pinterest.com/wisequotesworld/'},
-    fr:{facebook:null,instagram:null,threads:null,tiktok:null,youtube:null,pinterest:'https://www.pinterest.com/wisequotesworld/'}
+    fr:{facebook:'https://www.facebook.com/1193265527213860',instagram:'https://www.instagram.com/wisequotes.fr/',threads:'https://www.threads.com/@wisequotes.fr',tiktok:'https://www.tiktok.com/@wisequotes.fr',youtube:'https://www.youtube.com/channel/UCgjDE4kSf-THoL7OuxU-Kfw',pinterest:'https://www.pinterest.com/wisequotesworld/'}
   };
-  const A=T[l]||T.en;
-  const links=R[l]||R.en;
+  const S={
+    uk:{facebook:8,instagram:945,threads:42,tiktok:53,youtube:36,pinterest:0},
+    ru:{facebook:5,instagram:44,threads:13,tiktok:86,youtube:96,pinterest:0},
+    pl:{facebook:14,instagram:17,threads:6,tiktok:37,youtube:29,pinterest:0},
+    en:{facebook:11,instagram:17,threads:10,tiktok:30,youtube:31,pinterest:0},
+    sv:{facebook:4,instagram:9,threads:6,tiktok:10,youtube:4,pinterest:0},
+    de:{facebook:19,instagram:106,threads:3,tiktok:59,youtube:22,pinterest:0},
+    es:{facebook:21,instagram:196,threads:3,tiktok:11,youtube:82,pinterest:0},
+    fr:{facebook:0,instagram:0,threads:0,tiktok:0,youtube:0,pinterest:0}
+  };
+  const A=T[l]||T.en,links=R[l]||R.en,stats=S[l]||S.en;
+  const total=['facebook','instagram','threads','tiktok','youtube'].reduce((n,k)=>n+(stats[k]||0),0);
   const social=[['facebook','Facebook','📘'],['instagram','Instagram','📸'],['threads','Threads','🧵'],['tiktok','TikTok','🎵'],['youtube','YouTube','▶️'],['pinterest','Pinterest','📌']];
-  const socialHtml=social.map(([key,name,icon])=>links[key]
-    ? `<a class="btn" href="${links[key]}" target="_blank" rel="noopener noreferrer">${icon} ${name}</a>`
-    : `<div class="btn disabled">${icon} ${name}<small>${A.pending}</small></div>`
-  ).join('');
-  document.getElementById('app').innerHTML=`<main class="wrap"><section class="card"><div class="top"><div class="logo">W</div><div><h1>Wise Quotes World</h1><p class="sub">${A.sub}</p></div></div><a class="btn primary" href="/${l}/">📖 ${A.latest}<small>${A.latestSmall}</small></a><div class="section"><h2>${A.channels}</h2><div class="grid"><a class="btn" href="/${l}/">🌐 ${A.site}</a>${socialHtml}</div></div><a class="btn" href="/start/">🌍 ${A.change}</a><p class="foot">${A.foot}</p></section></main>`;
+  const socialHtml=social.map(([key,name,icon])=>`<a class="btn" href="${links[key]}" target="_blank" rel="noopener noreferrer">${icon} ${name}<small>${stats[key]||0} ${A.followers}${key==='pinterest'?' · shared':''}</small></a>`).join('');
+  document.getElementById('app').innerHTML=`<main class="wrap"><section class="card"><div class="top"><div class="logo">W</div><div><h1>Wise Quotes World</h1><p class="sub">${A.sub}</p></div></div><a class="btn primary" href="/${l}/">📖 ${A.latest}<small>${A.latestSmall}</small></a><div class="community"><span>${A.community}</span><strong>${total}</strong><small>${A.followers}</small></div><div class="section"><h2>${A.channels}</h2><div class="grid"><a class="btn" href="/${l}/">🌐 ${A.site}</a>${socialHtml}</div></div><a class="btn" href="/start/">🌍 ${A.change}</a><p class="foot">${A.foot}</p></section></main>`;
 })();

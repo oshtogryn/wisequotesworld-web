@@ -1,8 +1,8 @@
 import legacyWorker from './_worker_legacy.js';
-import {syncCanonicalRules} from './lib/canonical_rules.js';
+import {syncCanonicalRules,readCanonicalRules} from './lib/canonical_rules.js';
 import {siteV2} from './lib/site_v2.js';
 import {quoteDetailV3} from './lib/quote_detail_v3.js';
-import {productionConsoleApi} from './lib/production_console_api.js';
+import {productionConsoleApi,readbackProductionStatus} from './lib/production_console_api.js';
 import {ensureLegacyContentMigrated} from './lib/legacy_content_migration.js';
 import {ensureWQ011SitePublished} from './lib/wq011_site_publish.js';
 import {ensureWQ011PromptsSynced,readbackWQ011Prompts} from './lib/wq011_prompt_sync.js';
@@ -110,6 +110,7 @@ export default {
       if(env.DB && !wq011PromptSyncChecked){await ensureWQ011PromptsSynced(env);wq011PromptSyncChecked=true;}
       await publishExplicitWQ006(env);
       if(url.pathname==='/ops/readback/wq011-prompts.json'&&request.method==='GET')return json(await readbackWQ011Prompts(env));
+      if(url.pathname==='/ops/readback/wq011-production.json'&&request.method==='GET')return json({production:await readbackProductionStatus(env,'WQ011'),rules:await readCanonicalRules(env)});
       if(url.pathname==='/admin'||url.pathname==='/admin/')return Response.redirect(`${url.origin}/admin/console/`,302);
       const approvedMediaMatch=url.pathname.match(/^\/media\/approved\/([A-Za-z0-9_-]+)\/(uk|ru|pl|en|sv|de|es|fr)\/(video|pinterest)$/);
       if(approvedMediaMatch&&request.method==='GET')return approvedMedia(request,env,approvedMediaMatch[1],approvedMediaMatch[2],approvedMediaMatch[3]);

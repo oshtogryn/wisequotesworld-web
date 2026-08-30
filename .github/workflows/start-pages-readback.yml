@@ -40,13 +40,12 @@ jobs:
             ok=1
             [[ "$code" == "200" ]] || ok=0
             for needle in "$@"; do grep -Fq "$needle" "$out" || ok=0; done
-            if [[ "$ok" == 1 ]]; then echo "PASS $url" | tee -a "$report"; else echo "FAIL code=$code $url" | tee -a "$report"; cat "$out" | head -c 1200 >> "$report"; echo >> "$report"; return 1; fi
+            if [[ "$ok" == 1 ]]; then echo "PASS $url" | tee -a "$report"; else echo "FAIL code=$code $url" | tee -a "$report"; cat "$out" | head -c 1600 >> "$report"; echo >> "$report"; return 1; fi
           }
-          check 'https://wisequotesworld.com/start/' '2,085' '1,084' 'Français'
-          check 'https://wisequotesworld.com/uk/start/' 'Наша спільнота' '1,084' 'Instagram'
-          check 'https://wisequotesworld.com/fr/start/' 'Notre communauté' 'Facebook' 'Instagram' 'YouTube'
-          fr=$(mktemp); curl -L -sS 'https://wisequotesworld.com/fr/start/' -o "$fr"
-          if grep -Fq 'Bientôt disponible' "$fr"; then echo 'FAIL FR still says Bientôt disponible' | tee -a "$report"; exit 1; fi
+          check 'https://wisequotesworld.com/start/' '2,085' '1,084' 'Français' 'Site et canaux officiels'
+          check 'https://wisequotesworld.com/uk/start/' 'localized.js?v=20260830-1255'
+          check 'https://wisequotesworld.com/fr/start/' 'localized.js?v=20260830-1255' 'site et canaux officiels'
+          check 'https://wisequotesworld.com/start/localized.js?v=20260830-1255' 'Наша спільнота' 'Notre communauté' '1193265527213860' 'UCgjDE4kSf-THoL7OuxU-Kfw' 'fr:{facebook:0,instagram:0,threads:0,tiktok:0,youtube:0,pinterest:0}'
           echo "checked_at=$(date -u +%FT%TZ)" | tee -a "$report"
           echo 'overall=PASS' | tee -a "$report"
       - name: Commit readback report

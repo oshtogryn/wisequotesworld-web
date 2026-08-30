@@ -1,0 +1,48 @@
+name: WQ011 D1 prompt readback
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '_worker.js'
+      - 'lib/wq011_prompt_sync.js'
+      - '.github/workflows/wq011-prompt-readback.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for production deploy
+        run: sleep 35
+      - name: Read D1 prompt status through production Worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          report=ops/readback/WQ011-prompts-d1.json
+          curl -fsSL --retry 8 --retry-all-errors --retry-delay 5 'https://wisequotesworld.com/ops/readback/wq011-prompts.json' -o "$report"
+          cat "$report"
+          python - <<'PY'
+          import json
+          p='ops/readback/WQ011-prompts-d1.json'
+          d=json.load(open(p,encoding='utf-8'))
+          assert d.get('ok') is True, d
+          assert d.get('video_count') == 8, d
+          assert d.get('pinterest_count') == 8, d
+          assert d.get('v45_count') == 8, d
+          assert len(d.get('languages',[])) == 8, d
+          PY
+      - name: Commit readback report
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/WQ011-prompts-d1.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record WQ011 D1 prompt readback'
+          git push

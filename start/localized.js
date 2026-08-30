@@ -25,6 +25,6 @@
   };
   const A=T[l]||T.en,links=R[l]||R.en,stats=S[l]||S.en;
   const social=[['facebook','Facebook','📘'],['instagram','Instagram','📸'],['threads','Threads','🧵'],['tiktok','TikTok','🎵'],['youtube','YouTube','▶️'],['pinterest','Pinterest','📌']];
-  const socialHtml=social.map(([key,name,icon])=>`<a class="btn" href="${links[key]}" target="_blank" rel="noopener noreferrer">${icon} ${name}${key==='pinterest'?'<small>Wise Quotes World · shared account</small>':`<small>${stats[key]||0} ${A.followers}</small>`}</a>`).join('');
+  const socialHtml=social.map(([key,name,icon])=>`<a class="btn" href="${links[key]}" target="_blank" rel="noopener noreferrer">${icon} ${name}${key==='pinterest'?'':`<small>${stats[key]||0} ${A.followers}</small>`}</a>`).join('');
   document.getElementById('app').innerHTML=`<main class="wrap"><section class="card"><div class="top"><div class="logo">W</div><div><h1>Wise Quotes World</h1><p class="sub">${A.sub}</p></div></div><a class="btn primary" href="/${l}/">📖 ${A.latest}<small>${A.latestSmall}</small></a><div class="section"><h2>${A.channels}</h2><div class="grid"><a class="btn" href="/${l}/">🌐 ${A.site}</a>${socialHtml}</div></div><a class="btn" href="/start/">🌍 ${A.change}</a><p class="foot">${A.foot}</p></section></main>`;
 })();

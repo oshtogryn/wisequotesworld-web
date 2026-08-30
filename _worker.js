@@ -13,16 +13,20 @@ let legacyMigrationChecked=false;
 let wq011SitePublishChecked=false;
 let wq011PromptSyncChecked=false;
 
-const METRICOOL_FR=`<script>function loadScript(a){var b=document.getElementsByTagName("head")[0],c=document.createElement("script");c.type="text/javascript",c.src="https://tracker.metricool.com/resources/be.js",c.onreadystatechange=a,c.onload=a,b.appendChild(c)}loadScript(function(){beTracker.t({hash:"ae56143c509d953161c3599111b6d55d"})});</script>`;
+const METRICOOL_HASHES={fr:'ae56143c509d953161c3599111b6d55d',ru:'59444f08c2a0238b2d40a21ae0aea0e0'};
+function metricoolScript(hash){return `<script>function loadScript(a){var b=document.getElementsByTagName("head")[0],c=document.createElement("script");c.type="text/javascript",c.src="https://tracker.metricool.com/resources/be.js",c.onreadystatechange=a,c.onload=a,b.appendChild(c)}loadScript(function(){beTracker.t({hash:"${hash}"})});</script>`}
 function json(data,status=200){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}
 function adminAuth(request,env){return !!env.ADMIN_TOKEN&&(request.headers.get('authorization')||'')===`Bearer ${env.ADMIN_TOKEN}`}
 async function withLocaleTracking(response,url){
-  if(!response||!url.pathname.startsWith('/fr/'))return response;
+  if(!response)return response;
+  const locale=url.pathname.match(/^\/(uk|ru|pl|en|sv|de|es|fr)(?:\/|$)/)?.[1];
+  const hash=locale&&METRICOOL_HASHES[locale];
+  if(!hash)return response;
   const type=response.headers.get('content-type')||'';
   if(!type.includes('text/html'))return response;
   const html=await response.text();
-  if(html.includes('ae56143c509d953161c3599111b6d55d'))return new Response(html,{status:response.status,statusText:response.statusText,headers:response.headers});
-  const tracked=html.includes('</head>')?html.replace('</head>',`${METRICOOL_FR}</head>`):html;
+  if(html.includes(hash))return new Response(html,{status:response.status,statusText:response.statusText,headers:response.headers});
+  const tracked=html.includes('</head>')?html.replace('</head>',`${metricoolScript(hash)}</head>`):html;
   const headers=new Headers(response.headers);headers.delete('content-length');
   return new Response(tracked,{status:response.status,statusText:response.statusText,headers});
 }

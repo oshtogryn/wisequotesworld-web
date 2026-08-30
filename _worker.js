@@ -1,6 +1,7 @@
 import legacyWorker from './_worker_legacy.js';
 import {syncCanonicalRules} from './lib/canonical_rules.js';
 import {siteV2} from './lib/site_v2.js';
+import {quoteDetailV3} from './lib/quote_detail_v3.js';
 import {productionConsoleApi} from './lib/production_console_api.js';
 import {ensureLegacyContentMigrated} from './lib/legacy_content_migration.js';
 import {ensureWQ011SitePublished} from './lib/wq011_site_publish.js';
@@ -99,6 +100,8 @@ export default {
       if(reset&&request.method==='POST')return hardResetPreparedTopic(request,env,reset[1]);
       const productionResponse=await productionConsoleApi(request,env);
       if(productionResponse)return productionResponse;
+      const detailResponse=await quoteDetailV3(request,env);
+      if(detailResponse)return detailResponse;
       const publicResponse=await siteV2(request,env);
       if(publicResponse)return publicResponse;
       return legacyWorker.fetch(request,env,ctx);

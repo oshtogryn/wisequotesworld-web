@@ -13,8 +13,19 @@ let legacyMigrationChecked=false;
 let wq011SitePublishChecked=false;
 let wq011PromptSyncChecked=false;
 
+const METRICOOL_FR=`<script>function loadScript(a){var b=document.getElementsByTagName("head")[0],c=document.createElement("script");c.type="text/javascript",c.src="https://tracker.metricool.com/resources/be.js",c.onreadystatechange=a,c.onload=a,b.appendChild(c)}loadScript(function(){beTracker.t({hash:"ae56143c509d953161c3599111b6d55d"})});</script>`;
 function json(data,status=200){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}
 function adminAuth(request,env){return !!env.ADMIN_TOKEN&&(request.headers.get('authorization')||'')===`Bearer ${env.ADMIN_TOKEN}`}
+async function withLocaleTracking(response,url){
+  if(!response||!url.pathname.startsWith('/fr/'))return response;
+  const type=response.headers.get('content-type')||'';
+  if(!type.includes('text/html'))return response;
+  const html=await response.text();
+  if(html.includes('ae56143c509d953161c3599111b6d55d'))return new Response(html,{status:response.status,statusText:response.statusText,headers:response.headers});
+  const tracked=html.includes('</head>')?html.replace('</head>',`${METRICOOL_FR}</head>`):html;
+  const headers=new Headers(response.headers);headers.delete('content-length');
+  return new Response(tracked,{status:response.status,statusText:response.statusText,headers});
+}
 async function tryDelete(env,sql,...args){try{const r=await env.DB.prepare(sql).bind(...args).run();return {ok:true,changes:r?.meta?.changes??null}}catch(e){return {ok:false,error:String(e?.message||e)}}}
 async function hardResetPreparedTopic(request,env,id){
   if(!adminAuth(request,env))return json({ok:false,error:'unauthorized'},401);
@@ -80,27 +91,13 @@ export default {
   async fetch(request,env,ctx){
     try{
       const url=new URL(request.url);
-      if(env.DB && !rulesSynced){
-        await syncCanonicalRules(env);
-        rulesSynced=true;
-      }
-      if(env.DB && !legacyMigrationChecked){
-        await ensureLegacyContentMigrated(env);
-        legacyMigrationChecked=true;
-      }
-      if(env.DB && !wq011SitePublishChecked){
-        await ensureWQ011SitePublished(env);
-        wq011SitePublishChecked=true;
-      }
-      if(env.DB && !wq011PromptSyncChecked){
-        await ensureWQ011PromptsSynced(env);
-        wq011PromptSyncChecked=true;
-      }
+      if(env.DB && !rulesSynced){await syncCanonicalRules(env);rulesSynced=true;}
+      if(env.DB && !legacyMigrationChecked){await ensureLegacyContentMigrated(env);legacyMigrationChecked=true;}
+      if(env.DB && !wq011SitePublishChecked){await ensureWQ011SitePublished(env);wq011SitePublishChecked=true;}
+      if(env.DB && !wq011PromptSyncChecked){await ensureWQ011PromptsSynced(env);wq011PromptSyncChecked=true;}
       await publishExplicitWQ006(env);
       if(url.pathname==='/ops/readback/wq011-prompts.json'&&request.method==='GET')return json(await readbackWQ011Prompts(env));
-      if(url.pathname==='/admin'||url.pathname==='/admin/'){
-        return Response.redirect(`${url.origin}/admin/console/`,302);
-      }
+      if(url.pathname==='/admin'||url.pathname==='/admin/')return Response.redirect(`${url.origin}/admin/console/`,302);
       const approvedMediaMatch=url.pathname.match(/^\/media\/approved\/([A-Za-z0-9_-]+)\/(uk|ru|pl|en|sv|de|es|fr)\/(video|pinterest)$/);
       if(approvedMediaMatch&&request.method==='GET')return approvedMedia(request,env,approvedMediaMatch[1],approvedMediaMatch[2],approvedMediaMatch[3]);
       const reset=url.pathname.match(/^\/api\/admin\/prepared\/reset\/(WQ006|WQ011)$/);
@@ -108,10 +105,10 @@ export default {
       const productionResponse=await productionConsoleApi(request,env);
       if(productionResponse)return productionResponse;
       const detailResponse=await quoteDetailV3(request,env);
-      if(detailResponse)return detailResponse;
+      if(detailResponse)return withLocaleTracking(detailResponse,url);
       const publicResponse=await siteV2(request,env);
-      if(publicResponse)return publicResponse;
-      return legacyWorker.fetch(request,env,ctx);
+      if(publicResponse)return withLocaleTracking(publicResponse,url);
+      return withLocaleTracking(await legacyWorker.fetch(request,env,ctx),url);
     }catch(e){
       return new Response(JSON.stringify({ok:false,error:String(e?.message||e)}),{status:500,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
     }

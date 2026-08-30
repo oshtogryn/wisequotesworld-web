@@ -1,6 +1,6 @@
 # MASTER RULES — Wise Quotes World
 
-Останнє оновлення: 2026-08-29
+Останнє оновлення: 2026-08-30
 Статус: CANONICAL
 Версія: database-first v4.5
 
@@ -14,7 +14,9 @@
 7. Перед новою темою читати актуальний MASTER_RULES.
 
 ## 2. Мови
-uk, ru, pl, en, sv, de, es, fr. FR active website/Pinterest; FB/IG/Threads/TikTok/YouTube не планувати до підключення FR каналів. Pinterest для FR активний і є обов’язковим так само, як для інших мов.
+uk, ru, pl, en, sv, de, es, fr.
+
+Усі 8 мов активні для website, Pinterest, Facebook, Instagram, Threads, TikTok і YouTube. Попереднє обмеження FR лише до website/Pinterest скасоване після створення французьких каналів. Для повної production readiness французька тепер проходить ті самі social/media gates, що й інші 7 мов.
 
 ## 3. Контент
 Одна думка = один content_id, 8 localizations. Є два принципово різні production types:
@@ -30,7 +32,7 @@ uk, ru, pl, en, sv, de, es, fr. FR active website/Pinterest; FB/IG/Threads/TikTo
 ## 5. Workflow
 `idea -> source_check -> quote_length_qa -> quote_ready -> localized -> native_language_qa -> prompt_ready -> copy_ready -> website_ready -> pinterest_ready -> media_pending -> media_ready -> approved -> scheduled -> published -> analytics`.
 
-## 6. Gemini/Veo video prompt — PRODUCTION STANDARD v4.3
+## 6. Gemini/Veo video prompt — PRODUCTION STANDARD v4.5
 WQ006 RU successful generation is the confirmed benchmark for `adapted`. Короткий, прямий, структурований prompt працює краще за перевантажений prompt із внутрішніми QA-командами.
 
 ### Mandatory structure
@@ -52,7 +54,7 @@ WQ006 RU successful generation is the confirmed benchmark for `adapted`. Кор�
 - Use a distinct premium “Great / Winged Quotes” author-specific treatment only when author, source and original wording are verified.
 - Keep the author recognizably central through a dignified portrait/sculpture/art-historical treatment appropriate to that person and period; never imply fake authentic historical footage.
 - Do not make it a static museum slideshow. Give the quote its own cinematic visual metaphor and micro-dramaturgy: immediate hook → visual pressure/question → transformation/reveal synchronized with the meaning → strong final author attribution.
-- Camera, light, environment and symbolic details should *tell the thought*, not merely decorate the author. For a quote about adversity/strength, for example, pressure/cracks/darkness-to-light may support the idea; for another author/quote invent a different metaphor rather than mechanically reusing Nietzsche’s cracks or lighting.
+- Camera, light, environment and symbolic details should tell the thought, not merely decorate the author. For a quote about adversity/strength, pressure/cracks/darkness-to-light may support the idea; for another author/quote invent a different metaphor rather than mechanically reusing Nietzsche’s cracks or lighting.
 - Premium, restrained, intellectual/editorial tone; avoid superhero aesthetics, generic motivational-ad clichés and excessive melodrama.
 - Quote wording remains exact. Attribution is explicit. If the quote benefits from semantic pacing, the exact quote may be split across up to two stable sequential text cards without changing, adding or paraphrasing words; author attribution may follow as the final stable card. Do not split merely for decoration.
 - This author-specific family is NOT a replacement for the adapted/WQ006 family.
@@ -88,10 +90,10 @@ QA happens AFTER generation, not inside prompt. REJECT for wrong/missing text, b
 ## 8. Pinterest
 2:3 target 1000×1500; finished image contains exact localized quote; mobile-readable typography; no unrelated text/random letters/watermark; no generated Wise Quotes World logo by default. Same anti-leak rule: no letter-by-letter diagnostics or lists of misspellings. User generates manually → Admin upload → R2 → QA → approval.
 
-Pinterest is a MANDATORY publication channel for every approved Wise Quotes World topic in all 8 languages. Each locale must have its own Pinterest image, localized SEO title, localized description, exact same-language article destination, and correct locale board. FR Pinterest remains active even while FR FB/IG/Threads/TikTok/YouTube are disabled.
+Pinterest is a MANDATORY publication channel for every approved Wise Quotes World topic in all 8 languages. Each locale must have its own Pinterest image, localized SEO title, localized description, exact same-language article destination, and correct locale board.
 
 ## 9. Required outputs
-For each language: localized quote, Gemini/Veo prompt using the correct `adapted` or `verbatim` family, voiceover/on-screen text, Pinterest prompt, Facebook, Instagram, 3 Threads, TikTok, YouTube title+description, Pinterest title+description, localized article URL, substantive website reflection. FR prepared fully.
+For each language: localized quote, Gemini/Veo prompt using the correct `adapted` or `verbatim` family, voiceover/on-screen text, Pinterest prompt, Facebook, Instagram, 3 Threads, TikTok, YouTube title+description, Pinterest title+description, localized article URL, substantive website reflection.
 
 ## 10. Social copy
 Funnel: social → exact localized article → deeper reflection/more Wise Quotes. Never homepage when localized article exists; never cross-language. Posts must be self-contained and substantive. Working targets: Facebook 550–1000 chars; Instagram 400–800; Threads 3 independent posts; TikTok 250–500; YouTube 2–4 substantive sentences; Pinterest SEO-natural title + 2–4 sentences. Check actual platform limits before scheduling.
@@ -108,7 +110,7 @@ D1 database-first. New approved content should not require manual deploy. 8 loca
 R2 canonical binaries; D1 metadata. Upload once/reuse. User generates video/Pinterest manually and uploads via Admin.
 
 ## 14. Admin
-Create/edit topic, 8 localizations, prompts, copy, article/URL, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Empty author = NO AUTHOR everywhere.
+Create/edit topic, 8 localizations, prompts, copy, article/URL, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Media batch upload must support both video and Pinterest creative for all 8 locales, including FR. Empty author = NO AUTHOR everywhere.
 
 ## 15. Scheduling
 Metricool PRIMARY during stabilization. No `scheduled` without Planner readback. Before scheduling verify article opens, CTA, media QA PASS, approval, network/date/time/timezone/text/media.
@@ -116,17 +118,20 @@ Metricool PRIMARY during stabilization. No `scheduled` without Planner readback.
 ### Pinterest scheduling gate — HARD
 - Every approved topic must be checked for Pinterest before the topic can be considered fully scheduled.
 - Required Pinterest coverage is **8/8 locales: uk, ru, pl, en, sv, de, es, fr**.
-- FR exception applies only to FB/IG/Threads/TikTok/YouTube; it NEVER disables Pinterest.
 - Use the exact locale board ID/name from canonical routing and the exact live same-language D1 article URL as `pinLink`.
 - Use the approved Pinterest image from R2/D1 media, not the social video frame unless explicitly approved as the Pinterest creative.
-- Planner readback must confirm every Pinterest post. A topic with social posts scheduled but missing Pinterest is **NOT fully scheduled**.
+- Planner readback must confirm every Pinterest post. A topic with social posts scheduled but missing Pinterest is NOT fully scheduled.
 - When reporting a completed scheduling batch, report Pinterest separately and include its 8/8 status.
 
+### Social scheduling gate — HARD
+- Social coverage is now **8/8 locales: uk, ru, pl, en, sv, de, es, fr** for Facebook, Instagram, Threads, TikTok and YouTube where connected.
+- FR must have the same required video, platform copy, locale URL, media QA and Planner readback as the other active locales.
+
 ## 16. Analytics
-24h/72h/7d/30d by language/platform/category/quote_type/author/creative/time.
+24h/72h/7d/30d by language/platform/category/quote_type/author/creative/time. Each locale website must use the corresponding Metricool web tracker so traffic is not mixed across languages.
 
 ## 17. Standard command protocol
-`наступна цитата` / `готуй наступну` / `працюємо по правилах` = read MASTER_RULES + D1 → determine `adapted` vs verified `verbatim` → source/quote QA → duration gate → 8 native localizations → 8 Gemini/Veo prompts using the matching prompt family (§6A) → 8 Pinterest prompts → full social copy + localized URLs → website reflection → D1 → user media generation/upload → media QA outside prompt → approval → Metricool schedule including Pinterest 8/8 → Planner readback for all networks including Pinterest → analytics.
+`наступна цитата` / `готуй наступну` / `працюємо по правилах` = read MASTER_RULES + D1 → determine `adapted` vs verified `verbatim` → source/quote QA → duration gate → 8 native localizations → 8 Gemini/Veo prompts using the matching prompt family (§6A) → 8 Pinterest prompts → full social copy + localized URLs → website reflection → D1 → user media generation/upload → media QA outside prompt → approval → Metricool schedule for all 8 active social locales including Pinterest 8/8 → Planner readback for all networks including Pinterest → analytics.
 
 ## 18. Validation/fail-safe
 Adapted no author; verbatim verified author/source/original. Technically complete but failed native/exact-text/editorial/media QA = NOT production-ready. If API unavailable, preserve confirmed D1 state and mark only blocked step.

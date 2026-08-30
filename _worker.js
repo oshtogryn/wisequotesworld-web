@@ -13,7 +13,16 @@ let legacyMigrationChecked=false;
 let wq011SitePublishChecked=false;
 let wq011PromptSyncChecked=false;
 
-const METRICOOL_HASHES={fr:'ae56143c509d953161c3599111b6d55d',ru:'59444f08c2a0238b2d40a21ae0aea0e0'};
+const METRICOOL_HASHES={
+  uk:'830c345454221aac5e51b0bd4a011207',
+  ru:'59444f08c2a0238b2d40a21ae0aea0e0',
+  pl:'c381513400756762969fc09f5b4fc98c',
+  en:'8f23b8c0f14e3cfa6ff1eddf5ec69c02',
+  sv:'f597d9425c80f6c53ffafa65f05dff2d',
+  de:'8c66131b02cd287e4a0fc92b3ad5381c',
+  es:'452cf36ec8ec1a188325f08c5eab21ff',
+  fr:'ae56143c509d953161c3599111b6d55d'
+};
 function metricoolScript(hash){return `<script>function loadScript(a){var b=document.getElementsByTagName("head")[0],c=document.createElement("script");c.type="text/javascript",c.src="https://tracker.metricool.com/resources/be.js",c.onreadystatechange=a,c.onload=a,b.appendChild(c)}loadScript(function(){beTracker.t({hash:"${hash}"})});</script>`}
 function json(data,status=200){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}
 function adminAuth(request,env){return !!env.ADMIN_TOKEN&&(request.headers.get('authorization')||'')===`Bearer ${env.ADMIN_TOKEN}`}

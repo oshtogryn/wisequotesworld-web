@@ -1,0 +1,39 @@
+name: WQ011 production readback
+on:
+  push:
+    branches: [main]
+    paths:
+      - '_worker.js'
+      - 'lib/production_console_api.js'
+      - 'lib/canonical_rules.js'
+      - 'admin/console/app.js'
+      - 'ops/MASTER_RULES.md'
+      - '.github/workflows/wq011-production-readback.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  readback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for production deploy
+        run: sleep 45
+      - name: Read D1 production state
+        run: |
+          mkdir -p ops/readback
+          curl --fail --retry 6 --retry-delay 10 --max-time 30 https://wisequotesworld.com/ops/readback/wq011-production.json -o ops/readback/WQ011-production-d1.json
+          python - <<'PY'
+          import json
+          p=json.load(open('ops/readback/WQ011-production-d1.json'))
+          assert p['production']['ok'] is True
+          assert p['rules']['ok'] is True
+          print(json.dumps(p,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit readback
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add ops/readback/WQ011-production-d1.json
+          git diff --cached --quiet || git commit -m 'Record WQ011 production D1 readback'
+          git push

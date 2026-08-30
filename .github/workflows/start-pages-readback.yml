@@ -1,0 +1,61 @@
+name: Start pages live readback
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'start/**'
+      - 'uk/start/**'
+      - 'ru/start/**'
+      - 'pl/start/**'
+      - 'en/start/**'
+      - 'sv/start/**'
+      - 'de/start/**'
+      - 'es/start/**'
+      - 'fr/start/**'
+      - '.github/workflows/start-pages-readback.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for Pages deployment
+        run: sleep 40
+      - name: Verify start pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          report=ops/readback/start-pages-live.txt
+          : > "$report"
+          check(){
+            url="$1"; shift
+            out=$(mktemp)
+            code=$(curl -L -sS -o "$out" -w '%{http_code}' --retry 8 --retry-all-errors --retry-delay 5 "$url" || true)
+            ok=1
+            [[ "$code" == "200" ]] || ok=0
+            for needle in "$@"; do grep -Fq "$needle" "$out" || ok=0; done
+            if [[ "$ok" == 1 ]]; then echo "PASS $url" | tee -a "$report"; else echo "FAIL code=$code $url" | tee -a "$report"; cat "$out" | head -c 1200 >> "$report"; echo >> "$report"; return 1; fi
+          }
+          check 'https://wisequotesworld.com/start/' '2,085' '1,084' 'Français'
+          check 'https://wisequotesworld.com/uk/start/' 'Наша спільнота' '1,084' 'Instagram'
+          check 'https://wisequotesworld.com/fr/start/' 'Notre communauté' 'Facebook' 'Instagram' 'YouTube'
+          fr=$(mktemp); curl -L -sS 'https://wisequotesworld.com/fr/start/' -o "$fr"
+          if grep -Fq 'Bientôt disponible' "$fr"; then echo 'FAIL FR still says Bientôt disponible' | tee -a "$report"; exit 1; fi
+          echo "checked_at=$(date -u +%FT%TZ)" | tee -a "$report"
+          echo 'overall=PASS' | tee -a "$report"
+      - name: Commit readback report
+        if: always()
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/start-pages-live.txt || true
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record start pages live readback'
+          git push

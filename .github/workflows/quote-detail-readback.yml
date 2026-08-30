@@ -1,0 +1,56 @@
+name: Quote detail design readback
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '_worker.js'
+      - 'lib/quote_detail_v3.js'
+      - '.github/workflows/quote-detail-readback.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for Pages deployment
+        run: sleep 40
+      - name: Verify premium detail renderer
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          report=ops/readback/quote-detail-design.txt
+          : > "$report"
+          urls=(
+            'https://wisequotesworld.com/uk/quotes/shcho-mene-ne-vbyvaie-robyt-sylnishym-nitsshe/'
+            'https://wisequotesworld.com/en/quotes/what-does-not-kill-me-makes-me-stronger-nietzsche/'
+            'https://wisequotesworld.com/uk/quotes/my-doroslishayemo-batkivskyi-dim/'
+          )
+          ok=1
+          for u in "${urls[@]}"; do
+            out=$(mktemp)
+            code=$(curl -L -sS -o "$out" -w '%{http_code}' --retry 10 --retry-all-errors --retry-delay 5 "$u" || true)
+            bytes=$(wc -c < "$out" | tr -d ' ')
+            if [[ "$code" == "200" ]] && [[ "$bytes" -ge 2500 ]] && grep -q 'detail-hero' "$out" && grep -q 'class="header"' "$out" && grep -q 'langmenu' "$out"; then
+              echo "PASS code=200 bytes=$bytes premium-shell $u" | tee -a "$report"
+            else
+              echo "FAIL code=$code bytes=$bytes $u" | tee -a "$report"
+              ok=0
+            fi
+          done
+          echo "checked_at=$(date -u +%FT%TZ)" | tee -a "$report"
+          if [[ "$ok" == "1" ]]; then echo 'overall=PASS' | tee -a "$report"; else echo 'overall=FAIL' | tee -a "$report"; exit 1; fi
+      - name: Commit readback report
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/quote-detail-design.txt
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record quote detail design readback'
+          git push

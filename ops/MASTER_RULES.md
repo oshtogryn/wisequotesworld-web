@@ -52,7 +52,7 @@ WQ006 RU successful generation is the confirmed benchmark for `adapted`. Кор�
 
 **B. `verbatim` / verified real-author quote**
 - Use a distinct premium author-specific treatment only when author, source and original wording are verified.
-- Keep the author recognizably central through a dignified portrait/sculpture/art-historical treatment appropriate to that person and period; never imply fake authentic historical footage.
+- Keep the author recognizably central through a dignified portrait/sculpture/art-historical treatment appropriate to the person/period; never imply fake authentic historical footage.
 - Do not make it a static museum slideshow. Give the quote its own cinematic visual metaphor and micro-dramaturgy.
 - Premium, restrained, intellectual/editorial tone; avoid superhero aesthetics, generic motivational-ad clichés and excessive melodrama.
 - Quote wording remains exact. Attribution is explicit. Exact quote may be split across up to two stable sequential text cards when semantically justified.
@@ -93,7 +93,7 @@ Platform link routing is mandatory:
 - **Threads:** include the exact same-language article URL directly in the post. It is the clickable funnel to the article.
 - **Instagram Reels:** do NOT put the raw article URL in the video caption/description. Use a natural localized CTA equivalent to “Link in profile”. The locale website link must be configured in the Instagram profile.
 - **YouTube Shorts:** do NOT put the raw article URL in the Shorts description. Use a natural localized CTA equivalent to “Link in profile”. The locale website link must be configured in the YouTube channel profile.
-- **TikTok:** do NOT put the raw article URL in the video caption/description. Use the localized profile-link CTA requested for current production. If a specific TikTok account does not yet expose a website/profile link, the CTA must not falsely imply a clickable website link exists; use a follow/brand CTA until the profile link becomes available.
+- **TikTok:** keep the locale website address in the video caption/description as visible plain text even when TikTok does not make it clickable. Do NOT falsely call it a clickable link or say “link in profile” when the account has no website/profile link. The TikTok CTA may invite the viewer to follow and/or visit the displayed WiseQuotesWorld.com locale address manually.
 - **Pinterest:** pin destination remains the exact same-language article URL via the Pinterest destination-link field; localized description remains SEO-natural.
 - Never send a locale to the homepage or another language when an exact localized article exists.
 
@@ -123,7 +123,7 @@ Metricool PRIMARY during stabilization. No `scheduled` without Planner readback.
 ### Social scheduling gate — HARD
 - Social coverage is 8/8 locales for Facebook, Instagram, Threads, TikTok and YouTube where connected.
 - FR has the same required video, platform copy, locale URL, media QA and Planner readback as other locales.
-- Before scheduling, validate platform link policy in §10: raw article URL only where appropriate; profile CTA where required.
+- Before scheduling, validate platform link policy in §10: Facebook/Threads use direct article URLs; Instagram/YouTube use profile CTA without raw URL; TikTok keeps the visible locale website address as plain text.
 
 ## 16. Analytics
 24h/72h/7d/30d by language/platform/category/quote_type/author/creative/time. Each locale website must use corresponding Metricool web tracker.

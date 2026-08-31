@@ -1,0 +1,10 @@
+PASS 200 bytes=10922 https://wisequotesworld.com/uk/quotes/ty-ne-povynen-stavaty-tym-kym-khochut-bachyty-tebe-inshi/
+PASS 200 bytes=11487 https://wisequotesworld.com/ru/quotes/ty-ne-dolzhen-stanovitsya-tem-kem-khotyat-videt-tebya-drugie/
+PASS 200 bytes=9897 https://wisequotesworld.com/pl/quotes/nie-musisz-byc-taki-jakim-chca-cie-widziec-inni/
+PASS 200 bytes=9909 https://wisequotesworld.com/en/quotes/you-dont-have-to-be-who-others-want-you-to-be/
+PASS 200 bytes=9854 https://wisequotesworld.com/sv/quotes/du-behover-inte-vara-den-som-andra-vill-att-du-ska-vara/
+PASS 200 bytes=10109 https://wisequotesworld.com/de/quotes/du-musst-nicht-so-sein-wie-andere-dich-haben-wollen/
+PASS 200 bytes=10009 https://wisequotesworld.com/es/quotes/no-tienes-que-convertirte-en-quien-los-demas-quieren-que-seas/
+PASS 200 bytes=10193 https://wisequotesworld.com/fr/quotes/tu-nas-pas-a-devenir-la-personne-que-les-autres-veulent-que-tu-sois/
+checked_at=2026-08-31T05:00:37Z
+overall=PASS

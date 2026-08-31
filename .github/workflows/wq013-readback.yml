@@ -25,9 +25,8 @@ jobs:
           cat ops/readback/WQ013-site-d1.json || true
           test "$code" = "200"
           python - <<'PY'
-          import json, urllib.request
-          p='ops/readback/WQ013-site-d1.json'
-          d=json.load(open(p,encoding='utf-8'))
+          import json
+          d=json.load(open('ops/readback/WQ013-site-d1.json',encoding='utf-8'))
           assert d.get('ok') is True, d
           item=d['item']
           assert item['id']=='WQ013'
@@ -38,13 +37,14 @@ jobs:
           pages=d['pages']; assert len(pages)==8, pages
           assert all(x['status']=='published' for x in pages), pages
           prior=d['prior']; assert all(x['status']=='published' for x in prior), prior
-          base='https://wisequotesworld.com'
-          for x in pages:
-              u=base+x['canonical_path']
-              with urllib.request.urlopen(u,timeout=20) as r:
-                  assert r.status==200,(u,r.status)
-          print('PASS WQ013: item media_pending, 8/8 site pages published, prior topics published')
+          open('/tmp/wq013_paths','w').write('\n'.join(x['canonical_path'] for x in pages))
           PY
+          while IFS= read -r path; do
+            code=$(curl -A 'Mozilla/5.0' -L --retry 3 --retry-delay 3 --max-time 30 -sS -o /dev/null -w '%{http_code}' "https://wisequotesworld.com${path}" || true)
+            echo "$path -> $code"
+            test "$code" = "200"
+          done < /tmp/wq013_paths
+          echo 'PASS WQ013: item media_pending, 8/8 site pages published/live, prior topics published'
       - name: Commit readback
         run: |
           git config user.name github-actions

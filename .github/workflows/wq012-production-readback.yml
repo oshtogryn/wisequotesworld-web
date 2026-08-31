@@ -1,0 +1,40 @@
+name: WQ012 production readback
+on:
+  push:
+    branches: [main]
+    paths:
+      - '_worker.js'
+      - 'lib/production_console_api.js'
+      - '.github/workflows/wq012-production-readback.yml'
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for deployment
+        run: sleep 45
+      - name: Read production state
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --retry 8 --retry-all-errors --retry-delay 5 'https://wisequotesworld.com/ops/readback/wq012-production.json' -o ops/readback/WQ012-production-d1.json
+          python - <<'PY'
+          import json
+          p='ops/readback/WQ012-production-d1.json'
+          d=json.load(open(p,encoding='utf-8'))
+          r=d.get('production',{})
+          assert r.get('ok') is True, d
+          print('ready_for_metricool=',r.get('ready_for_metricool'))
+          for x in r.get('languages',[]):
+              print(x.get('language'), x.get('readiness'), x.get('video'), x.get('pinterest'))
+          PY
+      - name: Commit readback
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/WQ012-production-d1.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record WQ012 production readback'
+          git push

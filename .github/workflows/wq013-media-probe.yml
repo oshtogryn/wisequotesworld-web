@@ -1,0 +1,22 @@
+name: WQ013 media probe
+on:
+  push:
+    branches: [main]
+    paths:
+      - '_worker.js'
+      - '.github/workflows/wq013-media-probe.yml'
+  workflow_dispatch:
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for deployment
+        run: sleep 45
+      - name: Probe media
+        run: |
+          set -x
+          curl -sSIL --max-time 30 -A 'Mozilla/5.0' 'https://wisequotesworld.com/media/approved/WQ013/uk/video.mov'
+          curl -sSIL --max-time 30 -A 'Mozilla/5.0' 'https://wisequotesworld.com/media/approved/WQ013/uk/pinterest.png'
+          curl -sS --max-time 30 -A 'Mozilla/5.0' -r 0-31 -D - 'https://wisequotesworld.com/media/approved/WQ013/uk/video.mov' -o /tmp/video.bin
+          wc -c /tmp/video.bin

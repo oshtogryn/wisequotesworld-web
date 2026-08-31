@@ -1,0 +1,52 @@
+name: WQ013 live readback
+on:
+  push:
+    branches: [main]
+    paths:
+      - '_worker.js'
+      - 'lib/wq013_site_publish.js'
+      - '.github/workflows/wq013-readback.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for deployment
+        run: sleep 50
+      - name: Verify WQ013 D1 and 8 pages
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl --fail --retry 8 --retry-delay 8 --max-time 30 -sS 'https://wisequotesworld.com/ops/readback/wq013-site.json' -o ops/readback/WQ013-site-d1.json
+          python - <<'PY'
+          import json, urllib.request
+          p='ops/readback/WQ013-site-d1.json'
+          d=json.load(open(p,encoding='utf-8'))
+          assert d.get('ok') is True, d
+          item=d['item']
+          assert item['id']=='WQ013'
+          assert item['status']=='media_pending', item
+          assert item['quote_type']=='verbatim', item
+          assert item['author_name']=='Epictetus', item
+          assert item['attribution_status']=='verified', item
+          pages=d['pages']; assert len(pages)==8, pages
+          assert all(x['status']=='published' for x in pages), pages
+          prior=d['prior']; assert all(x['status']=='published' for x in prior), prior
+          base='https://wisequotesworld.com'
+          for x in pages:
+              u=base+x['canonical_path']
+              with urllib.request.urlopen(u,timeout=20) as r:
+                  assert r.status==200,(u,r.status)
+          print('PASS WQ013: item media_pending, 8/8 site pages published, prior topics published')
+          PY
+      - name: Commit readback
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add ops/readback/WQ013-site-d1.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record WQ013 live readback'
+          git push

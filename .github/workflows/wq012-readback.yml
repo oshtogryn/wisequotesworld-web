@@ -1,0 +1,80 @@
+name: WQ012 live readback
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '_worker.js'
+      - 'lib/wq012_site_publish.js'
+      - '.github/workflows/wq012-readback.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for Pages deployment
+        run: sleep 35
+      - name: Verify WQ012 D1 readback and 8 localized URLs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          json=ops/readback/WQ012-site-d1.json
+          report=ops/readback/WQ012-live.txt
+          curl -L -sS --retry 8 --retry-all-errors --retry-delay 5 'https://wisequotesworld.com/ops/readback/wq012-site.json' -o "$json"
+          python - <<'PY'
+          import json
+          p='ops/readback/WQ012-site-d1.json'
+          d=json.load(open(p,encoding='utf-8'))
+          assert d.get('ok') is True, d
+          assert d.get('item',{}).get('id')=='WQ012', d
+          assert d.get('item',{}).get('status')=='published', d
+          assert d.get('item',{}).get('quote_type')=='adapted', d
+          assert d.get('item',{}).get('author_name') is None, d
+          pages=d.get('pages',[])
+          assert len(pages)==8, pages
+          assert all(x.get('status')=='published' for x in pages), pages
+          versions=d.get('versions',[])
+          assert len(versions)==8, versions
+          assert all(x.get('language_check_status')=='native_qa_pass' for x in versions), versions
+          print('D1 PASS: WQ012 published 8/8, adapted, no author, native QA 8/8')
+          PY
+          : > "$report"
+          urls=(
+            'https://wisequotesworld.com/uk/quotes/ty-ne-povynen-stavaty-tym-kym-khochut-bachyty-tebe-inshi/'
+            'https://wisequotesworld.com/ru/quotes/ty-ne-dolzhen-stanovitsya-tem-kem-khotyat-videt-tebya-drugie/'
+            'https://wisequotesworld.com/pl/quotes/nie-musisz-byc-taki-jakim-chca-cie-widziec-inni/'
+            'https://wisequotesworld.com/en/quotes/you-dont-have-to-be-who-others-want-you-to-be/'
+            'https://wisequotesworld.com/sv/quotes/du-behover-inte-vara-den-som-andra-vill-att-du-ska-vara/'
+            'https://wisequotesworld.com/de/quotes/du-musst-nicht-so-sein-wie-andere-dich-haben-wollen/'
+            'https://wisequotesworld.com/es/quotes/no-tienes-que-convertirte-en-quien-los-demas-quieren-que-seas/'
+            'https://wisequotesworld.com/fr/quotes/tu-nas-pas-a-devenir-la-personne-que-les-autres-veulent-que-tu-sois/'
+          )
+          ok=1
+          for u in "${urls[@]}"; do
+            out=$(mktemp)
+            code=$(curl -L -sS -o "$out" -w '%{http_code}' --retry 8 --retry-all-errors --retry-delay 5 "$u" || true)
+            bytes=$(wc -c < "$out" | tr -d ' ')
+            if [[ "$code" == "200" ]] && [[ "$bytes" -ge 700 ]] && grep -qi 'Wise Quotes World' "$out"; then
+              echo "PASS 200 bytes=$bytes $u" | tee -a "$report"
+            else
+              echo "FAIL code=$code bytes=$bytes $u" | tee -a "$report"
+              ok=0
+            fi
+          done
+          echo "checked_at=$(date -u +%FT%TZ)" | tee -a "$report"
+          if [[ "$ok" != "1" ]]; then echo "overall=FAIL" | tee -a "$report"; exit 1; else echo "overall=PASS" | tee -a "$report"; fi
+      - name: Commit readback report
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/WQ012-site-d1.json ops/readback/WQ012-live.txt
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record WQ012 live website readback'
+          git push

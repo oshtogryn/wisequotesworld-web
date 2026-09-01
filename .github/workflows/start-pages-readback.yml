@@ -24,19 +24,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Wait for Pages deployment
+      - name: Wait for production propagation
         run: sleep 40
-      - name: Verify start pages
+      - name: Verify DNS and start pages
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p ops/readback
           report=ops/readback/start-pages-live.txt
           : > "$report"
+
+          echo 'DNS wisequotesworld.com:' | tee -a "$report"
+          if ! getent ahostsv4 wisequotesworld.com | awk '{print $1}' | sort -u | tee -a "$report" | grep -qE '^[0-9]+\.'; then
+            echo 'FAIL dns=unresolved wisequotesworld.com' | tee -a "$report"
+            exit 1
+          fi
+
           check(){
             url="$1"; shift
             out=$(mktemp)
-            code=$(curl -L -sS -o "$out" -w '%{http_code}' --retry 8 --retry-all-errors --retry-delay 5 "$url" || true)
+            code=$(curl -L -sS -o "$out" -w '%{http_code}' --connect-timeout 10 --max-time 30 --retry 8 --retry-all-errors --retry-delay 5 "$url" || true)
             ok=1
             [[ "$code" == "200" ]] || ok=0
             for needle in "$@"; do grep -Fq "$needle" "$out" || ok=0; done

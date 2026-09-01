@@ -1,3 +1,6 @@
+DNS wisequotesworld.com:
+104.21.57.154
+172.67.146.223
 PASS https://wisequotesworld.com/start/
 PASS https://wisequotesworld.com/uk/start/
 PASS https://wisequotesworld.com/ru/start/
@@ -8,5 +11,5 @@ PASS https://wisequotesworld.com/de/start/
 PASS https://wisequotesworld.com/es/start/
 PASS https://wisequotesworld.com/fr/start/
 PASS https://wisequotesworld.com/start/localized.js?v=20260831-0805
-checked_at=2026-09-01T06:10:30Z
+checked_at=2026-09-01T08:33:12Z
 overall=PASS

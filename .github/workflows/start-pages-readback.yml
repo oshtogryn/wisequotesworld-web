@@ -42,10 +42,19 @@ jobs:
             for needle in "$@"; do grep -Fq "$needle" "$out" || ok=0; done
             if [[ "$ok" == 1 ]]; then echo "PASS $url" | tee -a "$report"; else echo "FAIL code=$code $url" | tee -a "$report"; cat "$out" | head -c 1600 >> "$report"; echo >> "$report"; return 1; fi
           }
-          check 'https://wisequotesworld.com/start/' '2,085' '1,084' 'Français' 'Site et canaux officiels'
-          check 'https://wisequotesworld.com/uk/start/' 'localized.js?v=20260830-1255'
-          check 'https://wisequotesworld.com/fr/start/' 'localized.js?v=20260830-1255' 'site et canaux officiels'
-          check 'https://wisequotesworld.com/start/localized.js?v=20260830-1255' 'Наша спільнота' 'Notre communauté' '1193265527213860' 'UCgjDE4kSf-THoL7OuxU-Kfw' 'fr:{facebook:0,instagram:0,threads:0,tiktok:0,youtube:0,pinterest:0}'
+          check 'https://wisequotesworld.com/start/' '1,081' '250' '109' '103' '33' '213' '329' 'Français <b>5</b>'
+          for l in uk ru pl en sv de es fr; do
+            check "https://wisequotesworld.com/$l/start/" 'localized.js?v=20260831-0805'
+          done
+          check 'https://wisequotesworld.com/start/localized.js?v=20260831-0805' \
+            'uk:{facebook:8,instagram:942,threads:42,tiktok:53,youtube:36}' \
+            'ru:{facebook:6,instagram:44,threads:13,tiktok:88,youtube:99}' \
+            'pl:{facebook:15,instagram:17,threads:6,tiktok:39,youtube:32}' \
+            'en:{facebook:12,instagram:17,threads:10,tiktok:31,youtube:33}' \
+            'sv:{facebook:4,instagram:9,threads:6,tiktok:10,youtube:4}' \
+            'de:{facebook:19,instagram:106,threads:4,tiktok:61,youtube:23}' \
+            'es:{facebook:27,instagram:197,threads:3,tiktok:11,youtube:91}' \
+            'fr:{facebook:0,instagram:0,threads:0,tiktok:0,youtube:5}'
           echo "checked_at=$(date -u +%FT%TZ)" | tee -a "$report"
           echo 'overall=PASS' | tee -a "$report"
       - name: Commit readback report

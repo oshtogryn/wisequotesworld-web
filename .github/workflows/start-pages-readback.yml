@@ -46,8 +46,6 @@ jobs:
             delay=15
             for attempt in $(seq 1 "$attempts"); do
               out=$(mktemp)
-              code=$(curl -L -sS -o "$out" -w '%{http_code}' --connect-timeout 10 --max-time 30 --retry 3 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' "${url}${url#*\?}" >/dev/null 2>&1 && true)
-              # Fetch again with a unique cache-buster while preserving the original URL semantics.
               sep='?'; [[ "$url" == *\?* ]] && sep='&'
               code=$(curl -L -sS -o "$out" -w '%{http_code}' --connect-timeout 10 --max-time 30 --retry 3 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' "${url}${sep}rb=$(date +%s)-${attempt}" || true)
               ok=1

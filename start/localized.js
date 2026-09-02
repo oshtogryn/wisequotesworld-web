@@ -21,7 +21,7 @@
     fr:{facebook:'https://www.facebook.com/1193265527213860',instagram:'https://www.instagram.com/wisequotes.fr/',threads:'https://www.threads.com/@wisequotes.fr',tiktok:'https://www.tiktok.com/@wisequotes.fr',youtube:'https://www.youtube.com/channel/UCgjDE4kSf-THoL7OuxU-Kfw',pinterest:'https://www.pinterest.com/wisequotesworld/'}
   };
   const S={
-    uk:{facebook:8,instagram:942,threads:42,tiktok:53,youtube:36},ru:{facebook:6,instagram:44,threads:13,tiktok:88,youtube:99},pl:{facebook:15,instagram:17,threads:6,tiktok:39,youtube:32},en:{facebook:12,instagram:17,threads:10,tiktok:31,youtube:33},sv:{facebook:4,instagram:9,threads:6,tiktok:10,youtube:4},de:{facebook:19,instagram:106,threads:4,tiktok:61,youtube:23},es:{facebook:27,instagram:197,threads:3,tiktok:11,youtube:91},fr:{facebook:0,instagram:0,threads:0,tiktok:0,youtube:5}
+    uk:{facebook:8,instagram:940,threads:42,tiktok:54,youtube:36},ru:{facebook:7,instagram:44,threads:13,tiktok:90,youtube:102},pl:{facebook:16,instagram:17,threads:6,tiktok:40,youtube:34},en:{facebook:12,instagram:17,threads:10,tiktok:33,youtube:33},sv:{facebook:4,instagram:9,threads:6,tiktok:10,youtube:4},de:{facebook:19,instagram:106,threads:4,tiktok:64,youtube:24},es:{facebook:27,instagram:197,threads:3,tiktok:12,youtube:93},fr:{facebook:0,instagram:0,threads:0,tiktok:2,youtube:11}
   };
   const A=T[l]||T.en,links=R[l]||R.en,stats=S[l]||S.en;
   const contactEmail='wisequotesofworld@gmail.com';

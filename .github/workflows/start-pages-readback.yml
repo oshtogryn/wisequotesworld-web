@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Wait for production propagation
-        run: sleep 40
+        run: sleep 45
       - name: Verify DNS and start pages
         shell: bash
         run: |
@@ -42,13 +42,36 @@ jobs:
 
           check(){
             url="$1"; shift
-            out=$(mktemp)
-            code=$(curl -L -sS -o "$out" -w '%{http_code}' --connect-timeout 10 --max-time 30 --retry 8 --retry-all-errors --retry-delay 5 "$url" || true)
-            ok=1
-            [[ "$code" == "200" ]] || ok=0
-            for needle in "$@"; do grep -Fq "$needle" "$out" || ok=0; done
-            if [[ "$ok" == 1 ]]; then echo "PASS $url" | tee -a "$report"; else echo "FAIL code=$code $url" | tee -a "$report"; cat "$out" | head -c 1600 >> "$report"; echo >> "$report"; return 1; fi
+            attempts=12
+            delay=15
+            for attempt in $(seq 1 "$attempts"); do
+              out=$(mktemp)
+              code=$(curl -L -sS -o "$out" -w '%{http_code}' --connect-timeout 10 --max-time 30 --retry 3 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' "${url}${url#*\?}" >/dev/null 2>&1 && true)
+              # Fetch again with a unique cache-buster while preserving the original URL semantics.
+              sep='?'; [[ "$url" == *\?* ]] && sep='&'
+              code=$(curl -L -sS -o "$out" -w '%{http_code}' --connect-timeout 10 --max-time 30 --retry 3 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' "${url}${sep}rb=$(date +%s)-${attempt}" || true)
+              ok=1
+              [[ "$code" == "200" ]] || ok=0
+              for needle in "$@"; do grep -Fq "$needle" "$out" || ok=0; done
+              if [[ "$ok" == 1 ]]; then
+                echo "PASS $url attempt=$attempt" | tee -a "$report"
+                rm -f "$out"
+                return 0
+              fi
+              if [[ "$attempt" -lt "$attempts" ]]; then
+                echo "WAIT stale_or_unready code=$code $url attempt=$attempt/$attempts" | tee -a "$report"
+                rm -f "$out"
+                sleep "$delay"
+              else
+                echo "FAIL code=$code $url attempts=$attempts" | tee -a "$report"
+                cat "$out" | head -c 1600 >> "$report"
+                echo >> "$report"
+                rm -f "$out"
+                return 1
+              fi
+            done
           }
+
           check 'https://wisequotesworld.com/start/' '1,080' '256' '113' '105' '33' '217' '332' 'Français <b>13</b>'
           for l in uk ru pl en sv de es fr; do
             check "https://wisequotesworld.com/$l/start/" 'localized.js?v=20260902-0300'

@@ -7,9 +7,5 @@ PASS https://wisequotesworld.com/ru/start/
 PASS https://wisequotesworld.com/pl/start/
 PASS https://wisequotesworld.com/en/start/
 PASS https://wisequotesworld.com/sv/start/
-PASS https://wisequotesworld.com/de/start/
-PASS https://wisequotesworld.com/es/start/
-PASS https://wisequotesworld.com/fr/start/
-PASS https://wisequotesworld.com/start/localized.js?v=20260831-0805
-checked_at=2026-09-01T14:52:43Z
-overall=PASS
+FAIL code=200 https://wisequotesworld.com/de/start/
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wise Quotes World — Deutscher Start</title><meta name="description" content="Deutsche Startseite von Wise Quotes World: Website und offizielle Kanäle."><link rel="stylesheet" href="/start/start.css?v=20260830-1335"><script>function loadScript(a){var b=document.getElementsByTagName("head")[0],c=document.createElement("script");c.type="text/javascript",c.src="https://tracker.metricool.com/resources/be.js",c.onreadystatechange=a,c.onload=a,b.appendChild(c)}loadScript(function(){beTracker.t({hash:"8c66131b02cd287e4a0fc92b3ad5381c"})});</script></head><body><div id="app"></div><script src="/start/localized.js?v=20260831-0805"></script></body></html>

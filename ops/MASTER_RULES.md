@@ -1,6 +1,6 @@
 # MASTER RULES — Wise Quotes World
 
-Останнє оновлення: 2026-08-31
+Останнє оновлення: 2026-09-03
 Статус: CANONICAL
 Версія: database-first v4.6
 
@@ -87,6 +87,8 @@ For each language: localized quote, Gemini/Veo prompt, voiceover/on-screen text,
 
 ## 10. Social copy + link policy — HARD
 Posts must be self-contained and substantive. Working targets: Facebook 550–1000 chars; Instagram 400–800; Threads 3 independent posts; TikTok 250–500; YouTube 2–4 substantive sentences; Pinterest SEO-natural title + 2–4 sentences. Check actual platform limits before scheduling.
+
+- **Hashtags:** максимум 5 хештегів у будь-якому social post/caption. Використовувати лише релевантні; кількість не є самоціллю. `#WiseQuotesWorld` зберігати, коли доречно.
 
 Platform link routing is mandatory:
 - **Facebook:** include the exact same-language article URL directly in the post. It is the clickable funnel to the article.

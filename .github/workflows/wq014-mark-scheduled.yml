@@ -1,0 +1,67 @@
+name: WQ014 mark scheduled
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/wq014-mark-scheduled.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  mark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire temporary scheduled-status endpoint
+        run: |
+          git pull --rebase
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text(encoding='utf-8')
+          imp="import {markWQ014Scheduled} from './lib/wq014_mark_scheduled.js';\n"
+          anchor="import {readbackWQ014Site} from './lib/wq014_site_publish.js';\n"
+          route="if(url.pathname==='/ops/mark/wq014-scheduled'&&request.method==='POST')return json(await markWQ014Scheduled(env));"
+          route_anchor="if(url.pathname==='/ops/readback/wq014-prompts.json'&&request.method==='GET')"
+          if imp not in s:s=s.replace(anchor,anchor+imp,1)
+          if route not in s:s=s.replace(route_anchor,route+route_anchor,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git commit -m 'Temporarily wire WQ014 scheduled status endpoint'
+          git push
+      - name: Wait for deploy
+        run: sleep 30
+      - name: Mark scheduled and verify D1
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --retry 10 --retry-all-errors --retry-delay 5 -X POST 'https://wisequotesworld.com/ops/mark/wq014-scheduled' -o ops/readback/WQ014-scheduled-state.json
+          cat ops/readback/WQ014-scheduled-state.json
+          curl -L -sS --retry 10 --retry-all-errors --retry-delay 5 'https://wisequotesworld.com/ops/readback/wq014-site.json' -o /tmp/wq014-site.json
+          python - <<'PY'
+          import json
+          d=json.load(open('ops/readback/WQ014-scheduled-state.json',encoding='utf-8'))
+          assert d.get('ok') is True,d
+          assert d.get('item',{}).get('status')=='scheduled',d
+          assert len(d.get('versions',[]))==8 and all(x.get('status')=='scheduled' for x in d['versions']),d
+          s=json.load(open('/tmp/wq014-site.json',encoding='utf-8'))
+          assert s.get('item',{}).get('status')=='scheduled',s
+          print('WQ014 D1 status=scheduled')
+          PY
+      - name: Remove temporary route and commit readback
+        run: |
+          git pull --rebase
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("import {markWQ014Scheduled} from './lib/wq014_mark_scheduled.js';\n",'',1)
+          s=s.replace("if(url.pathname==='/ops/mark/wq014-scheduled'&&request.method==='POST')return json(await markWQ014Scheduled(env));",'',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git add _worker.js ops/readback/WQ014-scheduled-state.json
+          git commit -m 'Record WQ014 scheduled state and clean temp route'
+          git push

@@ -12,24 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Wait for deployment
-        run: sleep 10
       - name: Read current WQ014 production
         run: |
           set -euo pipefail
           mkdir -p ops/readback
           curl -L -sS --retry 8 --retry-all-errors --retry-delay 5 'https://wisequotesworld.com/ops/readback/wq014-production.json' -o ops/readback/WQ014-production-current.json
-          cat ops/readback/WQ014-production-current.json
-          python - <<'PY'
-          import json
-          d=json.load(open('ops/readback/WQ014-production-current.json',encoding='utf-8'))
-          p=d.get('production',{})
-          assert p.get('ok') is True, d
-          print('media_count=',p.get('media_count'))
-          for x in p.get('languages',[]):
-              r=x.get('readiness',{})
-              print(x.get('language'),'video',bool(x.get('video')),'pin',bool(x.get('pinterest')),'qa',r.get('media_qa'))
-          PY
+          python -m json.tool ops/readback/WQ014-production-current.json
       - name: Commit readback
         run: |
           git config user.name 'github-actions[bot]'

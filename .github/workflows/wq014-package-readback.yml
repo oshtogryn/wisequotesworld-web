@@ -1,0 +1,40 @@
+name: WQ014 package readback
+on:
+  push:
+    branches: [main]
+    paths:
+      - '_worker.js'
+      - 'lib/wq014_data.js'
+      - 'lib/wq014_decode.js'
+      - '.github/workflows/wq014-package-readback.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for deployment
+        run: sleep 25
+      - name: Read package summary
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --retry 8 --retry-all-errors --retry-delay 5 'https://wisequotesworld.com/ops/readback/wq014-package.json' -o ops/readback/WQ014-package.json
+          cat ops/readback/WQ014-package.json
+          python - <<'PY'
+          import json
+          p='ops/readback/WQ014-package.json'
+          d=json.load(open(p,encoding='utf-8'))
+          assert d.get('type') in ('object','array'), d
+          print(d)
+          PY
+      - name: Commit readback
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/WQ014-package.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record WQ014 package readback'
+          git push

@@ -1,0 +1,61 @@
+{
+  "ok": true,
+  "pages": [
+    {
+      "language": "de",
+      "url": "https://wisequotesworld.com/de/quotes/sokrates-ungeprueftes-leben/",
+      "http": 200,
+      "body_bytes": 9821,
+      "ok": true
+    },
+    {
+      "language": "en",
+      "url": "https://wisequotesworld.com/en/quotes/socrates-unexamined-life/",
+      "http": 200,
+      "body_bytes": 9776,
+      "ok": true
+    },
+    {
+      "language": "es",
+      "url": "https://wisequotesworld.com/es/quotes/socrates-vida-sin-examen/",
+      "http": 200,
+      "body_bytes": 9699,
+      "ok": true
+    },
+    {
+      "language": "fr",
+      "url": "https://wisequotesworld.com/fr/quotes/socrate-vie-sans-examen/",
+      "http": 200,
+      "body_bytes": 9997,
+      "ok": true
+    },
+    {
+      "language": "pl",
+      "url": "https://wisequotesworld.com/pl/quotes/sokrates-zycie-bez-refleksji/",
+      "http": 200,
+      "body_bytes": 9784,
+      "ok": true
+    },
+    {
+      "language": "ru",
+      "url": "https://wisequotesworld.com/ru/quotes/sokrat-neosmyslennaya-zhizn/",
+      "http": 200,
+      "body_bytes": 11165,
+      "ok": true
+    },
+    {
+      "language": "sv",
+      "url": "https://wisequotesworld.com/sv/quotes/sokrates-liv-utan-sjalvrannsakan/",
+      "http": 200,
+      "body_bytes": 9543,
+      "ok": true
+    },
+    {
+      "language": "uk",
+      "url": "https://wisequotesworld.com/uk/quotes/sokrat-neosmyslene-zhyttia/",
+      "http": 200,
+      "body_bytes": 11077,
+      "ok": true
+    }
+  ]
+}

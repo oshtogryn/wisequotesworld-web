@@ -1,35 +1,21 @@
-name: WQ014 publish and readback
+name: WQ014 website readback
 on:
   push:
     branches: [main]
     paths:
       - '_worker.js'
       - 'lib/wq014_site_publish.js'
-      - 'lib/wq014_data.js'
-      - 'lib/wq014_decode.js'
       - '.github/workflows/wq014-publish-readback.yml'
   workflow_dispatch:
 permissions:
   contents: write
 jobs:
-  publish:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Wait for deployment
         run: sleep 25
-      - name: Publish WQ014 once
-        run: |
-          set -euo pipefail
-          curl -L -sS --retry 8 --retry-all-errors --retry-delay 5 -X POST 'https://wisequotesworld.com/ops/publish/wq014' -o /tmp/wq014-publish.json
-          cat /tmp/wq014-publish.json
-          python - <<'PY'
-          import json
-          d=json.load(open('/tmp/wq014-publish.json',encoding='utf-8'))
-          assert d.get('ok') is True, d
-          assert d.get('versions_count')==8, d
-          assert d.get('pages_count')==8, d
-          PY
       - name: Read D1 and verify live pages
         run: |
           set -euo pipefail

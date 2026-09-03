@@ -1,0 +1,71 @@
+name: WQ014 finalize production
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/wq014-finalize-run.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Temporarily wire finalize endpoint
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text(encoding='utf-8')
+          imp="import {finalizeWQ014} from './lib/wq014_finalize.js';\n"
+          anchor="import {readbackWQ014Site} from './lib/wq014_site_publish.js';\n"
+          route="if(url.pathname==='/ops/finalize/wq014'&&request.method==='POST')return json(await finalizeWQ014(env));"
+          route_anchor="if(url.pathname==='/ops/readback/wq014-site.json'&&request.method==='GET')"
+          if imp not in s:
+              s=s.replace(anchor,anchor+imp,1)
+          if route not in s:
+              s=s.replace(route_anchor,route+route_anchor,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git commit -m 'Temporarily wire WQ014 finalize endpoint'
+          git push
+      - name: Wait for Cloudflare deploy
+        run: sleep 30
+      - name: Finalize and verify
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --retry 10 --retry-all-errors --retry-delay 5 -X POST 'https://wisequotesworld.com/ops/finalize/wq014' -o ops/readback/WQ014-finalize.json
+          cat ops/readback/WQ014-finalize.json
+          curl -L -sS --retry 10 --retry-all-errors --retry-delay 5 'https://wisequotesworld.com/ops/readback/wq014-production.json' -o ops/readback/WQ014-production-final.json
+          python - <<'PY'
+          import json
+          f=json.load(open('ops/readback/WQ014-finalize.json',encoding='utf-8'))
+          assert f.get('ok') is True, f
+          assert f.get('approved_media_count')==16, f
+          p=json.load(open('ops/readback/WQ014-production-final.json',encoding='utf-8'))['production']
+          assert p.get('ok') is True, p
+          assert p.get('approval',{}).get('status')=='approved', p
+          assert p.get('media_count')==16, p
+          assert p.get('ready_for_metricool') is True, p
+          assert all(x.get('readiness',{}).get('ready') is True for x in p.get('languages',[])), p
+          print('WQ014 ready_for_metricool=true')
+          PY
+      - name: Remove temporary endpoint and record readback
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("import {finalizeWQ014} from './lib/wq014_finalize.js';\n",'',1)
+          s=s.replace("if(url.pathname==='/ops/finalize/wq014'&&request.method==='POST')return json(await finalizeWQ014(env));",'',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git pull --rebase
+          git add _worker.js ops/readback/WQ014-finalize.json ops/readback/WQ014-production-final.json
+          git commit -m 'Finalize WQ014 media QA and approval'
+          git push

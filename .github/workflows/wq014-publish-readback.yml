@@ -1,0 +1,64 @@
+name: WQ014 publish and readback
+on:
+  push:
+    branches: [main]
+    paths:
+      - '_worker.js'
+      - 'lib/wq014_site_publish.js'
+      - 'lib/wq014_data.js'
+      - 'lib/wq014_decode.js'
+      - '.github/workflows/wq014-publish-readback.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for deployment
+        run: sleep 25
+      - name: Publish WQ014 once
+        run: |
+          set -euo pipefail
+          curl -L -sS --retry 8 --retry-all-errors --retry-delay 5 -X POST 'https://wisequotesworld.com/ops/publish/wq014' -o /tmp/wq014-publish.json
+          cat /tmp/wq014-publish.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/wq014-publish.json',encoding='utf-8'))
+          assert d.get('ok') is True, d
+          assert d.get('versions_count')==8, d
+          assert d.get('pages_count')==8, d
+          PY
+      - name: Read D1 and verify live pages
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --retry 8 --retry-all-errors --retry-delay 5 'https://wisequotesworld.com/ops/readback/wq014-site.json' -o ops/readback/WQ014-site-d1.json
+          curl -L -sS --retry 8 --retry-all-errors --retry-delay 5 'https://wisequotesworld.com/ops/readback/wq014-production.json' -o ops/readback/WQ014-production-d1.json
+          python - <<'PY'
+          import json, subprocess
+          p='ops/readback/WQ014-site-d1.json'
+          d=json.load(open(p,encoding='utf-8'))
+          assert d.get('ok') is True, d
+          assert d.get('versions_count')==8 and d.get('pages_count')==8, d
+          live=[]
+          for row in d['pages']:
+              path=row['canonical_path']
+              url='https://wisequotesworld.com'+path
+              code=subprocess.check_output(['curl','-L','-sS','--retry','5','--retry-all-errors','--retry-delay','3','-o','/tmp/page.html','-w','%{http_code}',url],text=True).strip()
+              body=open('/tmp/page.html',encoding='utf-8',errors='ignore').read()
+              ok=code=='200' and len(body)>500
+              live.append({'language':row['language_code'],'url':url,'http':int(code),'body_bytes':len(body.encode()),'ok':ok})
+              assert ok,(url,code,len(body))
+          json.dump({'ok':all(x['ok'] for x in live),'pages':live},open('ops/readback/WQ014-live-pages.json','w',encoding='utf-8'),ensure_ascii=False,indent=2)
+          print(json.dumps(live,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit readback
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/WQ014-site-d1.json ops/readback/WQ014-production-d1.json ops/readback/WQ014-live-pages.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Record WQ014 D1 and live website readback'
+          git push

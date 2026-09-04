@@ -29,9 +29,9 @@ jobs:
           PY
       - name: Commit readback
         run: |
-          git pull --rebase
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add ops/readback/WQ015-production.json
           git commit -m 'Refresh WQ015 media readback' || exit 0
+          git pull --rebase
           git push

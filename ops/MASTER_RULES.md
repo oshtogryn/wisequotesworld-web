@@ -1,8 +1,8 @@
 # MASTER RULES — Wise Quotes World
 
-Останнє оновлення: 2026-09-03
+Останнє оновлення: 2026-09-04
 Статус: CANONICAL
-Версія: database-first v4.6
+Версія: database-first v4.7
 
 ## 1. Джерела істини
 1. `ops/MASTER_RULES.md` — канонічне джерело операційних правил.
@@ -14,12 +14,12 @@
 7. Перед новою темою читати актуальний MASTER_RULES.
 
 ## 2. Мови
-uk, ru, pl, en, sv, de, es, fr.
+uk, ru, pl, en, sv, de, es, fr, it, pt (pt-BR).
 
-Усі 8 мов активні для website, Pinterest, Facebook, Instagram, Threads, TikTok і YouTube. Для повної production readiness французька проходить ті самі social/media gates, що й інші 7 мов.
+Усі 10 мов активні для website: uk, ru, pl, en, sv, de, es, fr, it, pt-BR. Італійська та бразильська португальська вже мають повні website-локалізації та індексовані URL; їхні social-канали поки в статусі prepared/inactive до створення й підключення акаунтів. Після підключення it і pt-BR переходять на ті самі social/media/scheduling gates, що й інші активні social locales.
 
 ## 3. Контент
-Одна думка = один content_id, 8 localizations. Є два production types:
+Одна думка = один content_id, 10 website localizations. Є два production types:
 - `adapted` — власні/адаптовані Wise Quotes World думки без автора. Основний established cinematic human/symbolic prompt style.
 - `verbatim` — справжня цитата конкретного автора; тільки verified author + verified source + verified original wording. Для неї діє author-specific visual treatment.
 
@@ -104,26 +104,26 @@ Separate substantive editorial asset: quote; verified attribution when applicabl
 WQ006 final version is the emotional editorial benchmark for adapted content. For verbatim content, include verified attribution/source/original wording and interpret context responsibly.
 
 ## 12. Website/database
-D1 database-first. New approved content should not require manual deploy. 8 locales, archive, quote/category/verified-author pages, sitemap/hreflang/canonical/internal links.
+D1 database-first. New approved content should not require manual deploy. 10 website locales, archive, quote/category/verified-author pages, sitemap/hreflang/canonical/internal links. Social readiness is evaluated only for connected social locales.
 
 ## 13. Media
 R2 canonical binaries; D1 metadata. Upload once/reuse. User generates video/Pinterest manually and uploads via Admin.
 
 ## 14. Admin
-Create/edit topic, 8 localizations, prompts, copy, article/URL, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Media batch upload must support video and Pinterest creative for all 8 locales, including FR. Empty author = NO AUTHOR everywhere.
+Create/edit topic, 10 website localizations, prompts, copy, article/URL, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Social/media requirements apply to connected social locales; it and pt-BR join those gates once their accounts are connected. Empty author = NO AUTHOR everywhere.
 
 ## 15. Scheduling
 Metricool PRIMARY during stabilization. No `scheduled` without Planner readback. Before scheduling verify article opens, CTA, media QA PASS, approval, network/date/time/timezone/text/media.
 
 ### Pinterest scheduling gate — HARD
 - Every approved topic must be checked for Pinterest before the topic can be considered fully scheduled.
-- Required Pinterest coverage is 8/8 locales: uk, ru, pl, en, sv, de, es, fr.
+- Required Pinterest coverage follows connected active social locales. The current established social set remains mandatory; target becomes 10/10 after it and pt-BR boards/accounts are connected.
 - Use exact locale board and exact live same-language D1 article URL as `pinLink`.
 - Use approved Pinterest image from R2/D1.
 - Planner readback must confirm every Pinterest post.
 
 ### Social scheduling gate — HARD
-- Social coverage is 8/8 locales for Facebook, Instagram, Threads, TikTok and YouTube where connected.
+- Social coverage is mandatory for every connected locale. it and pt-BR remain prepared/inactive until their accounts are created and connected.
 - FR has the same required video, platform copy, locale URL, media QA and Planner readback as other locales.
 - Before scheduling, validate platform link policy in §10: Facebook/Threads use direct article URLs; Instagram/YouTube use profile CTA without raw URL; TikTok keeps the visible locale website address as plain text.
 

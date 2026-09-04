@@ -7,69 +7,13 @@ on:
 permissions:
   contents: write
 jobs:
-  finalize:
+  diagnose:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Publish 14 D1 localizations
+      - name: Diagnose production publisher
         shell: bash
         run: |
-          set -euo pipefail
-          mkdir -p ops/readback
-          : > /tmp/publish.json
-          ok=0
-          for i in $(seq 1 36); do
-            code=$(curl -L -sS -o /tmp/publish.json -w '%{http_code}' -X POST 'https://wisequotesworld.com/ops/publish/new-locales' || true)
-            bytes=$(wc -c < /tmp/publish.json || true)
-            echo "attempt=$i status=$code bytes=$bytes"
-            if [ "$code" = "200" ] && jq -e '.ok == true and .published == 14' /tmp/publish.json >/dev/null 2>&1; then
-              ok=1
-              break
-            fi
-            sleep 5
-          done
-          test "$ok" = 1
-          cp /tmp/publish.json ops/readback/new-locales-publication.json
-          jq . ops/readback/new-locales-publication.json
-          test "$(jq -r '.counts[] | select(.language=="it") | .count' ops/readback/new-locales-publication.json)" = "7"
-          test "$(jq -r '.counts[] | select(.language=="pt") | .count' ops/readback/new-locales-publication.json)" = "7"
-      - name: Verify locale pages and sitemap
-        shell: bash
-        run: |
-          set -euo pipefail
-          check_url() {
-            local url="$1" code=000
-            for i in $(seq 1 20); do
-              code=$(curl -L -sS -o /dev/null -w '%{http_code}' "$url" || true)
-              if [ "$code" = "200" ]; then return 0; fi
-              sleep 3
-            done
-            echo "FAILED $url status=$code"
-            return 1
-          }
-          check_url 'https://wisequotesworld.com/it/'
-          check_url 'https://wisequotesworld.com/pt/'
-          check_url 'https://wisequotesworld.com/it/quotes/'
-          check_url 'https://wisequotesworld.com/pt/quotes/'
-          check_url 'https://wisequotesworld.com/it/start/'
-          check_url 'https://wisequotesworld.com/pt/start/'
-          jq -r '.results[].canonical_path' ops/readback/new-locales-publication.json | while read -r path; do
-            check_url "https://wisequotesworld.com${path}"
-          done
-          curl -L -sS 'https://wisequotesworld.com/sitemap.xml' -o /tmp/sitemap.xml
-          grep -q 'https://wisequotesworld.com/it/' /tmp/sitemap.xml
-          grep -q 'https://wisequotesworld.com/pt/' /tmp/sitemap.xml
-          jq -r '.results[].canonical_path' ops/readback/new-locales-publication.json | while read -r path; do
-            grep -q "https://wisequotesworld.com${path}" /tmp/sitemap.xml
-          done
-          echo 'Verified IT 7/7 + PT-BR 7/7 and sitemap.'
-      - name: Save production readback
-        shell: bash
-        run: |
-          set -euo pipefail
-          git pull --rebase
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add ops/readback/new-locales-publication.json
-          git commit -m 'Record live IT and PT-BR publication readback' || exit 0
-          git push
+          code=$(curl -L -sS -o /tmp/publish.json -w '%{http_code}' -X POST 'https://wisequotesworld.com/ops/publish/new-locales' || true)
+          echo "HTTP=$code"
+          cat /tmp/publish.json || true

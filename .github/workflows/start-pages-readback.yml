@@ -40,18 +40,16 @@ jobs:
             exit 1
           fi
 
-          check(){
-            url="$1"; shift
+          fetch_match(){
+            url="$1"
+            expected_file="$2"
             attempts=12
             delay=15
             for attempt in $(seq 1 "$attempts"); do
               out=$(mktemp)
               sep='?'; [[ "$url" == *\?* ]] && sep='&'
               code=$(curl -L -sS -o "$out" -w '%{http_code}' --connect-timeout 10 --max-time 30 --retry 3 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' "${url}${sep}rb=$(date +%s)-${attempt}" || true)
-              ok=1
-              [[ "$code" == "200" ]] || ok=0
-              for needle in "$@"; do grep -Fq "$needle" "$out" || ok=0; done
-              if [[ "$ok" == 1 ]]; then
+              if [[ "$code" == "200" ]] && cmp -s "$out" "$expected_file"; then
                 echo "PASS $url attempt=$attempt" | tee -a "$report"
                 rm -f "$out"
                 return 0
@@ -62,27 +60,27 @@ jobs:
                 sleep "$delay"
               else
                 echo "FAIL code=$code $url attempts=$attempts" | tee -a "$report"
-                cat "$out" | head -c 1600 >> "$report"
-                echo >> "$report"
+                echo "expected_sha256=$(sha256sum "$expected_file" | awk '{print $1}')" | tee -a "$report"
+                echo "actual_sha256=$(sha256sum "$out" | awk '{print $1}')" | tee -a "$report"
                 rm -f "$out"
                 return 1
               fi
             done
           }
 
-          check 'https://wisequotesworld.com/start/' '1,082' '256' '113' '106' '34' '217' '332' 'Français <b>17</b>'
+          fetch_match 'https://wisequotesworld.com/start/' 'start/index.html'
           for l in uk ru pl en sv de es fr; do
-            check "https://wisequotesworld.com/$l/start/" 'localized.js?v=20260902-2300'
+            fetch_match "https://wisequotesworld.com/$l/start/" "$l/start/index.html"
           done
-          check 'https://wisequotesworld.com/start/localized.js?v=20260902-2300' \
-            'uk:{facebook:8,instagram:941,threads:43,tiktok:54,youtube:36}' \
-            'ru:{facebook:7,instagram:44,threads:13,tiktok:90,youtube:102}' \
-            'pl:{facebook:16,instagram:17,threads:6,tiktok:40,youtube:34}' \
-            'en:{facebook:12,instagram:17,threads:10,tiktok:34,youtube:33}' \
-            'sv:{facebook:4,instagram:9,threads:6,tiktok:11,youtube:4}' \
-            'de:{facebook:19,instagram:104,threads:4,tiktok:66,youtube:24}' \
-            'es:{facebook:27,instagram:197,threads:3,tiktok:12,youtube:93}' \
-            'fr:{facebook:0,instagram:0,threads:0,tiktok:3,youtube:14}'
+
+          version=$(grep -oE 'localized\.js\?v=[0-9-]+' uk/start/index.html | head -1 | cut -d= -f2)
+          [[ -n "$version" ]]
+          for l in ru pl en sv de es fr; do
+            grep -Fq "localized.js?v=$version" "$l/start/index.html"
+          done
+          fetch_match "https://wisequotesworld.com/start/localized.js?v=$version" 'start/localized.js'
+
+          echo "cache_version=$version" | tee -a "$report"
           echo "checked_at=$(date -u +%FT%TZ)" | tee -a "$report"
           echo 'overall=PASS' | tee -a "$report"
       - name: Commit readback report

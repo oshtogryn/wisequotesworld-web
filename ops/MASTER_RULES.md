@@ -2,7 +2,7 @@
 
 Останнє оновлення: 2026-09-04
 Статус: CANONICAL
-Версія: database-first v4.7
+Версія: database-first v4.8
 
 ## 1. Джерела істини
 1. `ops/MASTER_RULES.md` — канонічне джерело операційних правил.
@@ -14,12 +14,12 @@
 7. Перед новою темою читати актуальний MASTER_RULES.
 
 ## 2. Мови
-uk, ru, pl, en, sv, de, es, fr, it, pt (pt-BR).
+uk, ru, pl, en, sv, de, es, fr, it, pt (pt-BR), id, tr, ar.
 
-Усі 10 мов активні для website: uk, ru, pl, en, sv, de, es, fr, it, pt-BR. Італійська та бразильська португальська вже мають повні website-локалізації та індексовані URL; їхні social-канали поки в статусі prepared/inactive до створення й підключення акаунтів. Після підключення it і pt-BR переходять на ті самі social/media/scheduling gates, що й інші активні social locales.
+Усі 13 мов активні для website: uk, ru, pl, en, sv, de, es, fr, it, pt-BR, id, tr, ar. Італійська, бразильська португальська, індонезійська, турецька та арабська мають website-локалізації та індексовані URL; їхні social-канали лишаються prepared/inactive до створення й підключення відповідних акаунтів/дошок. Після підключення кожна нова locale переходить на ті самі social/media/scheduling gates, що й інші активні social locales.
 
 ## 3. Контент
-Одна думка = один content_id, 10 website localizations. Є два production types:
+Одна думка = один content_id, 13 website localizations. Є два production types:
 - `adapted` — власні/адаптовані Wise Quotes World думки без автора. Основний established cinematic human/symbolic prompt style.
 - `verbatim` — справжня цитата конкретного автора; тільки verified author + verified source + verified original wording. Для неї діє author-specific visual treatment.
 
@@ -80,7 +80,7 @@ QA happens AFTER generation, not inside prompt. REJECT for wrong/missing text, b
 ## 8. Pinterest
 2:3 target 1000×1500; finished image contains exact localized quote; mobile-readable typography; no unrelated text/random letters/watermark; no generated Wise Quotes World logo by default. User generates manually → Admin upload → R2 → QA → approval.
 
-Pinterest is MANDATORY for every approved topic in all 8 languages. Each locale must have its own Pinterest image, localized SEO title, localized description, exact same-language article destination, and correct locale board.
+Pinterest is MANDATORY for every approved topic in every connected social locale. Each locale must have its own Pinterest image, localized SEO title, localized description, exact same-language article destination, and correct locale board.
 
 ## 9. Required outputs
 For each language: localized quote, Gemini/Veo prompt, voiceover/on-screen text, Pinterest prompt, Facebook, Instagram, 3 Threads, TikTok, YouTube title+description, Pinterest title+description, localized article URL, substantive website reflection.
@@ -104,26 +104,26 @@ Separate substantive editorial asset: quote; verified attribution when applicabl
 WQ006 final version is the emotional editorial benchmark for adapted content. For verbatim content, include verified attribution/source/original wording and interpret context responsibly.
 
 ## 12. Website/database
-D1 database-first. New approved content should not require manual deploy. 10 website locales, archive, quote/category/verified-author pages, sitemap/hreflang/canonical/internal links. Social readiness is evaluated only for connected social locales.
+D1 database-first. New approved content should not require manual deploy. 13 website locales, archive, quote/category/verified-author pages, sitemap/hreflang/canonical/internal links. Social readiness is evaluated only for connected social locales.
 
 ## 13. Media
 R2 canonical binaries; D1 metadata. Upload once/reuse. User generates video/Pinterest manually and uploads via Admin.
 
 ## 14. Admin
-Create/edit topic, 10 website localizations, prompts, copy, article/URL, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Social/media requirements apply to connected social locales; it and pt-BR join those gates once their accounts are connected. Empty author = NO AUTHOR everywhere.
+Create/edit topic, 13 website localizations, prompts, copy, article/URL, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Social/media requirements apply only to connected social locales; it, pt-BR, id, tr and ar join those gates once their accounts are connected. Empty author = NO AUTHOR everywhere.
 
 ## 15. Scheduling
 Metricool PRIMARY during stabilization. No `scheduled` without Planner readback. Before scheduling verify article opens, CTA, media QA PASS, approval, network/date/time/timezone/text/media.
 
 ### Pinterest scheduling gate — HARD
 - Every approved topic must be checked for Pinterest before the topic can be considered fully scheduled.
-- Required Pinterest coverage follows connected active social locales. The current established social set remains mandatory; target becomes 10/10 after it and pt-BR boards/accounts are connected.
+- Required Pinterest coverage follows connected active social locales. The current established social set remains mandatory; target expands with each connected locale; full target becomes 13/13 after it, pt-BR, id, tr and ar boards/accounts are connected.
 - Use exact locale board and exact live same-language D1 article URL as `pinLink`.
 - Use approved Pinterest image from R2/D1.
 - Planner readback must confirm every Pinterest post.
 
 ### Social scheduling gate — HARD
-- Social coverage is mandatory for every connected locale. it and pt-BR remain prepared/inactive until their accounts are created and connected.
+- Social coverage is mandatory for every connected locale. it, pt-BR, id, tr and ar remain prepared/inactive until their accounts are created and connected.
 - FR has the same required video, platform copy, locale URL, media QA and Planner readback as other locales.
 - Before scheduling, validate platform link policy in §10: Facebook/Threads use direct article URLs; Instagram/YouTube use profile CTA without raw URL; TikTok keeps the visible locale website address as plain text.
 
@@ -131,7 +131,7 @@ Metricool PRIMARY during stabilization. No `scheduled` without Planner readback.
 24h/72h/7d/30d by language/platform/category/quote_type/author/creative/time. Each locale website must use corresponding Metricool web tracker.
 
 ## 17. Standard command protocol
-`наступна цитата` / `готуй наступну` / `працюємо по правилах` = read MASTER_RULES + D1 → determine `adapted` vs verified `verbatim` → source/quote QA → duration gate → 8 native localizations → 8 Gemini/Veo prompts → 8 Pinterest prompts → full social copy with platform-correct CTA/links + localized URLs → website reflection → D1 → user media generation/upload → media QA → approval → Metricool schedule all 8 locales including Pinterest 8/8 → Planner readback → analytics.
+`наступна цитата` / `готуй наступну` / `працюємо по правилах` = read MASTER_RULES + D1 → determine `adapted` vs verified `verbatim` → source/quote QA → duration gate → 13 native website localizations → prompts/copy for connected social locales → Pinterest prompts for connected Pinterest locales → full social copy with platform-correct CTA/links + localized URLs → website reflection → D1 → user media generation/upload → media QA → approval → Metricool schedule all connected social locales including required Pinterest coverage → Planner readback → analytics.
 
 ## 18. Validation/fail-safe
 Adapted no author; verbatim verified author/source/original. Technically complete but failed native/exact-text/editorial/media QA = NOT production-ready. If API unavailable, preserve confirmed D1 state and mark only blocked step.

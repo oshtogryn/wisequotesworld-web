@@ -1,0 +1,6 @@
+{
+  "health_status": 403,
+  "health_body": "error code: 1010\n",
+  "write_status": 500,
+  "write_body": "{\"ok\":false,\"error\":\"D1_EXEC_ERROR: Error in line 1: CREATE TABLE IF NOT EXISTS newsletter_subscribers (: incomplete input: SQLITE_ERROR\"}"
+}

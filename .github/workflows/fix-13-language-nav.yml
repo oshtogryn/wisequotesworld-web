@@ -1,0 +1,69 @@
+name: Fix 13-language website navigation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-13-language-nav.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix-navigation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch all website renderers to 13 languages
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          # Core renderer: uk/ru/pl/en/sv/de/es/fr (+ shared archive/author pages)
+          p = Path('lib/site_v2.js')
+          s = p.read_text()
+          s = s.replace("const LOCALES=['uk','ru','pl','en','sv','de','es','fr','it','pt'];", "const LOCALES=['uk','ru','pl','en','sv','de','es','fr','it','pt','id','tr','ar'];")
+          s = s.replace("const NAMES={uk:'Українська',ru:'Русский',pl:'Polski',en:'English',sv:'Svenska',de:'Deutsch',es:'Español',fr:'Français',it:'Italiano',pt:'Português (Brasil)'};", "const NAMES={uk:'Українська',ru:'Русский',pl:'Polski',en:'English',sv:'Svenska',de:'Deutsch',es:'Español',fr:'Français',it:'Italiano',pt:'Português (Brasil)',id:'Bahasa Indonesia',tr:'Türkçe',ar:'العربية'};")
+          s = s.replace("const FLAGS={uk:'🇺🇦',ru:'🌐',pl:'🇵🇱',en:'🇬🇧',sv:'🇸🇪',de:'🇩🇪',es:'🇪🇸',fr:'🇫🇷',it:'🇮🇹',pt:'🇧🇷'};", "const FLAGS={uk:'🇺🇦',ru:'🌐',pl:'🇵🇱',en:'🇬🇧',sv:'🇸🇪',de:'🇩🇪',es:'🇪🇸',fr:'🇫🇷',it:'🇮🇹',pt:'🇧🇷',id:'🇮🇩',tr:'🇹🇷',ar:'🌍'};")
+          s = s.replace('Timeless words · ten languages', 'Timeless words · 13 languages')
+          s = s.replace('.langmenu a{text-decoration:none}', '.langmenu{max-height:70vh;overflow-y:auto}.langmenu a{text-decoration:none}')
+          p.write_text(s)
+
+          # Italian / Brazilian Portuguese renderer
+          p = Path('lib/new_locales_site.js')
+          s = p.read_text()
+          s = s.replace("const LOCALES=['uk','ru','pl','en','sv','de','es','fr','it','pt'];", "const LOCALES=['uk','ru','pl','en','sv','de','es','fr','it','pt','id','tr','ar'];")
+          s = s.replace("const HREFLANG={uk:'uk',ru:'ru',pl:'pl',en:'en',sv:'sv',de:'de',es:'es',fr:'fr',it:'it',pt:'pt-BR'};", "const HREFLANG={uk:'uk',ru:'ru',pl:'pl',en:'en',sv:'sv',de:'de',es:'es',fr:'fr',it:'it',pt:'pt-BR',id:'id',tr:'tr',ar:'ar'};")
+          s = s.replace("const NAMES={uk:'Українська',ru:'Русский',pl:'Polski',en:'English',sv:'Svenska',de:'Deutsch',es:'Español',fr:'Français',it:'Italiano',pt:'Português (Brasil)'};", "const NAMES={uk:'Українська',ru:'Русский',pl:'Polski',en:'English',sv:'Svenska',de:'Deutsch',es:'Español',fr:'Français',it:'Italiano',pt:'Português (Brasil)',id:'Bahasa Indonesia',tr:'Türkçe',ar:'العربية'};")
+          s = s.replace("const FLAGS={uk:'🇺🇦',ru:'🌐',pl:'🇵🇱',en:'🇬🇧',sv:'🇸🇪',de:'🇩🇪',es:'🇪🇸',fr:'🇫🇷',it:'🇮🇹',pt:'🇧🇷'};", "const FLAGS={uk:'🇺🇦',ru:'🌐',pl:'🇵🇱',en:'🇬🇧',sv:'🇸🇪',de:'🇩🇪',es:'🇪🇸',fr:'🇫🇷',it:'🇮🇹',pt:'🇧🇷',id:'🇮🇩',tr:'🇹🇷',ar:'🌍'};")
+          s = s.replace('Timeless words · ten languages', 'Timeless words · 13 languages')
+          s = s.replace('.langmenu a,.topic', '.langmenu{max-height:70vh;overflow-y:auto}.langmenu a,.topic')
+          s = s.replace("language_code IN ('uk','ru','pl','en','sv','de','es','fr','it','pt')", "language_code IN ('uk','ru','pl','en','sv','de','es','fr','it','pt','id','tr','ar')")
+          p.write_text(s)
+
+          # Indonesian / Turkish / Arabic renderer: add same header dropdown
+          p = Path('lib/locale13_site.js')
+          s = p.read_text()
+          old_header = "function header(lang){return `<header class=\"header\"><div class=\"container nav\"><a class=\"brand\" href=\"/${lang}/\"><span class=\"mark\">W</span><span><strong>Wise Quotes World</strong><small>Timeless words · 13 languages</small></span></a><div class=\"lang\"><button aria-label=\"Language\">${FLAGS[lang]}</button></div></div></header>`}"
+          new_header = "function header(lang){return `<header class=\"header\"><div class=\"container nav\"><a class=\"brand\" href=\"/${lang}/\"><span class=\"mark\">W</span><span><strong>Wise Quotes World</strong><small>Timeless words · 13 languages</small></span></a><div class=\"lang\"><button aria-label=\"Language\">${FLAGS[lang]}</button><div class=\"langmenu\">${langMenu()}</div></div></div></header>`}"
+          s = s.replace(old_header, new_header)
+          old_footer = "function footer(lang){return `<footer class=\"footer\"><div class=\"container\"><div class=\"locale13-menu\">${langMenu()}</div><p>© 2026 Wise Quotes World</p></div></footer></body></html>`}"
+          new_footer = "function footer(lang){return `<footer class=\"footer\"><div class=\"container\"><div class=\"locale13-menu\">${langMenu()}</div><p>© 2026 Wise Quotes World</p></div></footer><script>const lb=document.querySelector('.lang button'),lm=document.querySelector('.langmenu');lb&&lb.addEventListener('click',()=>lm.classList.toggle('show'));</script></body></html>`}"
+          s = s.replace(old_footer, new_footer)
+          s = s.replace('.locale13-menu a{text-decoration:none;font-size:13px;color:var(--muted)}', '.locale13-menu a{text-decoration:none;font-size:13px;color:var(--muted)}.langmenu{max-height:70vh;overflow-y:auto}.langmenu a{text-decoration:none}')
+          p.write_text(s)
+
+          # Fail loudly if stale text survived.
+          for fn in ['lib/site_v2.js','lib/new_locales_site.js']:
+              text = Path(fn).read_text()
+              if 'Timeless words · ten languages' in text:
+                  raise SystemExit(f'stale ten-language tagline remains in {fn}')
+          PY
+      - name: Commit renderer fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/site_v2.js lib/new_locales_site.js lib/locale13_site.js
+          git diff --cached --quiet && exit 0
+          git commit -m "Show all 13 languages across website navigation"
+          git push

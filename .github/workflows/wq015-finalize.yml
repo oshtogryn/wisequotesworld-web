@@ -1,0 +1,36 @@
+name: WQ015 finalize
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/wq015-finalize.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for deploy
+        run: sleep 30
+      - name: Finalize WQ015
+        run: |
+          set -euo pipefail
+          curl -L -sS --fail --retry 10 --retry-all-errors --retry-delay 5 -X POST 'https://wisequotesworld.com/ops/run/wq015-finalize' -o /tmp/finalize.json
+          cat /tmp/finalize.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/finalize.json'))
+          assert d.get('ok') is True, d
+          assert d.get('approved_media')==16, d
+          PY
+          curl -L -sS --fail --retry 10 --retry-all-errors --retry-delay 5 'https://wisequotesworld.com/ops/readback/wq015-production.json' -o /tmp/readback.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/readback.json'))['production']
+          assert d['approval']['status']=='approved', d['approval']
+          assert all(x['readiness']['media_qa'] for x in d['languages']), d['languages']
+          assert d['ready_for_metricool'] is True, d
+          print('WQ015 ready_for_metricool=true, 8/8 media QA approved')
+          PY

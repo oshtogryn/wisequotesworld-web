@@ -1,0 +1,77 @@
+name: Fix newsletter D1 schema
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-newsletter-d1-schema.yml'
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make newsletter schema migration-safe
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('lib/start_unified.js')
+          s=p.read_text()
+          a=s.index('async function ensureNewsletterTable(env)')
+          b=s.index('\n\nexport async function newsletterApi',a)
+          repl=r'''async function ensureNewsletterTable(env){
+ await env.DB.exec(`CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+ id TEXT PRIMARY KEY,
+ project_id TEXT NOT NULL,
+ email TEXT NOT NULL,
+ language_code TEXT NOT NULL,
+ status TEXT NOT NULL DEFAULT 'active',
+ source TEXT NOT NULL DEFAULT 'start_page',
+ consent_version TEXT NOT NULL DEFAULT '2026-09-04-v2-biweekly',
+ consent_at TEXT NOT NULL,
+ unsubscribe_token TEXT NOT NULL UNIQUE,
+ created_at TEXT NOT NULL,
+ updated_at TEXT NOT NULL
+ )`);
+ const info=await env.DB.prepare(`PRAGMA table_info(newsletter_subscribers)`).all();
+ const cols=new Set((info.results||[]).map(r=>r.name));
+ if(!cols.has('source'))await env.DB.exec(`ALTER TABLE newsletter_subscribers ADD COLUMN source TEXT NOT NULL DEFAULT 'start_page'`);
+ if(!cols.has('consent_version'))await env.DB.exec(`ALTER TABLE newsletter_subscribers ADD COLUMN consent_version TEXT NOT NULL DEFAULT '2026-09-04-v2-biweekly'`);
+ await env.DB.exec(`CREATE UNIQUE INDEX IF NOT EXISTS uq_newsletter_project_email_language ON newsletter_subscribers(project_id,email,language_code);CREATE INDEX IF NOT EXISTS idx_newsletter_status_language ON newsletter_subscribers(project_id,status,language_code);`);
+}'''
+          p.write_text(s[:a]+repl+s[b:])
+          PY
+      - name: Add safe newsletter health endpoint
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('lib/start_unified.js')
+          s=p.read_text()
+          needle=" const u=new URL(request.url);\n"
+          insert=""" const u=new URL(request.url);\n if(u.pathname==='/ops/readback/newsletter-health.json'&&request.method==='GET'){\n  await ensureNewsletterTable(env);\n  const info=await env.DB.prepare(`PRAGMA table_info(newsletter_subscribers)`).all();\n  const count=await env.DB.prepare(`SELECT COUNT(*) AS active FROM newsletter_subscribers WHERE project_id=? AND status='active'`).bind(PROJECT_ID).first();\n  return new Response(JSON.stringify({ok:true,table:'newsletter_subscribers',columns:(info.results||[]).map(r=>r.name),active:Number(count?.active||0),cadence_days:14,daily_cap:300}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});\n }\n"""
+          if insert not in s:
+              s=s.replace(needle,insert,1)
+          p.write_text(s)
+          PY
+      - name: Commit repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898242+github-actions[bot]@users.noreply.github.com'
+          git add lib/start_unified.js
+          git commit -m 'Make newsletter D1 signup migration-safe'
+          git push
+      - name: Verify production D1 health
+        run: |
+          python3 - <<'PY'
+          import json,time,urllib.request
+          u='https://wisequotesworld.com/ops/readback/newsletter-health.json'
+          for i in range(30):
+              try:
+                  with urllib.request.urlopen(u,timeout=20) as r:
+                      d=json.loads(r.read())
+                  cols=set(d.get('columns',[]))
+                  if d.get('ok') and {'source','consent_version','unsubscribe_token'}.issubset(cols):
+                      print(d);break
+              except Exception as e: print('retry',e)
+              time.sleep(5)
+          else: raise SystemExit('production newsletter D1 health failed')
+          PY

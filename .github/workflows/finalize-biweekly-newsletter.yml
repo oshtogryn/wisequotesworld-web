@@ -1,0 +1,160 @@
+name: Finalize biweekly newsletter policy
+
+on:
+  push:
+    paths:
+      - '.github/workflows/finalize-biweekly-newsletter.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  rollout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply 14-day newsletter policy
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+            "Отримуйте нові цитати й роздуми українською. Не частіше одного листа на тиждень.": "Отримуйте нові цитати й роздуми українською. Один лист раз на два тижні.",
+            "Получайте новые цитаты и размышления на русском. Не чаще одного письма в неделю.": "Получайте новые цитаты и размышления на русском. Одно письмо раз в две недели.",
+            "Otrzymuj nowe cytaty i refleksje po polsku. Nie częściej niż raz w tygodniu.": "Otrzymuj nowe cytaty i refleksje po polsku. Jeden e-mail co dwa tygodnie.",
+            "Receive new quotes and reflections in English. No more than one e-mail per week.": "Receive new quotes and reflections in English. One e-mail every two weeks.",
+            "Få nya citat och reflektioner på svenska. Högst ett mejl i veckan.": "Få nya citat och reflektioner på svenska. Ett mejl varannan vecka.",
+            "Erhalten Sie neue Zitate und Reflexionen auf Deutsch. Höchstens eine E-Mail pro Woche.": "Erhalten Sie neue Zitate und Reflexionen auf Deutsch. Eine E-Mail alle zwei Wochen.",
+            "Recibe nuevas citas y reflexiones en español. Como máximo un correo por semana.": "Recibe nuevas citas y reflexiones en español. Un correo cada dos semanas.",
+            "Recevez de nouvelles citations et réflexions en français. Pas plus d’un e-mail par semaine.": "Recevez de nouvelles citations et réflexions en français. Un e-mail toutes les deux semaines.",
+            "Ricevi nuove citazioni e riflessioni in italiano. Non più di un’e-mail a settimana.": "Ricevi nuove citazioni e riflessioni in italiano. Un’e-mail ogni due settimane.",
+            "Receba novas citações e reflexões em português do Brasil. No máximo um e-mail por semana.": "Receba novas citações e reflexões em português do Brasil. Um e-mail a cada duas semanas.",
+            "Dapatkan kutipan dan refleksi baru dalam Bahasa Indonesia. Maksimal satu e-mail per minggu.": "Dapatkan kutipan dan refleksi baru dalam Bahasa Indonesia. Satu e-mail setiap dua minggu.",
+            "Türkçe yeni alıntıları ve düşünceleri alın. Haftada en fazla bir e-posta.": "Türkçe yeni alıntıları ve düşünceleri alın. İki haftada bir e-posta.",
+            "احصل على اقتباسات وتأملات جديدة بالعربية. بحد أقصى رسالة واحدة في الأسبوع.": "احصل على اقتباسات وتأملات جديدة بالعربية. رسالة واحدة كل أسبوعين."
+          }
+
+          for filename in ['lib/start_unified.js', 'start/newsletter.js']:
+              p = Path(filename)
+              text = p.read_text()
+              changed = 0
+              for old, new in replacements.items():
+                  if old in text:
+                      text = text.replace(old, new)
+                      changed += 1
+              if changed != 13:
+                  raise SystemExit(f'{filename}: expected 13 cadence replacements, got {changed}')
+              if filename == 'lib/start_unified.js':
+                  old = "'2026-09-04-v1'"
+                  if old not in text:
+                      raise SystemExit('consent version marker missing')
+                  text = text.replace(old, "'2026-09-04-v2-biweekly'")
+              p.write_text(text)
+
+          rules = Path('ops/MASTER_RULES.md')
+          text = rules.read_text()
+          old = "Automated newsletter delivery must not be claimed as active until an outbound e-mail provider is connected; D1 remains the canonical subscriber source."
+          new = "Automated newsletter delivery must not be claimed as active until an outbound e-mail provider is connected; D1 remains the canonical subscriber source. Default newsletter cadence is one localized digest every 14 days. Free-tier planning uses a dynamic maximum of 300 deliveries per day, giving up to 4200 deliveries per 14-day cycle; subscribers are assigned to batches dynamically rather than permanently tied to weekdays. The intended transport is Brevo, but provider-specific delivery stays disabled until credentials and sender-domain authentication are connected."
+          if old not in text:
+              raise SystemExit('MASTER_RULES newsletter paragraph marker missing')
+          rules.write_text(text.replace(old,new))
+          PY
+
+          cat > lib/newsletter_policy.js <<'EOF'
+          export const NEWSLETTER_POLICY=Object.freeze({
+            cadenceDays:14,
+            dailySendCap:300,
+            maxCycleCapacity:4200,
+            digestMinArticles:3,
+            digestMaxArticles:6,
+            provider:'brevo',
+            deliveryEnabled:false,
+            senderAddress:'newsletter@wisequotesworld.com',
+            subscriberSource:'D1',
+            batchAssignment:'dynamic'
+          });
+
+          export function newsletterBatchForPosition(position){
+            const n=Math.max(0,Number(position)||0);
+            return {
+              batchIndex:Math.floor(n/NEWSLETTER_POLICY.dailySendCap),
+              positionInBatch:n%NEWSLETTER_POLICY.dailySendCap
+            };
+          }
+
+          export function newsletterPolicyReadback(){
+            return {...NEWSLETTER_POLICY};
+          }
+          EOF
+
+          mkdir -p ops/readback
+          cat > ops/readback/newsletter-policy.json <<'EOF'
+          {
+            "ok": true,
+            "cadence_days": 14,
+            "daily_send_cap": 300,
+            "max_cycle_capacity": 4200,
+            "digest_articles": "3-6",
+            "subscriber_source": "D1",
+            "batch_assignment": "dynamic",
+            "provider": "brevo",
+            "delivery_enabled": false,
+            "sender_address": "newsletter@wisequotesworld.com",
+            "status": "provider_credentials_and_domain_auth_pending"
+          }
+          EOF
+
+      - name: Commit policy changes
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898242+github-actions[bot]@users.noreply.github.com'
+          git add lib/start_unified.js start/newsletter.js lib/newsletter_policy.js ops/MASTER_RULES.md ops/readback/newsletter-policy.json
+          git commit -m 'Adopt biweekly multilingual newsletter policy'
+          git push
+
+      - name: Verify production after deployment
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import time, urllib.request
+          checks={
+            'uk':'Один лист раз на два тижні.',
+            'ru':'Одно письмо раз в две недели.',
+            'pl':'Jeden e-mail co dwa tygodnie.',
+            'en':'One e-mail every two weeks.',
+            'sv':'Ett mejl varannan vecka.',
+            'de':'Eine E-Mail alle zwei Wochen.',
+            'es':'Un correo cada dos semanas.',
+            'fr':'Un e-mail toutes les deux semaines.',
+            'it':'Un’e-mail ogni due settimane.',
+            'pt':'Um e-mail a cada duas semanas.',
+            'id':'Satu e-mail setiap dua minggu.',
+            'tr':'İki haftada bir e-posta.',
+            'ar':'رسالة واحدة كل أسبوعين.'
+          }
+          pending=set(checks)
+          for attempt in range(36):
+              done=[]
+              for lang in list(pending):
+                  try:
+                      req=urllib.request.Request(f'https://wisequotesworld.com/{lang}/start/?qa=biweekly-{attempt}',headers={'User-Agent':'WQW-biweekly-QA/1.0','Cache-Control':'no-cache'})
+                      with urllib.request.urlopen(req,timeout=20) as r:
+                          html=r.read().decode('utf-8','replace')
+                      if checks[lang] in html and 'newsletter-form' in html and 'contact-name' not in html:
+                          print(lang,'PASS')
+                          done.append(lang)
+                  except Exception as e:
+                      print(lang,'retry',e)
+              for lang in done: pending.remove(lang)
+              if not pending: break
+              print('waiting for deploy; pending',sorted(pending))
+              time.sleep(10)
+          if pending:
+              raise SystemExit('production verification failed for '+','.join(sorted(pending)))
+          print('All 13 localized start pages expose the 14-day cadence.')
+          PY

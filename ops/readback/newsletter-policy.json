@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "cadence_days": 14,
+  "daily_send_cap": 300,
+  "max_cycle_capacity": 4200,
+  "digest_articles": "3-6",
+  "subscriber_source": "D1",
+  "batch_assignment": "dynamic",
+  "provider": "brevo",
+  "delivery_enabled": false,
+  "sender_address": "newsletter@wisequotesworld.com",
+  "status": "provider_credentials_and_domain_auth_pending"
+}

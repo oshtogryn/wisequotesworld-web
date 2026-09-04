@@ -1,0 +1,60 @@
+name: New locales source catalog readback
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/new-locales-catalog-readback.yml'
+      - 'lib/new_locales_catalog_readback.js'
+permissions:
+  contents: write
+jobs:
+  readback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire temporary catalog endpoint
+        run: |
+          git pull --rebase
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text(encoding='utf-8')
+          imp="import {readNewLocalesSourceCatalog} from './lib/new_locales_catalog_readback.js';\n"
+          anchor="import {readCanonicalRules} from './lib/canonical_rules.js';\n"
+          route="if(url.pathname==='/ops/readback/new-locales-source.json'&&request.method==='GET')return json(await readNewLocalesSourceCatalog(env));"
+          route_anchor="if(url.pathname==='/ops/run/wq015-finalize'&&request.method==='POST')"
+          if imp not in s:s=s.replace(anchor,anchor+imp,1)
+          if route not in s:s=s.replace(route_anchor,route+route_anchor,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git commit -m 'Temporarily wire new locale catalog readback'
+          git push
+      - name: Wait for deploy and capture live catalog
+        run: |
+          sleep 35
+          mkdir -p ops/readback
+          curl -L -sS --retry 12 --retry-all-errors --retry-delay 5 'https://wisequotesworld.com/ops/readback/new-locales-source.json' -o ops/readback/new-locales-source.json
+          python - <<'PY'
+          import json
+          d=json.load(open('ops/readback/new-locales-source.json',encoding='utf-8'))
+          assert d.get('ok') is True,d
+          assert d.get('count',0)>0,d
+          print('published EN catalog rows:',d['count'])
+          PY
+      - name: Remove temporary route and commit readback
+        run: |
+          git pull --rebase
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("import {readNewLocalesSourceCatalog} from './lib/new_locales_catalog_readback.js';\n",'',1)
+          s=s.replace("if(url.pathname==='/ops/readback/new-locales-source.json'&&request.method==='GET')return json(await readNewLocalesSourceCatalog(env));",'',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git add _worker.js ops/readback/new-locales-source.json
+          git commit -m 'Record live catalog for IT and PT-BR expansion'
+          git push

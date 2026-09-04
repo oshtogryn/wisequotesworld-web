@@ -1,0 +1,118 @@
+name: Expand Wise Quotes World to 13 languages
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/expand-to-13-languages.yml'
+permissions:
+  contents: write
+jobs:
+  expand:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire locale13 website and temporary D1 publisher
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text()
+          s=s.replace("import {quoteDetailV3} from './lib/quote_detail_v3.js';", "import {quoteDetailV3} from './lib/quote_detail_v3.js';\nimport {locale13Site} from './lib/locale13_site.js';\nimport {publishLocale13,readLocale13} from './lib/locale13_publish.js';")
+          s=s.replace("(uk|ru|pl|en|sv|de|es|fr|it|pt)(?:\\/|$)", "(uk|ru|pl|en|sv|de|es|fr|it|pt|id|tr|ar)(?:\\/|$)")
+          s=s.replace("(uk|ru|pl|en|sv|de|es|fr|it|pt)\\/(video", "(uk|ru|pl|en|sv|de|es|fr|it|pt|id|tr|ar)\\/(video")
+          marker="try{const url=new URL(request.url);"
+          inject="try{const url=new URL(request.url);if(url.pathname==='/ops/run/locale13-publish'&&request.method==='POST')return json(await publishLocale13(env));if(url.pathname==='/ops/readback/locale13.json'&&request.method==='GET')return json(await readLocale13(env));"
+          assert marker in s
+          s=s.replace(marker,inject,1)
+          marker2="const newLocaleResponse=await newLocalesSite(request,env);"
+          inject2="const locale13Response=await locale13Site(request,env);if(locale13Response)return withLocaleTracking(locale13Response,url);const newLocaleResponse=await newLocalesSite(request,env);"
+          assert marker2 in s
+          s=s.replace(marker2,inject2,1)
+          p.write_text(s)
+
+          p=Path('start/index.html')
+          s=p.read_text()
+          old='<a class="start-btn" href="/pt/start/">🇧🇷 Português (Brasil) <span class="new">NEW</span><small>Site ativo · redes sociais em breve</small></a></div><p class="foot">Wise Quotes World · Timeless words · ten languages</p>'
+          new='<a class="start-btn" href="/pt/start/">🇧🇷 Português (Brasil) <span class="new">NEW</span><small>Site ativo · redes sociais em breve</small></a><a class="start-btn" href="/id/start/">🇮🇩 Bahasa Indonesia <span class="new">NEW</span><small>Situs aktif · media sosial sedang disiapkan</small></a><a class="start-btn" href="/tr/start/">🇹🇷 Türkçe <span class="new">NEW</span><small>Site aktif · sosyal medya hazırlanıyor</small></a><a class="start-btn" href="/ar/start/">🌍 العربية <span class="new">NEW</span><small>الموقع متاح · شبكات التواصل قيد الإعداد</small></a></div><p class="foot">Wise Quotes World · Timeless words · 13 languages</p>'
+          assert old in s
+          p.write_text(s.replace(old,new))
+
+          p=Path('ops/MASTER_RULES.md')
+          s=p.read_text()
+          s=s.replace('Версія: database-first v4.7','Версія: database-first v4.8')
+          s=s.replace('uk, ru, pl, en, sv, de, es, fr, it, pt (pt-BR).','uk, ru, pl, en, sv, de, es, fr, it, pt (pt-BR), id, tr, ar.')
+          old='Усі 10 мов активні для website: uk, ru, pl, en, sv, de, es, fr, it, pt-BR. Італійська та бразильська португальська вже мають повні website-локалізації та індексовані URL; їхні social-канали поки в статусі prepared/inactive до створення й підключення акаунтів. Після підключення it і pt-BR переходять на ті самі social/media/scheduling gates, що й інші активні social locales.'
+          new='Усі 13 мов активні для website: uk, ru, pl, en, sv, de, es, fr, it, pt-BR, id, tr, ar. Італійська, бразильська португальська, індонезійська, турецька та арабська мають website-локалізації та індексовані URL; їхні social-канали лишаються prepared/inactive до створення й підключення відповідних акаунтів/дошок. Після підключення кожна нова locale переходить на ті самі social/media/scheduling gates, що й інші активні social locales.'
+          assert old in s
+          s=s.replace(old,new)
+          s=s.replace('Одна думка = один content_id, 10 website localizations.','Одна думка = один content_id, 13 website localizations.')
+          s=s.replace('10 website locales, archive, quote/category/verified-author pages, sitemap/hreflang/canonical/internal links.','13 website locales, archive, quote/category/verified-author pages, sitemap/hreflang/canonical/internal links.')
+          s=s.replace('Create/edit topic, 10 website localizations, prompts, copy, article/URL, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Social/media requirements apply to connected social locales; it and pt-BR join those gates once their accounts are connected.','Create/edit topic, 13 website localizations, prompts, copy, article/URL, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Social/media requirements apply only to connected social locales; it, pt-BR, id, tr and ar join those gates once their accounts are connected.')
+          s=s.replace('Social coverage is mandatory for every connected locale. it and pt-BR remain prepared/inactive until their accounts are created and connected.','Social coverage is mandatory for every connected locale. it, pt-BR, id, tr and ar remain prepared/inactive until their accounts are created and connected.')
+          s=s.replace('target becomes 10/10 after it and pt-BR boards/accounts are connected.','target expands with each connected locale; full target becomes 13/13 after it, pt-BR, id, tr and ar boards/accounts are connected.')
+          s=s.replace('Pinterest is MANDATORY for every approved topic in all 8 languages.','Pinterest is MANDATORY for every approved topic in every connected social locale.')
+          s=s.replace('→ 8 native localizations → 8 Gemini/Veo prompts → 8 Pinterest prompts →','→ 13 native website localizations → prompts/copy for connected social locales → Pinterest prompts for connected Pinterest locales →')
+          s=s.replace('→ Metricool schedule all 8 locales including Pinterest 8/8 →','→ Metricool schedule all connected social locales including required Pinterest coverage →')
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js start/index.html ops/MASTER_RULES.md
+          git commit -m 'Wire 13-language website expansion'
+          git push
+      - name: Wait for production deployment
+        run: sleep 55
+      - name: Publish 21 D1 localizations
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --retry 12 --retry-all-errors --retry-delay 6 -X POST 'https://wisequotesworld.com/ops/run/locale13-publish' -o ops/readback/locale13-publication.json
+          cat ops/readback/locale13-publication.json
+          python - <<'PY'
+          import json
+          d=json.load(open('ops/readback/locale13-publication.json',encoding='utf-8'))
+          assert d.get('ok') is True, d
+          assert d.get('published')==21, d
+          counts={x['language_code']:x['count'] for x in d.get('counts',[])}
+          assert counts=={'ar':7,'id':7,'tr':7}, counts
+          PY
+      - name: Verify production URLs and sitemap
+        run: |
+          set -euo pipefail
+          for u in id tr ar; do
+            curl -L -f -sS --retry 8 --retry-all-errors --retry-delay 4 "https://wisequotesworld.com/$u/" >/dev/null
+            curl -L -f -sS --retry 8 --retry-all-errors --retry-delay 4 "https://wisequotesworld.com/$u/quotes/" >/dev/null
+            curl -L -f -sS --retry 8 --retry-all-errors --retry-delay 4 "https://wisequotesworld.com/$u/start/" >/dev/null
+          done
+          python - <<'PY'
+          import json,subprocess
+          d=json.load(open('ops/readback/locale13-publication.json',encoding='utf-8'))
+          for r in d['results']:
+              url='https://wisequotesworld.com'+r['canonical_path']
+              subprocess.run(['curl','--globoff','-L','-f','-sS','--retry','5','--retry-all-errors','--retry-delay','3',url],check=True,stdout=subprocess.DEVNULL)
+          PY
+          curl -L -f -sS 'https://wisequotesworld.com/sitemap.xml' -o /tmp/sitemap.xml
+          python - <<'PY'
+          import json
+          s=open('/tmp/sitemap.xml',encoding='utf-8').read()
+          d=json.load(open('ops/readback/locale13-publication.json',encoding='utf-8'))
+          for lang in ('id','tr','ar'):
+              assert f'https://wisequotesworld.com/{lang}/' in s
+              assert f'https://wisequotesworld.com/{lang}/start/' in s
+          for r in d['results']:
+              assert 'https://wisequotesworld.com'+r['canonical_path'] in s, r
+          print('Verified 21 article URLs and 13-language sitemap')
+          PY
+      - name: Save audit readback and remove write endpoint
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text()
+          s=s.replace("\nimport {publishLocale13,readLocale13} from './lib/locale13_publish.js';",'')
+          s=s.replace("if(url.pathname==='/ops/run/locale13-publish'&&request.method==='POST')return json(await publishLocale13(env));if(url.pathname==='/ops/readback/locale13.json'&&request.method==='GET')return json(await readLocale13(env));",'')
+          p.write_text(s)
+          PY
+          git add _worker.js ops/readback/locale13-publication.json
+          git commit -m 'Finalize verified 13-language website state'
+          git push

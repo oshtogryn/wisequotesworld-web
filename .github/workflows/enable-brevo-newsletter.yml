@@ -1,0 +1,79 @@
+name: Enable Brevo newsletter transport
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/enable-brevo-newsletter.yml'
+permissions:
+  contents: write
+jobs:
+  enable:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire Brevo transport into worker
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text()
+          imp="import {brevoNewsletterApi} from './lib/brevo_newsletter.js';\n"
+          if imp not in s:
+              s=s.replace("import {newsletterApi,startUnified} from './lib/start_unified.js';\n", "import {newsletterApi,startUnified} from './lib/start_unified.js';\n"+imp)
+          needle="const newsletterResponse=await newsletterApi(request,env);if(newsletterResponse)return newsletterResponse;"
+          repl="const brevoResponse=await brevoNewsletterApi(request,env);if(brevoResponse)return brevoResponse;"+needle
+          if "const brevoResponse=await brevoNewsletterApi(request,env);" not in s:
+              if needle not in s: raise SystemExit('newsletter routing anchor missing')
+              s=s.replace(needle,repl,1)
+          p.write_text(s)
+          PY
+      - name: Commit transport wiring
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898242+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git diff --cached --quiet || git commit -m 'Wire Brevo newsletter transport into production worker'
+          git push
+      - name: Wait for Cloudflare production
+        run: sleep 55
+      - name: Verify Brevo production health
+        run: |
+          python - <<'PY'
+          import json,time,urllib.request,pathlib
+          url='https://wisequotesworld.com/ops/readback/brevo-health.json'
+          last=None
+          ok=False
+          for i in range(24):
+              try:
+                  req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 WQW-Brevo-QA'})
+                  with urllib.request.urlopen(req,timeout=20) as r:
+                      body=r.read().decode()
+                      last={'status':r.status,'body':body,'attempt':i+1}
+                      data=json.loads(body)
+                      if r.status==200 and data.get('ok') is True and data.get('configured') is True and data.get('provider_status')==200:
+                          ok=True
+                          break
+              except Exception as e:
+                  last={'error':repr(e),'attempt':i+1}
+              print(last)
+              time.sleep(5)
+          pathlib.Path('ops/readback').mkdir(parents=True,exist_ok=True)
+          pathlib.Path('ops/readback/brevo-integration.json').write_text(json.dumps({'ok':ok,'health':last,'verified_at':'2026-09-04'},ensure_ascii=False,indent=2)+'\n')
+          if not ok: raise SystemExit('Brevo production health did not verify: '+json.dumps(last,ensure_ascii=False))
+          PY
+      - name: Record verified provider state
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('ops/MASTER_RULES.md')
+          s=p.read_text()
+          old='The intended transport is Brevo, but provider-specific delivery stays disabled until credentials and sender-domain authentication are connected.'
+          new='Brevo is the connected outbound transport: sender domain `news.wisequotesworld.com` is authenticated/branded and production credentials are stored only as Cloudflare secrets/variables. D1 remains canonical. Automated scheduled delivery remains disabled until the 14-day batch scheduler is explicitly enabled and verified.'
+          if old in s: s=s.replace(old,new)
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898242+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/brevo-integration.json ops/MASTER_RULES.md
+          git commit -m 'Record verified Brevo newsletter integration' || true
+          git push

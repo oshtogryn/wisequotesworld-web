@@ -11,31 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Force production Worker deployment
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('_worker.js')
-          s=p.read_text()
-          old='// deploy-marker: future-preprod-provenance-v2'
-          new='// deploy-marker: future-preprod-provenance-v3'
-          if old in s: s=s.replace(old,new,1)
-          elif new not in s: s=new+'\n'+s
-          p.write_text(s)
-          PY
-          git add _worker.js
-          git commit -m 'Deploy future preprod provenance fix'
-          git push
-      - name: Wait for production deployment
-        run: sleep 65
       - name: Prepare and verify D1 preproduction
         run: |
           set -euo pipefail
           mkdir -p ops/readback
-          code=$(curl -L -sS --retry 8 --retry-all-errors --retry-delay 5 -X POST 'https://wisequotesworld.com/ops/run/future-preprod' -o ops/readback/future-preprod.json -w '%{http_code}')
+          code=$(curl -L -sS --retry 12 --retry-all-errors --retry-delay 5 -X POST 'https://wisequotesworld.com/ops/run/future-preprod' -o ops/readback/future-preprod.json -w '%{http_code}')
           echo "HTTP $code"
           cat ops/readback/future-preprod.json
           echo
@@ -54,6 +34,8 @@ jobs:
           PY
       - name: Save verified readback
         run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add ops/readback/future-preprod.json
           git commit -m 'Save verified future preproduction readback'
           git push

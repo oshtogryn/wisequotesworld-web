@@ -1,4 +1,4 @@
-// deploy-marker: future-preprod-provenance-v2
+// deploy-marker: future-preprod-provenance-v3
 import legacyWorker from './_worker_legacy.js';
 import {readCanonicalRules} from './lib/canonical_rules.js';
 import {siteV2} from './lib/site_v2.js';

@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Wait for deploy
-        run: sleep 10
+        run: sleep 20
       - name: Prepare and verify
         run: |
           set -euo pipefail

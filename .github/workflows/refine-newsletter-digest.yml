@@ -1,0 +1,80 @@
+name: Refine newsletter digest rendering
+
+on:
+  push:
+    paths:
+      - '.github/workflows/refine-newsletter-digest.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  refine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Refine multilingual digest output
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('lib/newsletter_digest.js')
+          s=p.read_text()
+
+          marker="};\n\nfunction esc(v)"
+          if marker not in s:
+              raise SystemExit('COPY marker not found')
+          author_block=r''' };
+
+const AUTHOR_LOCALIZED={
+ 'Seneca':{uk:'Сенека',ru:'Сенека',pl:'Seneka',en:'Seneca',sv:'Seneca',de:'Seneca',es:'Séneca',fr:'Sénèque',it:'Seneca',pt:'Sêneca',id:'Seneca',tr:'Seneca',ar:'سينيكا'},
+ 'Socrates':{uk:'Сократ',ru:'Сократ',pl:'Sokrates',en:'Socrates',sv:'Sokrates',de:'Sokrates',es:'Sócrates',fr:'Socrate',it:'Socrate',pt:'Sócrates',id:'Socrates',tr:'Sokrates',ar:'سقراط'},
+ 'Epictetus':{uk:'Епіктет',ru:'Эпиктет',pl:'Epiktet',en:'Epictetus',sv:'Epiktetos',de:'Epiktet',es:'Epicteto',fr:'Épictète',it:'Epitteto',pt:'Epicteto',id:'Epictetus',tr:'Epiktetos',ar:'إبكتيتوس'},
+ 'Friedrich Nietzsche':{uk:'Фрідріх Ніцше',ru:'Фридрих Ницше',pl:'Friedrich Nietzsche',en:'Friedrich Nietzsche',sv:'Friedrich Nietzsche',de:'Friedrich Nietzsche',es:'Friedrich Nietzsche',fr:'Friedrich Nietzsche',it:'Friedrich Nietzsche',pt:'Friedrich Nietzsche',id:'Friedrich Nietzsche',tr:'Friedrich Nietzsche',ar:'فريدريك نيتشه'}
+};
+
+function esc(v)'''
+          s=s.replace(marker,author_block,1)
+
+          old="function strip(v){return String(v||'').replace(/\\s+/g,' ').trim()}"
+          new=r'''function strip(v){return String(v||'').replace(/\s+/g,' ').trim()}
+function cleanQuote(v){return strip(v).replace(/^[\s“”„«»\"'‘’]+/,'').replace(/[\s“”„«»\"'‘’]+$/,'').trim()}
+function localizedAuthor(name,locale){const n=strip(name);return AUTHOR_LOCALIZED[n]?.[locale]||n}
+function smartExcerpt(v,max=190){const t=strip(v);if(!t)return '';if(t.length<=max)return t;const cut=t.slice(0,max+1);const punct=[...cut.matchAll(/[.!?…](?=\s|$)/g)];if(punct.length){const idx=punct[punct.length-1].index+1;if(idx>=80)return cut.slice(0,idx).trim()}const space=cut.lastIndexOf(' ');return (space>80?cut.slice(0,space):cut.slice(0,max)).trim()+'…'}
+function cardExcerpt(meta,reflection){const m=strip(meta);if(m&&/[.!?…]$/.test(m))return smartExcerpt(m);const r=strip(reflection);if(r){const hit=r.match(/^.{40,220}?[.!?…](?=\s|$)/);if(hit)return hit[0].trim()}return smartExcerpt(m||r)}'''
+          if old not in s:
+              raise SystemExit('strip marker not found')
+          s=s.replace(old,new,1)
+
+          oldsel="SELECT qp.content_item_id,qp.slug,qp.seo_title,qp.meta_description,qp.canonical_path,cv.adapted_text,ci.author_name,ci.attribution_status,ci.sequence_no"
+          newsel="SELECT qp.content_item_id,qp.slug,qp.seo_title,qp.meta_description,qp.reflection_body,qp.canonical_path,cv.adapted_text,ci.author_name,ci.attribution_status,ci.sequence_no"
+          if oldsel not in s:
+              raise SystemExit('query select marker not found')
+          s=s.replace(oldsel,newsel,1)
+
+          old_lines="""   const quote=strip(a.adapted_text||a.seo_title||'');\n   const desc=strip(a.meta_description||'');\n   const author=a.author_name&&a.attribution_status==='verified'?`— ${a.author_name}`:BRAND;"""
+          new_lines="""   const quote=cleanQuote(a.adapted_text||a.seo_title||'');\n   const desc=cardExcerpt(a.meta_description||'',a.reflection_body||'');\n   const author=a.author_name&&a.attribution_status==='verified'?`— ${localizedAuthor(a.author_name,locale)}`:BRAND;"""
+          if old_lines not in s:
+              raise SystemExit('card marker not found')
+          s=s.replace(old_lines,new_lines,1)
+
+          old_text="""const author=a.author_name&&a.attribution_status==='verified'?`— ${a.author_name}`:BRAND;return [`“${strip(a.adapted_text||a.seo_title||'')}”`,author,href]"""
+          new_text="""const author=a.author_name&&a.attribution_status==='verified'?`— ${localizedAuthor(a.author_name,locale)}`:BRAND;return [`“${cleanQuote(a.adapted_text||a.seo_title||'')}”`,author,href]"""
+          if old_text not in s:
+              raise SystemExit('plain-text marker not found')
+          s=s.replace(old_text,new_text,1)
+
+          p.write_text(s)
+          PY
+
+      - name: Commit digest refinements
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898242+github-actions[bot]@users.noreply.github.com'
+          git add lib/newsletter_digest.js
+          git commit -m 'Refine localized newsletter digest rendering'
+          git push

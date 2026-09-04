@@ -11,85 +11,65 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Publish 14 D1 localizations after Worker deploy
+      - name: Publish 14 D1 localizations
+        shell: bash
         run: |
           set -euo pipefail
           mkdir -p ops/readback
+          : > /tmp/publish.json
           ok=0
-          for i in $(seq 1 18); do
+          for i in $(seq 1 36); do
             code=$(curl -L -sS -o /tmp/publish.json -w '%{http_code}' -X POST 'https://wisequotesworld.com/ops/publish/new-locales' || true)
-            echo "attempt=$i status=$code bytes=$(wc -c </tmp/publish.json 2>/dev/null || echo 0)"
-            if [ "$code" = "200" ] && python - <<'PY'
-import json,sys
-try:
- d=json.load(open('/tmp/publish.json',encoding='utf-8'))
- sys.exit(0 if d.get('ok') is True and d.get('published')==14 else 1)
-except Exception:
- sys.exit(1)
-PY
-            then ok=1; break; fi
+            bytes=$(wc -c < /tmp/publish.json || true)
+            echo "attempt=$i status=$code bytes=$bytes"
+            if [ "$code" = "200" ] && jq -e '.ok == true and .published == 14' /tmp/publish.json >/dev/null 2>&1; then
+              ok=1
+              break
+            fi
             sleep 5
           done
           test "$ok" = 1
           cp /tmp/publish.json ops/readback/new-locales-publication.json
-          cat ops/readback/new-locales-publication.json
-      - name: Verify all new live pages and sitemap
+          jq . ops/readback/new-locales-publication.json
+          test "$(jq -r '.counts[] | select(.language=="it") | .count' ops/readback/new-locales-publication.json)" = "7"
+          test "$(jq -r '.counts[] | select(.language=="pt") | .count' ops/readback/new-locales-publication.json)" = "7"
+      - name: Verify locale pages and sitemap
+        shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          import json,subprocess,time
-          d=json.load(open('ops/readback/new-locales-publication.json',encoding='utf-8'))
-          counts={x['language']:x['count'] for x in d.get('counts',[])}
-          assert counts.get('it')==7,counts
-          assert counts.get('pt')==7,counts
-          urls=['https://wisequotesworld.com/it/','https://wisequotesworld.com/pt/','https://wisequotesworld.com/it/quotes/','https://wisequotesworld.com/pt/quotes/','https://wisequotesworld.com/it/start/','https://wisequotesworld.com/pt/start/']
-          urls += ['https://wisequotesworld.com'+x['canonical_path'] for x in d['results']]
-          for url in urls:
-            good=False
-            for _ in range(8):
-              code=subprocess.check_output(['curl','-L','-sS','-o','/dev/null','-w','%{http_code}',url],text=True).strip()
-              if code=='200':good=True;break
-              time.sleep(3)
-            assert good,(url,code)
-          sm=subprocess.check_output(['curl','-L','-sS','https://wisequotesworld.com/sitemap.xml'],text=True)
-          assert 'https://wisequotesworld.com/it/' in sm
-          assert 'https://wisequotesworld.com/pt/' in sm
-          for x in d['results']:
-            assert 'https://wisequotesworld.com'+x['canonical_path'] in sm,x
-          print('Verified: IT 7/7, PT-BR 7/7, locale homes, archives, starts, sitemap')
-          PY
-      - name: Update canonical rules and remove one-time plumbing
+          check_url() {
+            local url="$1" code=000
+            for i in $(seq 1 20); do
+              code=$(curl -L -sS -o /dev/null -w '%{http_code}' "$url" || true)
+              if [ "$code" = "200" ]; then return 0; fi
+              sleep 3
+            done
+            echo "FAILED $url status=$code"
+            return 1
+          }
+          check_url 'https://wisequotesworld.com/it/'
+          check_url 'https://wisequotesworld.com/pt/'
+          check_url 'https://wisequotesworld.com/it/quotes/'
+          check_url 'https://wisequotesworld.com/pt/quotes/'
+          check_url 'https://wisequotesworld.com/it/start/'
+          check_url 'https://wisequotesworld.com/pt/start/'
+          jq -r '.results[].canonical_path' ops/readback/new-locales-publication.json | while read -r path; do
+            check_url "https://wisequotesworld.com${path}"
+          done
+          curl -L -sS 'https://wisequotesworld.com/sitemap.xml' -o /tmp/sitemap.xml
+          grep -q 'https://wisequotesworld.com/it/' /tmp/sitemap.xml
+          grep -q 'https://wisequotesworld.com/pt/' /tmp/sitemap.xml
+          jq -r '.results[].canonical_path' ops/readback/new-locales-publication.json | while read -r path; do
+            grep -q "https://wisequotesworld.com${path}" /tmp/sitemap.xml
+          done
+          echo 'Verified IT 7/7 + PT-BR 7/7 and sitemap.'
+      - name: Save production readback
+        shell: bash
         run: |
+          set -euo pipefail
           git pull --rebase
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('_worker.js');s=p.read_text(encoding='utf-8')
-          s=s.replace("import {expandItPtBr,readItPtBr} from './lib/expand_it_ptbr.js';\n",'',1)
-          s=s.replace("import {publishNewLocales} from './lib/new_locales_publish.js';\n",'',1)
-          s=s.replace("if(url.pathname==='/ops/expand/it-ptbr'&&request.method==='POST')return json(await expandItPtBr(env));if(url.pathname==='/ops/readback/it-ptbr.json'&&request.method==='GET')return json(await readItPtBr(env));",'',1)
-          s=s.replace("if(url.pathname==='/ops/publish/new-locales'&&request.method==='POST')return json(await publishNewLocales(env));",'',1)
-          p.write_text(s,encoding='utf-8')
-
-          p=Path('ops/MASTER_RULES.md');s=p.read_text(encoding='utf-8')
-          s=s.replace('Останнє оновлення: 2026-09-03','Останнє оновлення: 2026-09-04',1)
-          s=s.replace('Версія: database-first v4.6','Версія: database-first v4.7',1)
-          s=s.replace('uk, ru, pl, en, sv, de, es, fr.','uk, ru, pl, en, sv, de, es, fr, it, pt (pt-BR).',1)
-          s=s.replace('Усі 8 мов активні для website, Pinterest, Facebook, Instagram, Threads, TikTok і YouTube. Для повної production readiness французька проходить ті самі social/media gates, що й інші 7 мов.','Усі 10 мов активні для website: uk, ru, pl, en, sv, de, es, fr, it, pt-BR. Для it і pt-BR website/localized articles активні одразу; social-канали проходять підключення окремо й до підключення показуються як «in preparation / em breve». Після створення соцмереж it і pt-BR переходять на ті самі production/media/scheduling gates, що й інші мови.',1)
-          s=s.replace('Одна думка = один content_id, 8 localizations.','Одна думка = один content_id, 10 localizations.',1)
-          s=s.replace('Pinterest is MANDATORY for every approved topic in all 8 languages.','Pinterest is MANDATORY for every approved topic in all active social locales. Після підключення it і pt-BR цільове покриття — 10/10 мов.',1)
-          s=s.replace('D1 database-first. New approved content should not require manual deploy. 8 locales, archive, quote/category/verified-author pages, sitemap/hreflang/canonical/internal links.','D1 database-first. New approved content should not require manual deploy. 10 website locales (uk, ru, pl, en, sv, de, es, fr, it, pt-BR), archive, quote/category/verified-author pages, sitemap/hreflang/canonical/internal links.',1)
-          s=s.replace('Create/edit topic, 8 localizations, prompts, copy, article/URL, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Media batch upload must support video and Pinterest creative for all 8 locales, including FR.','Create/edit topic, 10 localizations, prompts, copy, article/URL, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Website must support all 10 locales. Social/media readiness for it and pt-BR becomes mandatory after those accounts are connected.',1)
-          s=s.replace('Required Pinterest coverage is 8/8 locales: uk, ru, pl, en, sv, de, es, fr.','Required Pinterest coverage follows connected active social locales; target becomes 10/10 after it and pt-BR boards/channels are connected.',1)
-          s=s.replace('Social coverage is 8/8 locales for Facebook, Instagram, Threads, TikTok and YouTube where connected.','Social coverage is required for every connected locale. Current established 8 remain mandatory; it and pt-BR join the gate immediately after their social accounts are connected.',1)
-          s=s.replace('→ 8 native localizations → 8 Gemini/Veo prompts → 8 Pinterest prompts →','→ 10 native website localizations → connected-locale Gemini/Veo prompts → connected-locale Pinterest prompts →',1)
-          s=s.replace('→ Metricool schedule all 8 locales including Pinterest 8/8 →','→ Metricool schedule all connected locales with required Pinterest coverage →',1)
-          p.write_text(s,encoding='utf-8')
-          PY
-          node --check _worker.js
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm -f .github/workflows/expand-it-ptbr.yml .github/workflows/publish-it-pt-website.yml .github/workflows/new-locales-catalog-readback.yml .github/workflows/finalize-it-ptbr.yml || true
-          git rm -f lib/expand_it_ptbr.js lib/new_locales_catalog_readback.js || true
-          git add _worker.js ops/MASTER_RULES.md ops/readback/new-locales-publication.json
-          git commit -m 'Finalize ten-language website expansion for IT and PT-BR'
+          git add ops/readback/new-locales-publication.json
+          git commit -m 'Record live IT and PT-BR publication readback' || exit 0
           git push

@@ -1,0 +1,76 @@
+name: WQ015 publish
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/wq015-publish.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire temporary WQ015 publish endpoint
+        run: |
+          git pull --rebase
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text(encoding='utf-8')
+          imp="import {publishWQ015AndCloseWQ014,readbackWQ015} from './lib/wq015_publish.js';\n"
+          anchor="import {readbackWQ014Prompts} from './lib/wq014_prompt_sync.js';\n"
+          route="if(url.pathname==='/ops/publish/wq015'&&request.method==='POST')return json(await publishWQ015AndCloseWQ014(env));if(url.pathname==='/ops/readback/wq015-site.json'&&request.method==='GET')return json(await readbackWQ015(env));"
+          route_anchor="if(url.pathname==='/ops/readback/wq014-prompts.json'&&request.method==='GET')"
+          if imp not in s:s=s.replace(anchor,anchor+imp,1)
+          if route not in s:s=s.replace(route_anchor,route+route_anchor,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git commit -m 'Temporarily wire WQ015 publish endpoint'
+          git push
+      - name: Wait for deploy
+        run: sleep 35
+      - name: Publish WQ015 and verify D1 plus live pages
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --retry 12 --retry-all-errors --retry-delay 5 -X POST 'https://wisequotesworld.com/ops/publish/wq015' -o ops/readback/WQ015-site.json
+          cat ops/readback/WQ015-site.json
+          python - <<'PY'
+          import json, subprocess
+          d=json.load(open('ops/readback/WQ015-site.json',encoding='utf-8'))
+          assert d.get('ok') is True,d
+          assert d.get('item',{}).get('status')=='media_pending',d
+          assert d.get('item',{}).get('attribution_status')=='verified',d
+          assert d.get('versions_count')==8,d
+          assert d.get('pages_count')==8,d
+          assert d.get('outputs_count')==88,d
+          assert d.get('evidence',{}).get('verified')==1,d
+          assert d.get('previous',{}).get('status')=='published',d
+          for v in d['versions']:
+            assert v['language_check_status']=='native_qa_pass',v
+          for p in d['pages']:
+            assert p['status']=='published',p
+            url='https://wisequotesworld.com'+p['canonical_path']
+            code=subprocess.check_output(['curl','-L','-sS','-o','/dev/null','-w','%{http_code}',url],text=True).strip()
+            assert code=='200',(url,code)
+          print('WQ015 8/8 live; WQ014 published')
+          PY
+      - name: Remove temporary route and commit readback
+        run: |
+          git pull --rebase
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("import {publishWQ015AndCloseWQ014,readbackWQ015} from './lib/wq015_publish.js';\n",'',1)
+          s=s.replace("if(url.pathname==='/ops/publish/wq015'&&request.method==='POST')return json(await publishWQ015AndCloseWQ014(env));if(url.pathname==='/ops/readback/wq015-site.json'&&request.method==='GET')return json(await readbackWQ015(env));",'',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git add _worker.js ops/readback/WQ015-site.json
+          git commit -m 'Record WQ015 publication and clean temporary route'
+          git push

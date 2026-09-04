@@ -1,0 +1,89 @@
+name: Expand Wise Quotes World to IT and PT-BR
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/expand-it-ptbr.yml'
+      - 'lib/expand_it_ptbr.js'
+permissions:
+  contents: write
+jobs:
+  expand:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Expand public routing to ten languages
+        run: |
+          git pull --rebase
+          python - <<'PY'
+          from pathlib import Path
+          def patch(path):
+            p=Path(path); s=p.read_text(encoding='utf-8')
+            s=s.replace("['uk','ru','pl','en','sv','de','es','fr']","['uk','ru','pl','en','sv','de','es','fr','it','pt']")
+            s=s.replace("fr:'Français'}","fr:'Français',it:'Italiano',pt:'Português (Brasil)'}")
+            s=s.replace("fr:'🇫🇷'}","fr:'🇫🇷',it:'🇮🇹',pt:'🇧🇷'}")
+            s=s.replace("(uk|ru|pl|en|sv|de|es|fr)","(uk|ru|pl|en|sv|de|es|fr|it|pt)")
+            s=s.replace('Timeless words · eight languages','Timeless words · ten languages')
+            if path=='lib/site_v2.js':
+              old="fr:{title:'Une sagesse à garder en mémoire',lead:'Des mots intemporels, de nouvelles réflexions et des citations auxquelles revenir.',all:'Toutes les citations',latest:'Dernières publications',curated:'Citations choisies',categories:'Thèmes',authors:'Auteurs',read:'Lire la réflexion',empty:'Aucune citation publiée pour le moment.'}};"
+              new="fr:{title:'Une sagesse à garder en mémoire',lead:'Des mots intemporels, de nouvelles réflexions et des citations auxquelles revenir.',all:'Toutes les citations',latest:'Dernières publications',curated:'Citations choisies',categories:'Thèmes',authors:'Auteurs',read:'Lire la réflexion',empty:'Aucune citation publiée pour le moment.'},\nit:{title:'Saggezza da ricordare',lead:'Parole senza tempo, nuove riflessioni e citazioni a cui vale la pena tornare.',all:'Tutte le citazioni',latest:'Ultime pubblicazioni',curated:'Citazioni selezionate',categories:'Temi',authors:'Autori',read:'Leggi la riflessione',empty:'Non ci sono ancora citazioni pubblicate.'},\npt:{title:'Sabedoria que vale a pena lembrar',lead:'Palavras atemporais, novas reflexões e citações às quais vale a pena voltar.',all:'Todas as citações',latest:'Publicações recentes',curated:'Citações selecionadas',categories:'Temas',authors:'Autores',read:'Leia a reflexão',empty:'Ainda não há citações publicadas.'}};"
+              s=s.replace(old,new)
+              s=s.replace("fr:'Parents et famille'}","fr:'Parents et famille',it:'Genitori e famiglia',pt:'Pais e família'}")
+              s=s.replace("fr:'Philosophie et force'}","fr:'Philosophie et force',it:'Filosofia e forza',pt:'Filosofia e força'}")
+              s=s.replace("fr:'Discipline'}","fr:'Discipline',it:'Disciplina',pt:'Disciplina'}")
+            if path=='lib/quote_detail_v3.js':
+              old="fr:{all:'Toutes les citations',home:'Accueil',reflection:'Réflexion',related:'Autres citations',author:'Auteur',source:'Source',back:'Toutes les citations',category:'Thème'}};"
+              new="fr:{all:'Toutes les citations',home:'Accueil',reflection:'Réflexion',related:'Autres citations',author:'Auteur',source:'Source',back:'Toutes les citations',category:'Thème'},\nit:{all:'Tutte le citazioni',home:'Home',reflection:'Riflessione',related:'Altre citazioni',author:'Autore',source:'Fonte',back:'Torna a tutte le citazioni',category:'Tema'},\npt:{all:'Todas as citações',home:'Início',reflection:'Reflexão',related:'Mais citações',author:'Autor',source:'Fonte',back:'Voltar para todas as citações',category:'Tema'}};"
+              s=s.replace(old,new)
+              s=s.replace("fr:'Parents et famille'}","fr:'Parents et famille',it:'Genitori e famiglia',pt:'Pais e família'}")
+              s=s.replace("fr:'Philosophie et force'}","fr:'Philosophie et force',it:'Filosofia e forza',pt:'Filosofia e força'}")
+              s=s.replace("fr:'Discipline'}","fr:'Discipline',it:'Disciplina',pt:'Disciplina'}")
+            p.write_text(s,encoding='utf-8')
+          patch('lib/site_v2.js'); patch('lib/quote_detail_v3.js')
+          p=Path('_worker.js'); s=p.read_text(encoding='utf-8')
+          s=s.replace("import {readCanonicalRules} from './lib/canonical_rules.js';\n","import {readCanonicalRules} from './lib/canonical_rules.js';\nimport {expandItPtBr,readItPtBr} from './lib/expand_it_ptbr.js';\n",1)
+          s=s.replace("(uk|ru|pl|en|sv|de|es|fr)","(uk|ru|pl|en|sv|de|es|fr|it|pt)")
+          anchor="if(url.pathname==='/ops/run/wq015-finalize'&&request.method==='POST')"
+          route="if(url.pathname==='/ops/expand/it-ptbr'&&request.method==='POST')return json(await expandItPtBr(env));if(url.pathname==='/ops/readback/it-ptbr.json'&&request.method==='GET')return json(await readItPtBr(env));"
+          if route not in s:s=s.replace(anchor,route+anchor,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js lib/site_v2.js lib/quote_detail_v3.js
+          git commit -m 'Enable Italian and Brazilian Portuguese public routing'
+          git push
+      - name: Wait for deploy and publish localized articles
+        run: |
+          sleep 35
+          curl -L -sS --retry 12 --retry-all-errors --retry-delay 5 -X POST 'https://wisequotesworld.com/ops/expand/it-ptbr' -o /tmp/expand.json
+          cat /tmp/expand.json
+          python - <<'PY'
+          import json,subprocess
+          d=json.load(open('/tmp/expand.json'))
+          assert d.get('ok') is True,d
+          assert d.get('inserted_or_updated')==14,d
+          for x in d['results']:
+            url='https://wisequotesworld.com'+x['canonical']
+            code=subprocess.check_output(['curl','-L','-sS','-o','/dev/null','-w','%{http_code}',url],text=True).strip()
+            assert code=='200',(url,code)
+          for url in ['https://wisequotesworld.com/it/','https://wisequotesworld.com/pt/','https://wisequotesworld.com/it/start/','https://wisequotesworld.com/pt/start/']:
+            code=subprocess.check_output(['curl','-L','-sS','-o','/dev/null','-w','%{http_code}',url],text=True).strip();assert code=='200',(url,code)
+          print('IT/PT-BR 14 article pages and locale homes verified live')
+          PY
+      - name: Record readback and remove write endpoint
+        run: |
+          curl -L -sS 'https://wisequotesworld.com/ops/readback/it-ptbr.json' -o /tmp/readback.json
+          git pull --rebase
+          mkdir -p ops/readback
+          cp /tmp/readback.json ops/readback/it-ptbr-live.json
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js');s=p.read_text(encoding='utf-8')
+          s=s.replace("import {expandItPtBr,readItPtBr} from './lib/expand_it_ptbr.js';\n",'',1)
+          s=s.replace("if(url.pathname==='/ops/expand/it-ptbr'&&request.method==='POST')return json(await expandItPtBr(env));if(url.pathname==='/ops/readback/it-ptbr.json'&&request.method==='GET')return json(await readItPtBr(env));",'',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git add _worker.js ops/readback/it-ptbr-live.json
+          git commit -m 'Record live IT and PT-BR expansion and close write endpoint'
+          git push

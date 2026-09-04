@@ -1,0 +1,41 @@
+name: Update Wise Quotes World ten-language rules
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/update-ten-language-rules.yml'
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update canonical language rules
+        run: |
+          set -euo pipefail
+          git pull --rebase
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('ops/MASTER_RULES.md')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('Останнє оновлення: 2026-09-03','Останнє оновлення: 2026-09-04',1)
+          s=s.replace('Версія: database-first v4.6','Версія: database-first v4.7',1)
+          s=s.replace('## 2. Мови\nuk, ru, pl, en, sv, de, es, fr.\n\nУсі 8 мов активні для website, Pinterest, Facebook, Instagram, Threads, TikTok і YouTube. Для повної production readiness французька проходить ті самі social/media gates, що й інші 7 мов.', '''## 2. Мови
+Website locales: uk, ru, pl, en, sv, de, es, fr, it, pt-BR. Внутрішній D1/path code для Brazilian Portuguese — `pt`; HTML/hreflang locale — `pt-BR`.
+
+Усі 10 мов активні для website та website-localized content. Соціальні production locales поки залишаються 8: uk, ru, pl, en, sv, de, es, fr. Італійська та Brazilian Portuguese мають website/start сторінки і контент, але їхні social accounts мають статус prepared/inactive до фактичного створення та підключення. Не вигадувати social URL або account IDs.''',1)
+          s=s.replace('Одна думка = один content_id, 8 localizations. Є два production types:','Одна думка = один content_id, 10 website localizations. Social/media outputs обов’язкові лише для фактично активних social locales. Є два production types:',1)
+          s=s.replace('Pinterest is MANDATORY for every approved topic in all 8 languages. Each locale must have its own Pinterest image, localized SEO title, localized description, exact same-language article destination, and correct locale board.','Pinterest is MANDATORY for every approved topic in all active Pinterest/social locales. Поки IT/PT-BR social accounts/boards не підключені, production gate залишається 8/8: uk, ru, pl, en, sv, de, es, fr. Після їх фактичного підключення gate розширюється без вигаданих URL/board IDs. Each active locale must have its own Pinterest image, localized SEO title, localized description, exact same-language article destination, and correct locale board.',1)
+          s=s.replace('D1 database-first. New approved content should not require manual deploy. 8 locales, archive, quote/category/verified-author pages, sitemap/hreflang/canonical/internal links.','D1 database-first. New approved content should not require manual deploy. 10 website locales (uk, ru, pl, en, sv, de, es, fr, it, pt-BR), archive, quote/category/verified-author pages, sitemap/hreflang/canonical/internal links.',1)
+          s=s.replace('Create/edit topic, 8 localizations, prompts, copy, article/URL, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Media batch upload must support video and Pinterest creative for all 8 locales, including FR. Empty author = NO AUTHOR everywhere.','Create/edit topic, 10 website localizations, article/URL, plus prompts/social copy/media for active social locales, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Media batch upload must support all active social locales. IT/PT-BR remain website-only until their social accounts are actually connected. Empty author = NO AUTHOR everywhere.',1)
+          old='`наступна цитата` / `готуй наступну` / `працюємо по правилах` = read MASTER_RULES + D1 → determine `adapted` vs verified `verbatim` → source/quote QA → duration gate → 8 native localizations → 8 Gemini/Veo prompts → 8 Pinterest prompts → full social copy with platform-correct CTA/links + localized URLs → website reflection → D1 → user media generation/upload → media QA → approval → Metricool schedule all 8 locales including Pinterest 8/8 → Planner readback → analytics.'
+          new='`наступна цитата` / `готуй наступну` / `працюємо по правилах` = read MASTER_RULES + D1 → determine `adapted` vs verified `verbatim` → source/quote QA → duration gate → 10 native website localizations (uk, ru, pl, en, sv, de, es, fr, it, pt-BR) → prompts/social copy/media only for currently active social locales → localized website reflections/URLs for all 10 → D1 → user media generation/upload → media QA → approval → Metricool schedule active social locales → Planner readback → analytics. Until IT/PT-BR social accounts are connected, do not block website publication on missing IT/PT-BR social/media outputs.'
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/MASTER_RULES.md
+          git commit -m 'Update canonical rules for ten website languages'
+          git push

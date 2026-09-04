@@ -30,38 +30,34 @@ jobs:
           git diff --cached --quiet || git commit -m 'Use shared newsletter widget on five newest start pages'
           git push
       - name: Wait for deployment
-        run: sleep 55
-      - name: Verify unified static start presentation
+        run: sleep 45
+      - name: Verify all 13 production start pages
         run: |
           set -euo pipefail
-          for lang in uk ru pl en sv de es fr; do
+          for lang in uk ru pl en sv de es fr it pt id tr ar; do
+            echo "Checking $lang"
             ok=0
-            for i in $(seq 1 15); do
-              body=$(curl -L -sS "https://wisequotesworld.com/$lang/start/" || true)
-              js=$(curl -L -sS 'https://wisequotesworld.com/start/localized.js?v=20260904-1528' || true)
-              if echo "$body" | grep -q '/start/localized.js' && echo "$js" | grep -q '/start/newsletter.js' && ! echo "$js" | grep -q 'contact-name'; then ok=1; break; fi
+            for i in $(seq 1 18); do
+              body=$(curl -L -sS --retry 3 --retry-all-errors --retry-delay 2 "https://wisequotesworld.com/$lang/start/" || true)
+              if grep -q 'newsletter-form' <<<"$body" && grep -q 'mailto:wisequotesofworld@gmail.com' <<<"$body" && ! grep -q 'contact-name' <<<"$body"; then
+                ok=1
+                break
+              fi
               sleep 5
             done
-            test "$ok" -eq 1
+            if [ "$ok" -ne 1 ]; then
+              echo "Unified production page failed for $lang" >&2
+              printf '%s' "$body" | head -c 1500 >&2 || true
+              exit 1
+            fi
           done
-          for lang in it pt id tr ar; do
-            ok=0
-            for i in $(seq 1 15); do
-              body=$(curl -L -sS "https://wisequotesworld.com/$lang/start/" || true)
-              if echo "$body" | grep -q '/start/newsletter.js'; then ok=1; break; fi
-              sleep 5
-            done
-            test "$ok" -eq 1
-          done
-          js=$(curl -L -f -sS 'https://wisequotesworld.com/start/newsletter.js?v=20260904-1528')
-          echo "$js" | grep -q 'api/newsletter/subscribe'
       - name: Verify newsletter API
         run: |
           set -euo pipefail
           ok=0
           for i in $(seq 1 15); do
             response=$(curl -L -sS -X POST 'https://wisequotesworld.com/api/newsletter/subscribe' -H 'content-type: application/json' --data '{"email":"qa-newsletter@example.invalid","language":"en","company":"qa-bot"}' || true)
-            if echo "$response" | grep -q '"ok":true'; then ok=1; break; fi
+            if grep -q '"ok":true' <<<"$response"; then ok=1; break; fi
             sleep 5
           done
           test "$ok" -eq 1
@@ -71,6 +67,8 @@ jobs:
           cat > ops/readback/start-newsletter-verification.json <<'JSON'
           {"ok":true,"start_pages":13,"contact_style":"compact_mailto","newsletter_widget":"13_locales","newsletter_signup":"D1_locale_aware","unsubscribe":"implemented","email_delivery":"provider_pending","verified_at":"2026-09-04"}
           JSON
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add ops/readback/start-newsletter-verification.json
           git diff --cached --quiet || git commit -m 'Record verified unified start and newsletter signup'
           git push

@@ -4,16 +4,111 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/finalize-it-ptbr.yml'
+      - 'lib/prepare_new_locales.js'
 permissions:
   contents: write
 jobs:
-  diagnose:
+  finalize:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Diagnose production publisher
+      - name: Wire temporary D1 locale preparation endpoint
         shell: bash
         run: |
-          code=$(curl -L -sS -o /tmp/publish.json -w '%{http_code}' -X POST 'https://wisequotesworld.com/ops/publish/new-locales' || true)
-          echo "HTTP=$code"
-          cat /tmp/publish.json || true
+          set -euo pipefail
+          git pull --rebase
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js'); s=p.read_text(encoding='utf-8')
+          imp="import {prepareNewLocales} from './lib/prepare_new_locales.js';\n"
+          anchor="import {publishNewLocales} from './lib/new_locales_publish.js';\n"
+          route="if(url.pathname==='/ops/prepare/new-locales'&&request.method==='POST')return json(await prepareNewLocales(env));"
+          route_anchor="if(url.pathname==='/ops/publish/new-locales'&&request.method==='POST')"
+          if imp not in s: s=s.replace(anchor,anchor+imp,1)
+          if route not in s: s=s.replace(route_anchor,route+route_anchor,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git commit -m 'Temporarily wire IT and PT-BR D1 locale preparation' || true
+          git push
+      - name: Prepare locale rows in D1
+        shell: bash
+        run: |
+          set -euo pipefail
+          : > /tmp/prepare.json
+          ok=0
+          for i in $(seq 1 36); do
+            code=$(curl -L -sS -o /tmp/prepare.json -w '%{http_code}' -X POST 'https://wisequotesworld.com/ops/prepare/new-locales' || true)
+            echo "prepare attempt=$i status=$code bytes=$(wc -c < /tmp/prepare.json || true)"
+            if [ "$code" = "200" ] && jq -e '.ok == true and (.languages|length) == 2' /tmp/prepare.json >/dev/null 2>&1; then ok=1; break; fi
+            sleep 5
+          done
+          test "$ok" = 1
+          jq . /tmp/prepare.json
+      - name: Publish 14 D1 localizations
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          : > /tmp/publish.json
+          ok=0
+          for i in $(seq 1 12); do
+            code=$(curl -L -sS -o /tmp/publish.json -w '%{http_code}' -X POST 'https://wisequotesworld.com/ops/publish/new-locales' || true)
+            echo "publish attempt=$i status=$code bytes=$(wc -c < /tmp/publish.json || true)"
+            if [ "$code" = "200" ] && jq -e '.ok == true and .published == 14' /tmp/publish.json >/dev/null 2>&1; then ok=1; break; fi
+            cat /tmp/publish.json || true
+            sleep 5
+          done
+          test "$ok" = 1
+          cp /tmp/publish.json ops/readback/new-locales-publication.json
+          jq . ops/readback/new-locales-publication.json
+          test "$(jq -r '.counts[] | select(.language=="it") | .count' ops/readback/new-locales-publication.json)" = "7"
+          test "$(jq -r '.counts[] | select(.language=="pt") | .count' ops/readback/new-locales-publication.json)" = "7"
+      - name: Verify locale pages and sitemap
+        shell: bash
+        run: |
+          set -euo pipefail
+          check_url() {
+            local url="$1" code=000
+            for i in $(seq 1 20); do
+              code=$(curl -L -sS -o /dev/null -w '%{http_code}' "$url" || true)
+              if [ "$code" = "200" ]; then return 0; fi
+              sleep 3
+            done
+            echo "FAILED $url status=$code"; return 1
+          }
+          check_url 'https://wisequotesworld.com/it/'
+          check_url 'https://wisequotesworld.com/pt/'
+          check_url 'https://wisequotesworld.com/it/quotes/'
+          check_url 'https://wisequotesworld.com/pt/quotes/'
+          check_url 'https://wisequotesworld.com/it/start/'
+          check_url 'https://wisequotesworld.com/pt/start/'
+          jq -r '.results[].canonical_path' ops/readback/new-locales-publication.json | while read -r path; do check_url "https://wisequotesworld.com${path}"; done
+          curl -L -sS 'https://wisequotesworld.com/sitemap.xml' -o /tmp/sitemap.xml
+          grep -q 'https://wisequotesworld.com/it/' /tmp/sitemap.xml
+          grep -q 'https://wisequotesworld.com/pt/' /tmp/sitemap.xml
+          jq -r '.results[].canonical_path' ops/readback/new-locales-publication.json | while read -r path; do grep -q "https://wisequotesworld.com${path}" /tmp/sitemap.xml; done
+          echo 'Verified IT 7/7 + PT-BR 7/7 and sitemap.'
+      - name: Save readback and clean temporary endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js'); s=p.read_text(encoding='utf-8')
+          s=s.replace("import {prepareNewLocales} from './lib/prepare_new_locales.js';\n",'',1)
+          s=s.replace("import {expandItPtBr,readItPtBr} from './lib/expand_it_ptbr.js';\n",'',1)
+          s=s.replace("import {publishNewLocales} from './lib/new_locales_publish.js';\n",'',1)
+          s=s.replace("if(url.pathname==='/ops/prepare/new-locales'&&request.method==='POST')return json(await prepareNewLocales(env));",'',1)
+          s=s.replace("if(url.pathname==='/ops/expand/it-ptbr'&&request.method==='POST')return json(await expandItPtBr(env));if(url.pathname==='/ops/readback/it-ptbr.json'&&request.method==='GET')return json(await readItPtBr(env));",'',1)
+          s=s.replace("if(url.pathname==='/ops/publish/new-locales'&&request.method==='POST')return json(await publishNewLocales(env));",'',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js ops/readback/new-locales-publication.json
+          git commit -m 'Record verified IT and PT-BR website publication' || true
+          git push

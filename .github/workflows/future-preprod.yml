@@ -1,0 +1,31 @@
+name: Future preprod
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/future-preprod.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for deploy
+        run: sleep 35
+      - name: Prepare and verify
+        run: |
+          set -euo pipefail
+          curl -L -sS --fail --retry 12 --retry-all-errors --retry-delay 5 -X POST 'https://wisequotesworld.com/ops/run/future-preprod' -o /tmp/prep.json
+          cat /tmp/prep.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/prep.json'))
+          assert d.get('ok') is True, d
+          assert d.get('localizations')==13, d
+          assert d['wq016']['status']=='localized', d
+          assert d['wq016']['attribution_status']=='verified', d
+          assert len(d.get('next',[]))==9, d
+          print('WQ016 localized 13/13; WQ017-WQ025 preproduction candidates stored')
+          PY

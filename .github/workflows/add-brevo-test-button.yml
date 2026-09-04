@@ -1,0 +1,80 @@
+name: Add protected Brevo test control
+
+on:
+  push:
+    paths:
+      - '.github/workflows/add-brevo-test-button.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch protected test endpoint and Admin button
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('lib/brevo_newsletter.js')
+          text=p.read_text()
+          old="""  const email=String(data.email||'').trim().toLowerCase();
+  if(email.length>254||!/^\\S+@\\S+\\.\\S+$/.test(email))return json({ok:false,error:'invalid_email'},400);
+  const sub=await env.DB.prepare(`SELECT language_code,unsubscribe_token FROM newsletter_subscribers WHERE project_id=? AND email=? AND status='active' ORDER BY updated_at DESC LIMIT 1`).bind(PROJECT_ID,email).first();
+  if(!sub)return json({ok:false,error:'active_subscriber_not_found'},404);
+"""
+          new="""  const email=String(data.email||'').trim().toLowerCase();
+  if(email&&(email.length>254||!/^\\S+@\\S+\\.\\S+$/.test(email)))return json({ok:false,error:'invalid_email'},400);
+  const sub=email
+   ? await env.DB.prepare(`SELECT email,language_code,unsubscribe_token FROM newsletter_subscribers WHERE project_id=? AND email=? AND status='active' ORDER BY updated_at DESC LIMIT 1`).bind(PROJECT_ID,email).first()
+   : await env.DB.prepare(`SELECT email,language_code,unsubscribe_token FROM newsletter_subscribers WHERE project_id=? AND status='active' ORDER BY updated_at ASC LIMIT 1`).bind(PROJECT_ID).first();
+  if(!sub)return json({ok:false,error:'active_subscriber_not_found'},404);
+  const recipient=String(sub.email||'').trim().toLowerCase();
+"""
+          if old not in text:
+              raise SystemExit('brevo target block missing')
+          text=text.replace(old,new)
+          text=text.replace("to:email,subject,htmlContent", "to:recipient,subject,htmlContent")
+          text=text.replace("recipient:email,language:sub.language_code", "recipient:recipient,language:sub.language_code")
+          p.write_text(text)
+
+          p=Path('admin/console/index.html')
+          html=p.read_text()
+          old="<div class=\"card\"><h2>Стан системи</h2><div id=\"sys\" class=\"status\">Введи ADMIN_TOKEN.</div></div>"
+          new="<div class=\"card\"><h2>Стан системи</h2><div id=\"sys\" class=\"status\">Введи ADMIN_TOKEN.</div></div><div class=\"card\"><h2>Newsletter / Brevo</h2><p class=\"muted\">Захищений тест: надсилає один лист першому активному підписнику в D1.</p><button id=\"brevoTestBtn\">Надіслати Brevo test</button><div id=\"brevoTestStatus\" class=\"status\">Очікує запуску.</div></div>"
+          if old not in html:
+              raise SystemExit('dashboard target missing')
+          html=html.replace(old,new)
+          script="""<script>(()=>{const b=document.getElementById('brevoTestBtn'),s=document.getElementById('brevoTestStatus');if(!b||!s)return;b.addEventListener('click',async()=>{const token=localStorage.getItem('wq_admin_token')||'';if(!token){s.className='status bad';s.textContent='Спочатку підключіть ADMIN_TOKEN.';return}b.disabled=true;s.className='status';s.textContent='Надсилаю тестовий лист…';try{const r=await fetch('/ops/run/brevo-test',{method:'POST',headers:{'content-type':'application/json',Authorization:'Bearer '+token},body:'{}'});const j=await r.json();if(!r.ok||!j.ok)throw new Error(j.error||('HTTP '+r.status));s.className='status ok';s.textContent='Brevo прийняв лист ✓ · '+(j.language||'')+' · status '+(j.status||'');}catch(e){s.className='status bad';s.textContent='Помилка: '+e.message}finally{b.disabled=false}})})();</script>"""
+          html=html.replace('</body></html>',script+'</body></html>')
+          p.write_text(html)
+          PY
+      - name: Commit and push
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898242+github-actions[bot]@users.noreply.github.com'
+          git add lib/brevo_newsletter.js admin/console/index.html
+          git commit -m 'Add protected Brevo test button'
+          git push
+      - name: Wait for production
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import time,urllib.request
+          for i in range(36):
+              try:
+                  req=urllib.request.Request('https://wisequotesworld.com/admin/console/?brevo='+str(i),headers={'Cache-Control':'no-cache','User-Agent':'WQW-QA/1.0'})
+                  with urllib.request.urlopen(req,timeout=20) as r: h=r.read().decode('utf-8','replace')
+                  if 'brevoTestBtn' in h and 'Надіслати Brevo test' in h:
+                      print('production button ready')
+                      break
+              except Exception as e: print('retry',e)
+              time.sleep(10)
+          else: raise SystemExit('production button not ready')
+          PY

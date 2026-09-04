@@ -13,12 +13,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Wait for deploy
-        run: sleep 35
+        run: sleep 10
       - name: Prepare and verify
         run: |
           set -euo pipefail
-          curl -L -sS --fail --retry 12 --retry-all-errors --retry-delay 5 -X POST 'https://wisequotesworld.com/ops/run/future-preprod' -o /tmp/prep.json
+          code=$(curl -L -sS -X POST 'https://wisequotesworld.com/ops/run/future-preprod' -o /tmp/prep.json -w '%{http_code}')
+          echo "HTTP $code"
           cat /tmp/prep.json
+          echo
+          test "$code" = "200"
           python - <<'PY'
           import json
           d=json.load(open('/tmp/prep.json'))

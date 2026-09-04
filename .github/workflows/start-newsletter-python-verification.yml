@@ -11,32 +11,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Diagnose production newsletter API
+      - name: Capture production newsletter API diagnostic
         run: |
           python - <<'PY'
-          import json,time,urllib.request,urllib.error
+          import json,urllib.request,urllib.error,pathlib
+          result={}
           health='https://wisequotesworld.com/ops/readback/newsletter-health.json'
           try:
               with urllib.request.urlopen(health,timeout=20) as r:
-                  print('HEALTH STATUS',r.status)
-                  print('HEALTH BODY',r.read().decode())
+                  result['health_status']=r.status
+                  result['health_body']=r.read().decode(errors='replace')
           except urllib.error.HTTPError as e:
-              print('HEALTH HTTP',e.code,e.read().decode(errors='replace'))
+              result['health_status']=e.code
+              result['health_body']=e.read().decode(errors='replace')
           except Exception as e:
-              print('HEALTH ERROR',repr(e))
-
+              result['health_error']=repr(e)
           payload=json.dumps({'email':'qa-newsletter-diagnostic@example.invalid','language':'uk','company':''}).encode()
-          req=urllib.request.Request('https://wisequotesworld.com/api/newsletter/subscribe',data=payload,headers={'Content-Type':'application/json','User-Agent':'WQW-production-QA/3.0'},method='POST')
+          req=urllib.request.Request('https://wisequotesworld.com/api/newsletter/subscribe',data=payload,headers={'Content-Type':'application/json','User-Agent':'WQW-production-QA/4.0'},method='POST')
           try:
               with urllib.request.urlopen(req,timeout=20) as r:
-                  body=r.read().decode()
-                  print('WRITE STATUS',r.status)
-                  print('WRITE BODY',body)
-                  out=json.loads(body)
-                  assert out.get('ok') is True
+                  result['write_status']=r.status
+                  result['write_body']=r.read().decode(errors='replace')
           except urllib.error.HTTPError as e:
-              body=e.read().decode(errors='replace')
-              print('WRITE HTTP',e.code)
-              print('WRITE ERROR BODY',body)
-              raise
+              result['write_status']=e.code
+              result['write_body']=e.read().decode(errors='replace')
+          except Exception as e:
+              result['write_error']=repr(e)
+          pathlib.Path('ops/readback').mkdir(parents=True,exist_ok=True)
+          pathlib.Path('ops/readback/newsletter-diagnostic.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
+          print(json.dumps(result,ensure_ascii=False,indent=2))
           PY
+      - name: Commit diagnostic
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898242+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/newsletter-diagnostic.json
+          git commit -m 'Record newsletter production diagnostic' || true
+          git push

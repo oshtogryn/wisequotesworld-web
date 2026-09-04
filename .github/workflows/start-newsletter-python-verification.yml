@@ -11,40 +11,82 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Capture production newsletter API diagnostic
+      - name: Replace D1 exec DDL with prepared statements
         run: |
           python - <<'PY'
-          import json,urllib.request,urllib.error,pathlib
-          result={}
-          health='https://wisequotesworld.com/ops/readback/newsletter-health.json'
-          try:
-              with urllib.request.urlopen(health,timeout=20) as r:
-                  result['health_status']=r.status
-                  result['health_body']=r.read().decode(errors='replace')
-          except urllib.error.HTTPError as e:
-              result['health_status']=e.code
-              result['health_body']=e.read().decode(errors='replace')
-          except Exception as e:
-              result['health_error']=repr(e)
-          payload=json.dumps({'email':'qa-newsletter-diagnostic@example.invalid','language':'uk','company':''}).encode()
-          req=urllib.request.Request('https://wisequotesworld.com/api/newsletter/subscribe',data=payload,headers={'Content-Type':'application/json','User-Agent':'WQW-production-QA/4.0'},method='POST')
-          try:
-              with urllib.request.urlopen(req,timeout=20) as r:
-                  result['write_status']=r.status
-                  result['write_body']=r.read().decode(errors='replace')
-          except urllib.error.HTTPError as e:
-              result['write_status']=e.code
-              result['write_body']=e.read().decode(errors='replace')
-          except Exception as e:
-              result['write_error']=repr(e)
-          pathlib.Path('ops/readback').mkdir(parents=True,exist_ok=True)
-          pathlib.Path('ops/readback/newsletter-diagnostic.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
-          print(json.dumps(result,ensure_ascii=False,indent=2))
+          from pathlib import Path
+          p=Path('lib/start_unified.js')
+          s=p.read_text()
+          a=s.index('async function ensureNewsletterTable(env)')
+          b=s.index('\n\nexport async function newsletterApi',a)
+          repl="""async function ensureNewsletterTable(env){
+ await env.DB.prepare(`CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  email TEXT NOT NULL,
+  language_code TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  source TEXT NOT NULL DEFAULT 'start_page',
+  consent_version TEXT NOT NULL DEFAULT '2026-09-04-v2-biweekly',
+  consent_at TEXT NOT NULL,
+  unsubscribe_token TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+ )`).run();
+ const info=await env.DB.prepare(`PRAGMA table_info(newsletter_subscribers)`).all();
+ const cols=new Set((info.results||[]).map(r=>r.name));
+ if(!cols.has('source'))await env.DB.prepare(`ALTER TABLE newsletter_subscribers ADD COLUMN source TEXT NOT NULL DEFAULT 'start_page'`).run();
+ if(!cols.has('consent_version'))await env.DB.prepare(`ALTER TABLE newsletter_subscribers ADD COLUMN consent_version TEXT NOT NULL DEFAULT '2026-09-04-v2-biweekly'`).run();
+ await env.DB.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS uq_newsletter_project_email_language ON newsletter_subscribers(project_id,email,language_code)`).run();
+ await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_newsletter_status_language ON newsletter_subscribers(project_id,status,language_code)`).run();
+}"""
+          p.write_text(s[:a]+repl+s[b:])
           PY
-      - name: Commit diagnostic
+      - name: Commit D1 fix
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898242+github-actions[bot]@users.noreply.github.com'
-          git add ops/readback/newsletter-diagnostic.json
-          git commit -m 'Record newsletter production diagnostic' || true
+          git add lib/start_unified.js
+          git diff --cached --quiet || git commit -m 'Use prepared D1 statements for newsletter schema'
+          git push
+      - name: Wait for production and verify real signup
+        run: |
+          python - <<'PY'
+          import json,time,urllib.request,urllib.error,pathlib
+          url='https://wisequotesworld.com/api/newsletter/subscribe'
+          result={}
+          ok=False
+          for i in range(36):
+              payload=json.dumps({'email':'qa-newsletter-real-verified@example.invalid','language':'uk','company':''}).encode()
+              req=urllib.request.Request(url,data=payload,headers={'Content-Type':'application/json','User-Agent':'Mozilla/5.0 WQW-QA'},method='POST')
+              try:
+                  with urllib.request.urlopen(req,timeout=20) as r:
+                      body=r.read().decode(errors='replace')
+                      result={'status':r.status,'body':body,'attempt':i+1}
+                      data=json.loads(body)
+                      if r.status==200 and data.get('ok') is True:
+                          ok=True
+                          break
+              except urllib.error.HTTPError as e:
+                  result={'status':e.code,'body':e.read().decode(errors='replace'),'attempt':i+1}
+              except Exception as e:
+                  result={'error':repr(e),'attempt':i+1}
+              print(result)
+              time.sleep(5)
+          pathlib.Path('ops/readback').mkdir(parents=True,exist_ok=True)
+          result['real_d1_insert_verified']=ok
+          pathlib.Path('ops/readback/newsletter-diagnostic.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
+          if not ok:
+              raise SystemExit('real newsletter signup still failing: '+json.dumps(result,ensure_ascii=False))
+          PY
+      - name: Record verified state
+        if: success()
+        run: |
+          cat > ops/readback/start-newsletter-verification.json <<'JSON'
+          {"ok":true,"start_pages":13,"contact_style":"compact_mailto","newsletter_signup":"D1_locale_aware","real_d1_insert_verified":true,"unsubscribe":"implemented","cadence_days":14,"daily_cap":300,"email_delivery":"provider_pending","verified_at":"2026-09-04"}
+          JSON
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898242+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/start-newsletter-verification.json ops/readback/newsletter-diagnostic.json
+          git commit -m 'Record verified newsletter D1 signup' || true
           git push

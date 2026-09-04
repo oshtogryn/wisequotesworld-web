@@ -11,66 +11,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Repair newsletter schema handling
+      - name: Diagnose production newsletter API
         run: |
           python - <<'PY'
-          from pathlib import Path
-          p=Path('lib/start_unified.js')
-          s=p.read_text()
-          a=s.index('async function ensureNewsletterTable(env)')
-          b=s.index('\n\nexport async function newsletterApi',a)
-          repl='''async function ensureNewsletterTable(env){\n await env.DB.exec(`CREATE TABLE IF NOT EXISTS newsletter_subscribers (\n id TEXT PRIMARY KEY,\n project_id TEXT NOT NULL,\n email TEXT NOT NULL,\n language_code TEXT NOT NULL,\n status TEXT NOT NULL DEFAULT 'active',\n source TEXT NOT NULL DEFAULT 'start_page',\n consent_version TEXT NOT NULL DEFAULT '2026-09-04-v2-biweekly',\n consent_at TEXT NOT NULL,\n unsubscribe_token TEXT NOT NULL UNIQUE,\n created_at TEXT NOT NULL,\n updated_at TEXT NOT NULL\n )`);\n const info=await env.DB.prepare(`PRAGMA table_info(newsletter_subscribers)`).all();\n const cols=new Set((info.results||[]).map(r=>r.name));\n if(!cols.has('source'))await env.DB.exec(`ALTER TABLE newsletter_subscribers ADD COLUMN source TEXT NOT NULL DEFAULT 'start_page'`);\n if(!cols.has('consent_version'))await env.DB.exec(`ALTER TABLE newsletter_subscribers ADD COLUMN consent_version TEXT NOT NULL DEFAULT '2026-09-04-v2-biweekly'`);\n await env.DB.exec(`CREATE UNIQUE INDEX IF NOT EXISTS uq_newsletter_project_email_language ON newsletter_subscribers(project_id,email,language_code);CREATE INDEX IF NOT EXISTS idx_newsletter_status_language ON newsletter_subscribers(project_id,status,language_code);`);\n}'''
-          s=s[:a]+repl+s[b:]
-          needle=" const u=new URL(request.url);\n"
-          health=""" const u=new URL(request.url);\n if(u.pathname==='/ops/readback/newsletter-health.json'&&request.method==='GET'){\n  await ensureNewsletterTable(env);\n  const info=await env.DB.prepare(`PRAGMA table_info(newsletter_subscribers)`).all();\n  const count=await env.DB.prepare(`SELECT COUNT(*) AS active FROM newsletter_subscribers WHERE project_id=? AND status='active'`).bind(PROJECT_ID).first();\n  return new Response(JSON.stringify({ok:true,columns:(info.results||[]).map(r=>r.name),active:Number(count?.active||0),cadence_days:14,daily_cap:300}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});\n }\n"""
-          if '/ops/readback/newsletter-health.json' not in s:
-              s=s.replace(needle,health,1)
-          p.write_text(s)
-          PY
-      - name: Commit repair
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898242+github-actions[bot]@users.noreply.github.com'
-          git add lib/start_unified.js
-          git diff --cached --quiet || git commit -m 'Make newsletter D1 signup migration-safe'
-          git push
-      - name: Verify production schema and real write
-        run: |
-          python - <<'PY'
-          import json,time,urllib.request
+          import json,time,urllib.request,urllib.error
           health='https://wisequotesworld.com/ops/readback/newsletter-health.json'
-          for _ in range(30):
-              try:
-                  with urllib.request.urlopen(health,timeout=20) as r:
-                      d=json.loads(r.read())
-                  cols=set(d.get('columns',[]))
-                  if d.get('ok') and {'source','consent_version','unsubscribe_token'}.issubset(cols):
-                      print('health',d); break
-              except Exception as e: print('health retry',repr(e))
-              time.sleep(5)
-          else: raise AssertionError('newsletter health endpoint/schema not ready')
+          try:
+              with urllib.request.urlopen(health,timeout=20) as r:
+                  print('HEALTH STATUS',r.status)
+                  print('HEALTH BODY',r.read().decode())
+          except urllib.error.HTTPError as e:
+              print('HEALTH HTTP',e.code,e.read().decode(errors='replace'))
+          except Exception as e:
+              print('HEALTH ERROR',repr(e))
 
-          # Real D1 write: no honeypot. This validates the INSERT path that the previous QA missed.
-          payload=json.dumps({'email':'qa-newsletter-real-write@example.invalid','language':'en','company':''}).encode()
-          for _ in range(12):
-              try:
-                  req=urllib.request.Request('https://wisequotesworld.com/api/newsletter/subscribe',data=payload,headers={'Content-Type':'application/json','User-Agent':'WQW-production-QA/2.0'},method='POST')
-                  with urllib.request.urlopen(req,timeout=20) as r:
-                      out=json.loads(r.read())
-                  print('real write',out)
+          payload=json.dumps({'email':'qa-newsletter-diagnostic@example.invalid','language':'uk','company':''}).encode()
+          req=urllib.request.Request('https://wisequotesworld.com/api/newsletter/subscribe',data=payload,headers={'Content-Type':'application/json','User-Agent':'WQW-production-QA/3.0'},method='POST')
+          try:
+              with urllib.request.urlopen(req,timeout=20) as r:
+                  body=r.read().decode()
+                  print('WRITE STATUS',r.status)
+                  print('WRITE BODY',body)
+                  out=json.loads(body)
                   assert out.get('ok') is True
-                  break
-              except Exception as e: print('write retry',repr(e)); time.sleep(5)
-          else: raise AssertionError('real newsletter D1 INSERT failed')
+          except urllib.error.HTTPError as e:
+              body=e.read().decode(errors='replace')
+              print('WRITE HTTP',e.code)
+              print('WRITE ERROR BODY',body)
+              raise
           PY
-      - name: Record verified state
-        run: |
-          mkdir -p ops/readback
-          cat > ops/readback/start-newsletter-verification.json <<'JSON'
-          {"ok":true,"start_pages":13,"contact_style":"compact_mailto","newsletter_signup":"D1_locale_aware","real_d1_insert_verified":true,"unsubscribe":"implemented","cadence_days":14,"daily_cap":300,"email_delivery":"provider_pending","verified_at":"2026-09-04"}
-          JSON
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898242+github-actions[bot]@users.noreply.github.com'
-          git add ops/readback/start-newsletter-verification.json
-          git diff --cached --quiet || git commit -m 'Record verified real newsletter D1 write'
-          git push

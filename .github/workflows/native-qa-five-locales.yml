@@ -1,0 +1,105 @@
+name: Native QA five newest locales
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/native-qa-five-locales.yml'
+permissions:
+  contents: write
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire temporary native QA endpoint
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text()
+          marker="import {locale13Site} from './lib/locale13_site.js';"
+          inject=marker+"\nimport {applyNativeQaFive,readbackNativeQaFive} from './lib/native_qa_patch_5.js';"
+          assert marker in s and 'native_qa_patch_5' not in s
+          s=s.replace(marker,inject,1)
+          marker2="try{const url=new URL(request.url);"
+          inject2="try{const url=new URL(request.url);if(url.pathname==='/ops/run/native-qa-five'&&request.method==='POST')return json(await applyNativeQaFive(env));if(url.pathname==='/ops/readback/native-qa-five.json'&&request.method==='GET')return json(await readbackNativeQaFive(env));"
+          assert marker2 in s
+          s=s.replace(marker2,inject2,1)
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git commit -m 'Wire temporary five-locale native QA endpoint'
+          git push
+      - name: Wait for production deployment
+        run: sleep 55
+      - name: Apply native QA corrections
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --retry 12 --retry-all-errors --retry-delay 6 -X POST 'https://wisequotesworld.com/ops/run/native-qa-five' -o /tmp/native-qa-result.json
+          cat /tmp/native-qa-result.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/native-qa-result.json',encoding='utf-8'))
+          assert d.get('ok') is True, d
+          assert d.get('reviewed_pages')==35, d
+          assert d.get('reviewed_languages')==['it','pt','id','tr','ar'], d
+          assert d.get('corrections')==12, d
+          PY
+          curl -L -sS --retry 8 --retry-all-errors --retry-delay 5 'https://wisequotesworld.com/ops/readback/native-qa-five.json' -o ops/readback/native-qa-five-locales.json
+      - name: Validate corrected D1 text
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('ops/readback/native-qa-five-locales.json',encoding='utf-8'))
+          assert d.get('ok') is True, d
+          counts={x['language_code']:x['count'] for x in d['counts']}
+          assert counts=={'ar':7,'id':7,'it':7,'pt':7,'tr':7}, counts
+          rows={(x['content_id'],x['language_code']):x for x in d['probes']}
+          assert rows[('WQ012','it')]['adapted_text']=='Non devi diventare la persona che gli altri vogliono che tu sia. Diventa la persona che vuoi essere.'
+          assert rows[('WQ005','pt')]['meta_description']=='Uma reflexão sobre autodisciplina, constância e os compromissos que assumimos conosco quando ninguém está cobrando.'
+          assert rows[('WQ012','id')]['adapted_text']=='Kamu tidak harus menjadi seperti yang orang lain inginkan. Jadilah pribadi yang benar-benar ingin kamu jadi.'
+          assert rows[('WQ005','tr')]['adapted_text']=='En zor zafer, kimse seni zorlamazken yapılması gerekeni yapmaktır.'
+          assert rows[('WQ006','ar')]['adapted_text']=='نكبر حين نغادر بيت والدينا، ونكبر مرة أخرى حين ندرك مدى حاجتنا إليهما.'
+          assert 'membutuhkan waktu lama untuk pulih' in rows[('WQ011','id')]['reflection_body']
+          assert 'istikrara ve yanımızda kalan insanlara daha çok değer vermemizi sağlayabilir' in rows[('WQ011','tr')]['reflection_body']
+          assert 'daha bilinçli bir hayat yaşamaktır' in rows[('WQ014','tr')]['reflection_body']
+          assert 'التقدم على المدى الطويل' in rows[('WQ005','ar')]['reflection_body']
+          assert 'الشخص الذي تراه فيها هو أنت فعلًا' in rows[('WQ012','ar')]['reflection_body']
+          assert 'ونبدأ في الشعور بأن الاحتمال صار يقينًا' in rows[('WQ015','ar')]['reflection_body']
+          print('Native QA D1 corrections verified')
+          PY
+      - name: Verify all 35 production pages
+        run: |
+          set -euo pipefail
+          for lang in it pt id tr ar; do
+            curl --globoff -L -f -sS --retry 6 --retry-all-errors --retry-delay 3 "https://wisequotesworld.com/$lang/" >/dev/null
+            curl --globoff -L -f -sS --retry 6 --retry-all-errors --retry-delay 3 "https://wisequotesworld.com/$lang/quotes/" >/dev/null
+            curl --globoff -L -f -sS --retry 6 --retry-all-errors --retry-delay 3 "https://wisequotesworld.com/$lang/start/" >/dev/null
+          done
+          python - <<'PY'
+          import json,subprocess
+          paths=[]
+          for f in ('ops/readback/new-locales-publication.json','ops/readback/locale13-publication.json'):
+              d=json.load(open(f,encoding='utf-8'))
+              paths += [x['canonical_path'] for x in d['results'] if x['language'] in {'it','pt','id','tr','ar'}]
+          assert len(paths)==35, len(paths)
+          for p in paths:
+              subprocess.run(['curl','--globoff','-L','-f','-sS','--retry','5','--retry-all-errors','--retry-delay','2','https://wisequotesworld.com'+p],check=True,stdout=subprocess.DEVNULL)
+          print('Verified',len(paths),'live article URLs')
+          PY
+      - name: Remove temporary endpoint and save audit
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text()
+          s=s.replace("\nimport {applyNativeQaFive,readbackNativeQaFive} from './lib/native_qa_patch_5.js';",'')
+          s=s.replace("if(url.pathname==='/ops/run/native-qa-five'&&request.method==='POST')return json(await applyNativeQaFive(env));if(url.pathname==='/ops/readback/native-qa-five.json'&&request.method==='GET')return json(await readbackNativeQaFive(env));",'')
+          p.write_text(s)
+          PY
+          git add _worker.js ops/readback/native-qa-five-locales.json
+          git commit -m 'Record verified native QA for five newest locales'
+          git push

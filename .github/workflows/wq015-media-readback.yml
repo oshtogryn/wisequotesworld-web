@@ -1,0 +1,37 @@
+name: WQ015 media readback
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/wq015-media-readback.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  readback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for deploy
+        run: sleep 30
+      - name: Read WQ015 production media
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --retry 10 --retry-all-errors --retry-delay 5 'https://wisequotesworld.com/ops/readback/wq015-production.json' -o ops/readback/WQ015-production.json
+          python - <<'PY'
+          import json
+          d=json.load(open('ops/readback/WQ015-production.json',encoding='utf-8'))
+          p=d['production']
+          print('media_count=',p.get('media_count'))
+          for x in p.get('media',[]):
+              print(x.get('language'),x.get('kind'),x.get('filename'),x.get('qa_status'))
+          PY
+      - name: Commit readback
+        run: |
+          git pull --rebase
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/WQ015-production.json
+          git commit -m 'Record WQ015 media readback' || exit 0
+          git push

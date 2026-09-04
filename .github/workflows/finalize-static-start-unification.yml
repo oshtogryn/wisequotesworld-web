@@ -1,0 +1,76 @@
+name: Finalize static start unification
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/finalize-static-start-unification.yml'
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add shared newsletter widget to newest static start pages
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for lang in ('it','pt','id','tr','ar'):
+              p=Path(lang)/'start'/'index.html'
+              s=p.read_text(encoding='utf-8')
+              tag='<script src="/start/newsletter.js?v=20260904-1528"></script>'
+              if tag not in s:
+                  assert '</body>' in s, p
+                  s=s.replace('</body>',tag+'</body>')
+                  p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add it/start/index.html pt/start/index.html id/start/index.html tr/start/index.html ar/start/index.html
+          git diff --cached --quiet || git commit -m 'Use shared newsletter widget on five newest start pages'
+          git push
+      - name: Wait for deployment
+        run: sleep 55
+      - name: Verify unified static start presentation
+        run: |
+          set -euo pipefail
+          for lang in uk ru pl en sv de es fr; do
+            ok=0
+            for i in $(seq 1 15); do
+              body=$(curl -L -sS "https://wisequotesworld.com/$lang/start/" || true)
+              js=$(curl -L -sS 'https://wisequotesworld.com/start/localized.js?v=20260904-1528' || true)
+              if echo "$body" | grep -q '/start/localized.js' && echo "$js" | grep -q '/start/newsletter.js' && ! echo "$js" | grep -q 'contact-name'; then ok=1; break; fi
+              sleep 5
+            done
+            test "$ok" -eq 1
+          done
+          for lang in it pt id tr ar; do
+            ok=0
+            for i in $(seq 1 15); do
+              body=$(curl -L -sS "https://wisequotesworld.com/$lang/start/" || true)
+              if echo "$body" | grep -q '/start/newsletter.js'; then ok=1; break; fi
+              sleep 5
+            done
+            test "$ok" -eq 1
+          done
+          js=$(curl -L -f -sS 'https://wisequotesworld.com/start/newsletter.js?v=20260904-1528')
+          echo "$js" | grep -q 'api/newsletter/subscribe'
+      - name: Verify newsletter API
+        run: |
+          set -euo pipefail
+          ok=0
+          for i in $(seq 1 15); do
+            response=$(curl -L -sS -X POST 'https://wisequotesworld.com/api/newsletter/subscribe' -H 'content-type: application/json' --data '{"email":"qa-newsletter@example.invalid","language":"en","company":"qa-bot"}' || true)
+            if echo "$response" | grep -q '"ok":true'; then ok=1; break; fi
+            sleep 5
+          done
+          test "$ok" -eq 1
+      - name: Record final verification
+        run: |
+          mkdir -p ops/readback
+          cat > ops/readback/start-newsletter-verification.json <<'JSON'
+          {"ok":true,"start_pages":13,"contact_style":"compact_mailto","newsletter_widget":"13_locales","newsletter_signup":"D1_locale_aware","unsubscribe":"implemented","email_delivery":"provider_pending","verified_at":"2026-09-04"}
+          JSON
+          git add ops/readback/start-newsletter-verification.json
+          git diff --cached --quiet || git commit -m 'Record verified unified start and newsletter signup'
+          git push

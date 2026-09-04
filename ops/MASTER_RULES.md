@@ -106,6 +106,8 @@ WQ006 final version is the emotional editorial benchmark for adapted content. Fo
 ## 12. Website/database
 D1 database-first. New approved content should not require manual deploy. 13 website locales, archive, quote/category/verified-author pages, sitemap/hreflang/canonical/internal links. Social readiness is evaluated only for connected social locales.
 
+All 13 localized `/start` pages use one unified presentation: compact contact block with direct e-mail action, not the old multi-field contact form. Newsletter signup is locale-aware: the current `/xx/start` locale determines the subscription language automatically. Subscriber e-mail, locale, consent timestamp/version, status and unsubscribe token are stored in D1. Automated newsletter delivery must not be claimed as active until an outbound e-mail provider is connected; D1 remains the canonical subscriber source.
+
 ## 13. Media
 R2 canonical binaries; D1 metadata. Upload once/reuse. User generates video/Pinterest manually and uploads via Admin.
 

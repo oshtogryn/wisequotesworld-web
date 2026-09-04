@@ -1,0 +1,68 @@
+name: Fix start runtime funnel and followers
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-start-runtime-funnel-followers.yml'
+permissions:
+  contents: write
+jobs:
+  patch-deploy-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch production start runtime
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('lib/start_unified.js')
+          s=p.read_text()
+
+          anchor="const LABEL={facebook:'Facebook',instagram:'Instagram',threads:'Threads',tiktok:'TikTok',youtube:'YouTube',pinterest:'Pinterest'};"
+          insert="""const LABEL={facebook:'Facebook',instagram:'Instagram',threads:'Threads',tiktok:'TikTok',youtube:'YouTube',pinterest:'Pinterest'};
+const LATEST={uk:'/uk/quotes/seneka-strazhdannia-v-uiavi/',ru:'/ru/quotes/seneka-stradanie-v-voobrazhenii/',pl:'/pl/quotes/seneka-cierpimy-w-wyobrazni/',en:'/en/quotes/seneca-suffer-in-imagination/',sv:'/sv/quotes/seneca-lider-i-fantasin/',de:'/de/quotes/seneca-leiden-in-der-vorstellung/',es:'/es/quotes/seneca-sufrimos-en-la-imaginacion/',fr:'/fr/quotes/seneque-souffrons-en-imagination/',it:'/it/quotes/seneca-soffriamo-piu-nell-immaginazione/',pt:'/pt/quotes/seneca-sofremos-mais-na-imaginacao/',id:'/id/quotes/seneca-kita-lebih-menderita-dalam-imajinasi/',tr:'/tr/quotes/seneca-hayalimizda-gercekten-daha-cok-acı-cekeriz/',ar:'/ar/quotes/سينيكا-نعاني-في-الخيال-أكثر-من-الواقع/'};
+const READ={uk:'Читати останню статтю повністю',ru:'Читать последнюю статью полностью',pl:'Przeczytaj najnowszy artykuł w całości',en:'Read the latest article in full',sv:'Läs den senaste artikeln i sin helhet',de:'Neuesten Artikel vollständig lesen',es:'Leer completo el artículo más reciente',fr:'Lire le dernier article en entier',it:'Leggi per intero l’ultimo articolo',pt:'Leia o artigo mais recente na íntegra',id:'Baca artikel terbaru selengkapnya',tr:'En son makalenin tamamını oku',ar:'اقرأ أحدث مقال كاملًا'};
+const READ_SMALL={uk:'Найновіший матеріал Wise Quotes World',ru:'Самый новый материал Wise Quotes World',pl:'Najnowszy materiał Wise Quotes World',en:'Newest Wise Quotes World story',sv:'Senaste materialet från Wise Quotes World',de:'Der neueste Beitrag von Wise Quotes World',es:'El contenido más reciente de Wise Quotes World',fr:'Le contenu le plus récent de Wise Quotes World',it:'Il contenuto più recente di Wise Quotes World',pt:'O conteúdo mais recente do Wise Quotes World',id:'Materi terbaru dari Wise Quotes World',tr:'Wise Quotes World’ün en yeni içeriği',ar:'أحدث محتوى من Wise Quotes World'};
+const ALL={uk:'Усі цитати та роздуми',ru:'Все цитаты и размышления',pl:'Wszystkie cytaty i refleksje',en:'All quotes and reflections',sv:'Alla citat och reflektioner',de:'Alle Zitate und Gedanken',es:'Todas las citas y reflexiones',fr:'Toutes les citations et réflexions',it:'Tutte le citazioni e le riflessioni',pt:'Todas as citações e reflexões',id:'Semua kutipan dan refleksi',tr:'Tüm alıntılar ve düşünceler',ar:'كل الاقتباسات والتأملات'};
+const ALL_SMALL={uk:'Переглянути всі публікації цією мовою',ru:'Посмотреть все публикации на русском',pl:'Zobacz wszystkie publikacje po polsku',en:'Browse all English publications',sv:'Se alla svenska publiceringar',de:'Alle deutschsprachigen Beiträge ansehen',es:'Ver todas las publicaciones en español',fr:'Voir toutes les publications en français',it:'Scopri tutte le pubblicazioni in italiano',pt:'Veja todas as publicações em português',id:'Lihat semua publikasi dalam bahasa Indonesia',tr:'Türkçe tüm yayınları görüntüle',ar:'تصفّح جميع المنشورات بالعربية'};
+const FOLLOWER_LABEL={uk:'підписників',ru:'подписчиков',pl:'obserwujących',en:'followers / subscribers',sv:'följare / prenumeranter',de:'Follower / Abonnenten',es:'seguidores / suscriptores',fr:'abonnés',it:'follower / iscritti',pt:'seguidores / inscritos',id:'pengikut / pelanggan',tr:'takipçi / abone',ar:'متابع / مشترك'};
+const FOLLOWERS={uk:{facebook:8,instagram:939,threads:43,tiktok:56,youtube:36},ru:{facebook:7,instagram:44,threads:13,tiktok:92,youtube:103},pl:{facebook:16,instagram:17,threads:6,tiktok:40,youtube:35},en:{facebook:12,instagram:17,threads:10,tiktok:34,youtube:33},sv:{facebook:4,instagram:9,threads:6,tiktok:11,youtube:4},de:{facebook:19,instagram:104,threads:4,tiktok:68,youtube:24},es:{facebook:27,instagram:196,threads:3,tiktok:14,youtube:94},fr:{facebook:1,instagram:0,threads:0,tiktok:5,youtube:15}};"""
+          if 'const LATEST=' not in s:
+              assert anchor in s
+              s=s.replace(anchor,insert,1)
+
+          old="function socialHtml(l,t){return Object.keys(LABEL).map(k=>{const href=SOCIAL[l]?.[k];if(href)return `<a class=\"btn\" href=\"${href}\" target=\"_blank\" rel=\"noopener noreferrer\">${ICON[k]} ${LABEL[k]}</a>`;return `<span class=\"btn disabled\">${ICON[k]} ${LABEL[k]}<small>${esc(t.soon)}</small></span>`}).join('')}"
+          new="function socialHtml(l,t){return Object.keys(LABEL).map(k=>{const href=SOCIAL[l]?.[k];if(href){const count=(k!=='pinterest'&&FOLLOWERS[l]&&Number.isFinite(FOLLOWERS[l][k]))?`<small>${FOLLOWERS[l][k]} ${esc(FOLLOWER_LABEL[l]||FOLLOWER_LABEL.en)}</small>`:'';return `<a class=\"btn\" href=\"${href}\" target=\"_blank\" rel=\"noopener noreferrer\">${ICON[k]} ${LABEL[k]}${count}</a>`}return `<span class=\"btn disabled\">${ICON[k]} ${LABEL[k]}<small>${esc(t.soon)}</small></span>`}).join('')}"
+          if old in s:
+              s=s.replace(old,new,1)
+          elif 'FOLLOWERS[l][k]' not in s:
+              raise SystemExit('socialHtml anchor not found')
+
+          oldcta='<a class="btn primary" href="/${l}/">📖 ${esc(t.latest)}<small>${esc(t.latestSmall)}</small></a>'
+          newcta='<a class="btn primary" href="${LATEST[l]}">📖 ${esc(READ[l])}<small>${esc(READ_SMALL[l])}</small></a><a class="btn" href="/${l}/">🗂️ ${esc(ALL[l])}<small>${esc(ALL_SMALL[l])}</small></a>'
+          if oldcta in s:
+              s=s.replace(oldcta,newcta,1)
+          elif '${LATEST[l]}' not in s:
+              raise SystemExit('CTA anchor not found')
+
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/start_unified.js
+          git diff --cached --quiet || git commit -m 'Fix production start funnel and restore follower counters'
+          git push
+      - name: Wait for Cloudflare production deployment
+        run: sleep 75
+      - name: Verify production start pages
+        run: |
+          set -euo pipefail
+          for lang in uk ru pl en sv de es fr it pt id tr ar; do
+            body=$(curl -L -f -sS --retry 12 --retry-all-errors --retry-delay 5 "https://wisequotesworld.com/$lang/start/?v=runtime-fix-20260904")
+            echo "$body" | grep -q 'newsletter-form'
+          done
+          uk=$(curl -L -f -sS --retry 12 --retry-all-errors --retry-delay 5 'https://wisequotesworld.com/uk/start/?v=runtime-fix-20260904')
+          echo "$uk" | grep -q 'Читати останню статтю повністю'
+          echo "$uk" | grep -q '/uk/quotes/seneka-strazhdannia-v-uiavi/'
+          echo "$uk" | grep -q '939 підписників'
+          echo 'Production verification passed: latest article funnel + follower counters are live.'

@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "health": {
+    "status": 200,
+    "body": "{\"ok\":true,\"configured\":true,\"provider\":\"brevo\",\"provider_status\":200,\"sender_email\":\"newsletter@news.wisequotesworld.com\",\"sender_name\":\"Wise Quotes World\",\"delivery_mode\":\"manual_test_ready_scheduler_disabled\",\"cadence_days\":14,\"daily_cap\":300}",
+    "attempt": 1
+  },
+  "verified_at": "2026-09-04"
+}

@@ -1,0 +1,21 @@
+async function ensureNewsletterTable(env){
+ await env.DB.prepare(`CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  email TEXT NOT NULL,
+  language_code TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  source TEXT NOT NULL DEFAULT 'start_page',
+  consent_version TEXT NOT NULL DEFAULT '2026-09-04-v2-biweekly',
+  consent_at TEXT NOT NULL,
+  unsubscribe_token TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+ )`).run();
+ const info=await env.DB.prepare(`PRAGMA table_info(newsletter_subscribers)`).all();
+ const cols=new Set((info.results||[]).map(r=>r.name));
+ if(!cols.has('source'))await env.DB.prepare(`ALTER TABLE newsletter_subscribers ADD COLUMN source TEXT NOT NULL DEFAULT 'start_page'`).run();
+ if(!cols.has('consent_version'))await env.DB.prepare(`ALTER TABLE newsletter_subscribers ADD COLUMN consent_version TEXT NOT NULL DEFAULT '2026-09-04-v2-biweekly'`).run();
+ await env.DB.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS uq_newsletter_project_email_language ON newsletter_subscribers(project_id,email,language_code)`).run();
+ await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_newsletter_status_language ON newsletter_subscribers(project_id,status,language_code)`).run();
+}

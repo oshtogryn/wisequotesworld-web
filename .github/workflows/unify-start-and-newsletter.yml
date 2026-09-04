@@ -1,0 +1,79 @@
+name: Unify start pages and newsletter
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/unify-start-and-newsletter.yml'
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire unified start pages and newsletter
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text()
+          imp="import {locale13Site} from './lib/locale13_site.js';"
+          newimp=imp+"\nimport {newsletterApi,startUnified} from './lib/start_unified.js';"
+          if "./lib/start_unified.js" not in s:
+              assert imp in s
+              s=s.replace(imp,newimp,1)
+          marker="try{const url=new URL(request.url);"
+          replacement="try{const url=new URL(request.url);const newsletterResponse=await newsletterApi(request,env);if(newsletterResponse)return newsletterResponse;"
+          if "const newsletterResponse=await newsletterApi" not in s:
+              assert marker in s
+              s=s.replace(marker,replacement,1)
+          marker2="const productionResponse=await productionConsoleApi(request,env);if(productionResponse)return productionResponse;"
+          replacement2=marker2+"const startResponse=await startUnified(request);if(startResponse)return withLocaleTracking(startResponse,url);"
+          if "const startResponse=await startUnified" not in s:
+              assert marker2 in s
+              s=s.replace(marker2,replacement2,1)
+          p.write_text(s)
+
+          p=Path('ops/MASTER_RULES.md')
+          s=p.read_text()
+          needle='## 12. Website/database\nD1 database-first. New approved content should not require manual deploy. 13 website locales, archive, quote/category/verified-author pages, sitemap/hreflang/canonical/internal links. Social readiness is evaluated only for connected social locales.'
+          replacement=needle+'\n\nAll 13 localized `/start` pages use one unified presentation: compact contact block with direct e-mail action, not the old multi-field contact form. Newsletter signup is locale-aware: the current `/xx/start` locale determines the subscription language automatically. Subscriber e-mail, locale, consent timestamp/version, status and unsubscribe token are stored in D1. Automated newsletter delivery must not be claimed as active until an outbound e-mail provider is connected; D1 remains the canonical subscriber source.'
+          if 'Newsletter signup is locale-aware' not in s:
+              assert needle in s
+              s=s.replace(needle,replacement,1)
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js ops/MASTER_RULES.md
+          git diff --cached --quiet || git commit -m 'Unify 13 start pages and enable D1 newsletter signup'
+          git push
+      - name: Wait for production deployment
+        run: sleep 55
+      - name: Verify all localized start pages
+        run: |
+          set -euo pipefail
+          for lang in uk ru pl en sv de es fr it pt id tr ar; do
+            body=$(curl -L -f -sS --retry 10 --retry-all-errors --retry-delay 4 "https://wisequotesworld.com/$lang/start/")
+            echo "$body" | grep -q 'newsletter-form'
+            echo "$body" | grep -q 'mailto:wisequotesofworld@gmail.com'
+            if echo "$body" | grep -q 'contact-name'; then
+              echo "Old contact form still present for $lang" >&2
+              exit 1
+            fi
+          done
+      - name: Verify newsletter endpoint without retaining test data
+        run: |
+          set -euo pipefail
+          response=$(curl -L -f -sS -X POST 'https://wisequotesworld.com/api/newsletter/subscribe' -H 'content-type: application/json' --data '{"email":"qa-newsletter@example.invalid","language":"en","company":"qa-bot"}')
+          echo "$response"
+          echo "$response" | grep -q '"ok":true'
+      - name: Record deployment verification
+        run: |
+          mkdir -p ops/readback
+          cat > ops/readback/start-newsletter-verification.json <<'JSON'
+          {"ok":true,"start_pages":13,"contact_style":"compact_mailto","newsletter_signup":"D1_locale_aware","email_delivery":"provider_pending","verified_at":"2026-09-04"}
+          JSON
+          git add ops/readback/start-newsletter-verification.json
+          git diff --cached --quiet || git commit -m 'Record start and newsletter production verification'
+          git push

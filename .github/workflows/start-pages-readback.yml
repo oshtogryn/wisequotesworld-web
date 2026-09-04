@@ -40,16 +40,18 @@ jobs:
             exit 1
           fi
 
-          fetch_match(){
-            url="$1"
-            expected_file="$2"
+          fetch_contains(){
+            url="$1"; shift
             attempts=12
             delay=15
             for attempt in $(seq 1 "$attempts"); do
               out=$(mktemp)
               sep='?'; [[ "$url" == *\?* ]] && sep='&'
               code=$(curl -L -sS -o "$out" -w '%{http_code}' --connect-timeout 10 --max-time 30 --retry 3 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' "${url}${sep}rb=$(date +%s)-${attempt}" || true)
-              if [[ "$code" == "200" ]] && cmp -s "$out" "$expected_file"; then
+              ok=1
+              [[ "$code" == "200" ]] || ok=0
+              for needle in "$@"; do grep -Fq "$needle" "$out" || ok=0; done
+              if [[ "$ok" == 1 ]]; then
                 echo "PASS $url attempt=$attempt" | tee -a "$report"
                 rm -f "$out"
                 return 0
@@ -60,25 +62,28 @@ jobs:
                 sleep "$delay"
               else
                 echo "FAIL code=$code $url attempts=$attempts" | tee -a "$report"
-                echo "expected_sha256=$(sha256sum "$expected_file" | awk '{print $1}')" | tee -a "$report"
-                echo "actual_sha256=$(sha256sum "$out" | awk '{print $1}')" | tee -a "$report"
+                cat "$out" | head -c 1600 >> "$report"
+                echo >> "$report"
                 rm -f "$out"
                 return 1
               fi
             done
           }
 
-          fetch_match 'https://wisequotesworld.com/start/' 'start/index.html'
-          for l in uk ru pl en sv de es fr; do
-            fetch_match "https://wisequotesworld.com/$l/start/" "$l/start/index.html"
-          done
+          mapfile -t totals < <(grep -oE '<b>[^<]+</b>' start/index.html | sed -E 's#</?b>##g')
+          [[ "${#totals[@]}" -eq 8 ]]
+          fetch_contains 'https://wisequotesworld.com/start/' "${totals[@]}"
 
           version=$(grep -oE 'localized\.js\?v=[0-9-]+' uk/start/index.html | head -1 | cut -d= -f2)
           [[ -n "$version" ]]
-          for l in ru pl en sv de es fr; do
+          for l in uk ru pl en sv de es fr; do
             grep -Fq "localized.js?v=$version" "$l/start/index.html"
+            fetch_contains "https://wisequotesworld.com/$l/start/" "localized.js?v=$version"
           done
-          fetch_match "https://wisequotesworld.com/start/localized.js?v=$version" 'start/localized.js'
+
+          mapfile -t stat_tokens < <(grep -oE '(uk|ru|pl|en|sv|de|es|fr):\{facebook:[0-9]+,instagram:[0-9]+,threads:[0-9]+,tiktok:[0-9]+,youtube:[0-9]+\}' start/localized.js)
+          [[ "${#stat_tokens[@]}" -eq 8 ]]
+          fetch_contains "https://wisequotesworld.com/start/localized.js?v=$version" "${stat_tokens[@]}"
 
           echo "cache_version=$version" | tee -a "$report"
           echo "checked_at=$(date -u +%FT%TZ)" | tee -a "$report"

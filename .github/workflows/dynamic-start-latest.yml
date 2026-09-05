@@ -1,4 +1,4 @@
-name: Dynamic Start Latest Patch
+name: dynamic-start-sequence-patch
 
 on:
   push:
@@ -9,74 +9,34 @@ permissions:
 
 jobs:
   patch:
-    if: "${{ !contains(github.event.head_commit.message, '[dynamic-start]') }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Patch start runtime safely
-        shell: python
+      - name: Patch latest lookup
         run: |
+          python3 - <<'PY'
           from pathlib import Path
-
-          p = Path('lib/start_unified.js')
-          s = p.read_text()
-
-          if 'async function latestPublished(env,l)' not in s:
-              marker = "function htmlLang(l){return l==='pt'?'pt-BR':l}\n"
-              helper = marker + """async function latestPublished(env,l){
- if(!env?.DB)return LATEST[l]||`/${l}/`;
- try{
-  const r=await env.DB.prepare(`SELECT qp.slug FROM quote_pages qp JOIN content_items ci ON ci.id=qp.content_item_id WHERE qp.project_id=? AND qp.language_code=? AND qp.status='published' ORDER BY COALESCE(ci.sequence_no,CAST(SUBSTR(ci.id,3) AS INTEGER),0) DESC, COALESCE(qp.published_at,qp.updated_at) DESC, qp.updated_at DESC LIMIT 1`).bind(PROJECT_ID,l).first();
-  return r?.slug?`/${l}/quotes/${encodeURIComponent(r.slug)}/`:(LATEST[l]||`/${l}/`);
- }catch{return LATEST[l]||`/${l}/`}
-}
-"""
-              if marker not in s:
-                  raise SystemExit('htmlLang marker not found')
-              s = s.replace(marker, helper, 1)
-
-          old_sql = "const r=await env.DB.prepare(`SELECT canonical_path FROM quote_pages WHERE project_id=? AND language_code=? AND status='published' ORDER BY COALESCE(published_at,updated_at) DESC, COALESCE(updated_at,published_at) DESC LIMIT 1`).bind(PROJECT_ID,l).first();"
-          new_sql = "const r=await env.DB.prepare(`SELECT qp.slug FROM quote_pages qp JOIN content_items ci ON ci.id=qp.content_item_id WHERE qp.project_id=? AND qp.language_code=? AND qp.status='published' ORDER BY COALESCE(ci.sequence_no,CAST(SUBSTR(ci.id,3) AS INTEGER),0) DESC, COALESCE(qp.published_at,qp.updated_at) DESC, qp.updated_at DESC LIMIT 1`).bind(PROJECT_ID,l).first();"
-          s = s.replace(old_sql, new_sql, 1)
-          s = s.replace("return r?.canonical_path||LATEST[l]||`/${l}/`;", "return r?.slug?`/${l}/quotes/${encodeURIComponent(r.slug)}/`:(LATEST[l]||`/${l}/`);", 1)
-
-          s = s.replace('export async function startUnified(request){','export async function startUnified(request,env){',1)
-
-          if 'const latest=await latestPublished(env,l);' not in s:
-              marker = 'subject=encodeURIComponent(t.subject);'
-              if marker not in s:
-                  raise SystemExit('subject marker not found')
-              s = s.replace(marker, marker+'\n const latest=await latestPublished(env,l);', 1)
-
-          if 'href="${LATEST[l]}"' in s:
-              s = s.replace('href="${LATEST[l]}"','href="${latest}"',1)
-          elif 'href="${latest}"' not in s:
-              raise SystemExit('latest href marker not found')
-
+          p=Path('lib/start_unified.js')
+          s=p.read_text()
+          old="const r=await env.DB.prepare(`SELECT canonical_path FROM quote_pages WHERE project_id=? AND language_code=? AND status='published' ORDER BY COALESCE(published_at,updated_at) DESC, COALESCE(updated_at,published_at) DESC LIMIT 1`).bind(PROJECT_ID,l).first();"
+          new="const r=await env.DB.prepare(`SELECT qp.slug FROM quote_pages qp JOIN content_items ci ON ci.id=qp.content_item_id WHERE qp.project_id=? AND qp.language_code=? AND qp.status='published' ORDER BY COALESCE(ci.sequence_no,CAST(SUBSTR(ci.id,3) AS INTEGER),0) DESC, COALESCE(qp.published_at,qp.updated_at) DESC, qp.updated_at DESC LIMIT 1`).bind(PROJECT_ID,l).first();"
+          oldret="return r?.canonical_path||LATEST[l]||`/${l}/`;"
+          newret="return r?.slug?`/${l}/quotes/${encodeURIComponent(r.slug)}/`:(LATEST[l]||`/${l}/`);"
+          if old in s:
+              s=s.replace(old,new,1)
+              s=s.replace(oldret,newret,1)
+          elif new not in s:
+              raise SystemExit('expected latest lookup not found')
           p.write_text(s)
-
-          w = Path('_worker.js')
-          x = w.read_text()
-          if 'startUnified(request,env)' not in x:
-              if 'startUnified(request)' not in x:
-                  raise SystemExit('worker startUnified marker not found')
-              x = x.replace('startUnified(request)','startUnified(request,env)',1)
-          w.write_text(x)
-
-      - name: Verify patch markers
+          PY
+      - name: Verify
         run: |
-          grep -q "async function latestPublished(env,l)" lib/start_unified.js
-          grep -q "SELECT qp.slug FROM quote_pages" lib/start_unified.js
-          grep -q "content_items ci" lib/start_unified.js
-          grep -q "const latest=await latestPublished(env,l)" lib/start_unified.js
+          grep -q "SELECT qp.slug FROM quote_pages qp JOIN content_items ci" lib/start_unified.js
           grep -q 'href="${latest}"' lib/start_unified.js
           grep -q "startUnified(request,env)" _worker.js
-          ! grep -q "SELECT canonical_path FROM quote_pages" lib/start_unified.js
-
-      - name: Commit patch
+      - name: Commit
         run: |
           if git diff --quiet; then
             echo "Nothing to change"
@@ -84,6 +44,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/start_unified.js _worker.js
-          git commit -m "Fix D1 latest article lookup [dynamic-start]"
+          git add lib/start_unified.js
+          git commit -m "Use content sequence for latest start article [dynamic-start]"
           git push

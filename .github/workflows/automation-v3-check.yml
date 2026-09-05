@@ -21,6 +21,7 @@ jobs:
           node --check lib/publication_core.js
           node --check lib/production_console_api.js
           node --check lib/site_v2.js
+          node --check lib/sitemap_runtime.js
           node --check lib/canonical_rules.js
           node --check admin/console/app.js
       - name: Run D1 migration and guardrail smoke tests

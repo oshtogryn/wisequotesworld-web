@@ -1,0 +1,80 @@
+name: Batch WQ018-WQ026 premedia
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/batch-018-026-prep.yml'
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix localized Facebook composition and force deploy
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('lib/prepared_batch_018_026.js')
+          s=p.read_text()
+          old="return{facebook:fb,instagram:x.ig,threads:[x.th1,x.th2,x.th3].join('\\n\\n---\\n\\n'),tiktok:x.tt"
+          new="return{facebook:article(lang,t).split('\\n\\n').slice(0,4).join('\\n\\n')+`\\n\\n${u.more}:\\n${url}\\n\\n${tags}`,instagram:x.ig,threads:[x.th1,x.th2,x.th3].join('\\n\\n---\\n\\n'),tiktok:x.tt"
+          assert old in s
+          p.write_text(s.replace(old,new,1))
+          w=Path('_worker.js')
+          x=w.read_text()
+          marker='// deploy-marker: prepared-batch-018-026-v1'
+          if marker not in x:x=marker+'\n'+x
+          w.write_text(x)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/prepared_batch_018_026.js _worker.js
+          git commit -m 'Deploy verified WQ018-WQ026 premedia batch'
+          git push
+      - name: Wait for Cloudflare deployment
+        run: sleep 75
+      - name: Prepare batch in D1 and verify
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          ok=0
+          for i in $(seq 1 18); do
+            code=$(curl -L -sS --retry 3 --retry-all-errors --retry-delay 3 -X POST 'https://wisequotesworld.com/ops/run/future-preprod' -o ops/readback/prepared-batch-018-026.json -w '%{http_code}' || true)
+            echo "Attempt $i HTTP $code"
+            if [ "$code" = "200" ] && python - <<'PY'
+          import json,sys
+          try:d=json.load(open('ops/readback/prepared-batch-018-026.json'))
+          except:sys.exit(1)
+          b=d.get('batch',{})
+          ok=d.get('ok') is True and d.get('stage')=='done' and b.get('ok') is True and b.get('count')==9 and all(x.get('ready_for_user_media') for x in b.get('rows',[]))
+          sys.exit(0 if ok else 1)
+          PY
+            then ok=1; break; fi
+            cat ops/readback/prepared-batch-018-026.json || true
+            sleep 8
+          done
+          test "$ok" = "1"
+          python - <<'PY'
+          import json
+          d=json.load(open('ops/readback/prepared-batch-018-026.json'))
+          rows=d['batch']['rows']
+          assert len(rows)==9
+          for x in rows:
+              assert x['status']=='media_pending',x
+              assert x['published_pages']==13,x
+              assert x['outputs']==88,x
+              assert x['native_qa']==13,x
+              assert x['video_prompts']==8,x
+              assert x['ready_for_user_media'] is True,x
+          print('Verified WQ018-WQ026: 9/9 media_pending, 117/117 pages, 792/792 outputs')
+          PY
+      - name: Save readback
+        run: |
+          git pull --rebase
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/prepared-batch-018-026.json
+          git commit -m 'Save WQ018-WQ026 verified premedia readback' || exit 0
+          git push

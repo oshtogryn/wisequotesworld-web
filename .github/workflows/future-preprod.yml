@@ -4,6 +4,9 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/future-preprod.yml'
+      - 'lib/future_preprod.js'
+      - 'lib/site_package_apply.js'
+      - 'lib/wq017_site_payload.js'
 permissions:
   contents: write
 jobs:
@@ -15,11 +18,27 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p ops/readback
-          code=$(curl -L -sS --retry 12 --retry-all-errors --retry-delay 5 -X POST 'https://wisequotesworld.com/ops/run/future-preprod' -o ops/readback/future-preprod.json -w '%{http_code}')
-          echo "HTTP $code"
-          cat ops/readback/future-preprod.json
-          echo
-          test "$code" = "200"
+          ok=0
+          for i in $(seq 1 24); do
+            code=$(curl -L -sS --retry 3 --retry-all-errors --retry-delay 3 -X POST 'https://wisequotesworld.com/ops/run/future-preprod' -o ops/readback/future-preprod.json -w '%{http_code}' || true)
+            echo "Attempt $i HTTP $code"
+            cat ops/readback/future-preprod.json || true
+            echo
+            if [ "$code" = "200" ]; then
+              if python - <<'PY'
+import json,sys
+try:
+ d=json.load(open('ops/readback/future-preprod.json'))
+ ok=(d.get('ok') is True and d.get('stage')=='done' and d.get('wq017_site',{}).get('published') is True and len(d.get('wq017_pages',[]))==13 and all(x.get('status')=='published' for x in d.get('wq017_pages',[])))
+ sys.exit(0 if ok else 1)
+except Exception:
+ sys.exit(1)
+PY
+              then ok=1; break; fi
+            fi
+            sleep 5
+          done
+          test "$ok" = "1"
           python - <<'PY'
           import json
           d=json.load(open('ops/readback/future-preprod.json'))
@@ -28,14 +47,22 @@ jobs:
           assert d.get('localizations')==13, d
           assert d['wq016']['status']=='localized', d
           assert d['wq016']['attribution_status']=='verified', d
-          assert d['wq016']['facts_verified']==1, d
-          assert len(d.get('next',[]))==9, d
-          print('WQ016 localized 13/13; WQ017-WQ025 preproduction candidates stored')
+          assert d['wq017']['attribution_status']=='verified', d
+          assert d['wq017']['facts_verified']==1, d
+          assert d['wq017_site']['published'] is True, d
+          assert len(d['wq017_pages'])==13, d
+          assert all(x['status']=='published' for x in d['wq017_pages']), d
+          assert len(d.get('next',[]))==8, d
+          print('WQ017 website published 13/13 through shared publication engine; WQ016 remains paused')
           PY
       - name: Save verified readback
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add ops/readback/future-preprod.json
-          git commit -m 'Save verified future preproduction readback'
-          git push
+          if git diff --cached --quiet; then
+            echo 'Readback unchanged'
+          else
+            git commit -m 'Save verified WQ017 website publication readback'
+            git push
+          fi

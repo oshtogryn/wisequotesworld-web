@@ -1,4 +1,5 @@
 // deploy-marker: future-preprod-wq017-premedia-v1
+// deploy-marker: future-preprod-wq017-premedia-v1
 import legacyWorker from './_worker_legacy.js';
 import {readCanonicalRules} from './lib/canonical_rules.js';
 import {siteV2} from './lib/site_v2.js';

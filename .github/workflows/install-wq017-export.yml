@@ -1,0 +1,40 @@
+name: install-wq017-export
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/install-wq017-export.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch worker
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js'); s=p.read_text()
+          imp="import {wq017ScheduleExport} from './lib/wq017_schedule_export.js';"
+          if imp not in s:
+              anchor="import {siteVisibilityApi} from './lib/site_visibility_api.js';"
+              if anchor not in s: raise SystemExit('import anchor missing')
+              s=s.replace(anchor,anchor+'\n'+imp,1)
+          route="const wq017ExportResponse=await wq017ScheduleExport(request,env);if(wq017ExportResponse)return wq017ExportResponse;"
+          if route not in s:
+              anchor="const publicationResponse=await publicationApi(request,env);"
+              if anchor not in s: raise SystemExit('route anchor missing')
+              s=s.replace(anchor,route+anchor,1)
+          p.write_text(s)
+          PY
+          node --check _worker.js
+          git diff --check
+      - name: Commit patch
+        run: |
+          git config user.name oshtogryn
+          git config user.email alex.shtogryn@gmail.com
+          git add _worker.js
+          git commit -m 'Temporarily route WQ017 scheduling export' || exit 0
+          git pull --rebase
+          git push

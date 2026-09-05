@@ -1,0 +1,89 @@
+name: Prepared quality split verify
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/prepared-quality-split-verify.yml'
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire per-topic quality endpoints and deploy
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js'); s=p.read_text()
+          old="import {applyPreparedBatchQualityPatch,readPreparedBatchQuality} from './lib/prepared_batch_quality_patch.js';"
+          new="import {applyPreparedBatchQualityPatch,applyPreparedTopicQuality,readPreparedBatchQuality,readPreparedTopicQuality} from './lib/prepared_batch_quality_patch.js';"
+          assert old in s or new in s
+          s=s.replace(old,new)
+          route="const qualityOne=url.pathname.match(/^\\/ops\\/run\\/prepared-quality\\/(WQ0(?:18|19|20|21|22|23|24|25|26))$/);if(qualityOne&&request.method==='POST')return json(await applyPreparedTopicQuality(env,qualityOne[1]));const qualityRead=url.pathname.match(/^\\/ops\\/readback\\/prepared-quality\\/(WQ0(?:18|19|20|21|22|23|24|25|26))\\.json$/);if(qualityRead&&request.method==='GET')return json(await readPreparedTopicQuality(env,qualityRead[1]));"
+          anchor="if(url.pathname==='/ops/run/prepared-quality-patch'&&request.method==='POST')"
+          assert anchor in s
+          if route not in s:s=s.replace(anchor,route+anchor,1)
+          marker='// deploy-marker: prepared-quality-split-v2'
+          if marker not in s:s=marker+'\n'+s
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git commit -m 'Wire per-topic prepared quality endpoints'
+          git push
+      - name: Wait for Cloudflare deployment
+        run: sleep 85
+      - name: Apply QA one topic at a time
+        run: |
+          set -euo pipefail
+          for id in WQ018 WQ019 WQ020 WQ021 WQ022 WQ023 WQ024 WQ025 WQ026; do
+            echo "=== $id ==="
+            ok=0
+            for i in $(seq 1 10); do
+              code=$(curl -L -sS --max-time 25 --retry 2 --retry-all-errors --retry-delay 2 -X POST "https://wisequotesworld.com/ops/run/prepared-quality/$id" -o /tmp/$id.json -w '%{http_code}' || true)
+              cat /tmp/$id.json || true; echo
+              if [ "$code" = "200" ] && ID="$id" python - <<'PY'
+          import json,os
+          d=json.load(open('/tmp/'+os.environ['ID']+'.json'))
+          raise SystemExit(0 if d.get('ok') is True else 1)
+          PY
+              then ok=1; break; fi
+              sleep 6
+            done
+            [ "$ok" = 1 ] || { echo "$id failed"; exit 1; }
+          done
+      - name: Verify Master Rules quality and Admin statuses
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --max-time 30 --fail --retry 8 --retry-all-errors --retry-delay 4 'https://wisequotesworld.com/ops/readback/prepared-quality.json' -o ops/readback/prepared-quality.json
+          curl -L -sS --max-time 30 --fail --retry 8 --retry-all-errors --retry-delay 4 -H "Authorization: Bearer $ADMIN_TOKEN" 'https://wisequotesworld.com/api/admin/topics' -o ops/readback/admin-topics.json
+          python - <<'PY'
+          import json
+          q=json.load(open('ops/readback/prepared-quality.json'))
+          assert q.get('ok') is True,q
+          assert q.get('count')==9,q
+          assert all(x.get('ok') for x in q['rows']),q
+          a=json.load(open('ops/readback/admin-topics.json'))
+          assert a.get('ok') is True,a
+          rows={x['id']:x for x in a['items']}
+          expected={'WQ015':'scheduled','WQ016':'skipped','WQ017':'media_pending',**{f'WQ{n:03d}':'media_pending' for n in range(18,27)}}
+          for k,v in expected.items():assert rows[k]['status']==v,(k,rows[k])
+          print('QUALITY 9/9 PASS')
+          print('ADMIN STATUS PASS',expected)
+          PY
+          cat ops/readback/prepared-quality.json
+      - name: Save verified readbacks
+        run: |
+          set -euo pipefail
+          git pull --rebase
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/prepared-quality.json ops/readback/admin-topics.json
+          git commit -m 'Save verified prepared quality and Admin readbacks' || exit 0
+          git push

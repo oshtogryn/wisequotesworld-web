@@ -25,36 +25,15 @@ jobs:
             cat ops/readback/future-preprod.json || true
             echo
             if [ "$code" = "200" ]; then
-              if python - <<'PY'
-import json,sys
-try:
- d=json.load(open('ops/readback/future-preprod.json'))
- ok=(d.get('ok') is True and d.get('stage')=='done' and d.get('wq017_site',{}).get('published') is True and len(d.get('wq017_pages',[]))==13 and all(x.get('status')=='published' for x in d.get('wq017_pages',[])))
- sys.exit(0 if ok else 1)
-except Exception:
- sys.exit(1)
-PY
-              then ok=1; break; fi
+              if python -c "import json,sys; d=json.load(open('ops/readback/future-preprod.json')); ok=(d.get('ok') is True and d.get('stage')=='done' and d.get('wq017_site',{}).get('published') is True and len(d.get('wq017_pages',[]))==13 and all(x.get('status')=='published' for x in d.get('wq017_pages',[]))); sys.exit(0 if ok else 1)"; then
+                ok=1
+                break
+              fi
             fi
             sleep 5
           done
           test "$ok" = "1"
-          python - <<'PY'
-          import json
-          d=json.load(open('ops/readback/future-preprod.json'))
-          assert d.get('ok') is True, d
-          assert d.get('stage')=='done', d
-          assert d.get('localizations')==13, d
-          assert d['wq016']['status']=='localized', d
-          assert d['wq016']['attribution_status']=='verified', d
-          assert d['wq017']['attribution_status']=='verified', d
-          assert d['wq017']['facts_verified']==1, d
-          assert d['wq017_site']['published'] is True, d
-          assert len(d['wq017_pages'])==13, d
-          assert all(x['status']=='published' for x in d['wq017_pages']), d
-          assert len(d.get('next',[]))==8, d
-          print('WQ017 website published 13/13 through shared publication engine; WQ016 remains paused')
-          PY
+          python -c "import json; d=json.load(open('ops/readback/future-preprod.json')); assert d.get('ok') is True, d; assert d.get('stage')=='done', d; assert d.get('localizations')==13, d; assert d['wq016']['status']=='localized', d; assert d['wq016']['attribution_status']=='verified', d; assert d['wq017']['attribution_status']=='verified', d; assert d['wq017']['facts_verified']==1, d; assert d['wq017_site']['published'] is True, d; assert len(d['wq017_pages'])==13, d; assert all(x['status']=='published' for x in d['wq017_pages']), d; assert len(d.get('next',[]))==8, d; print('WQ017 website published 13/13 through shared publication engine; WQ016 remains paused')"
       - name: Save verified readback
         run: |
           git config user.name 'github-actions[bot]'

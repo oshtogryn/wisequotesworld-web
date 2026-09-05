@@ -1,0 +1,38 @@
+name: Patch generic publication rule
+on:
+  push:
+    paths:
+      - 'ops/MASTER_PUBLICATION_TRIGGER'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch canonical rule
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('ops/MASTER_RULES.md')
+          s=p.read_text()
+          anchor='D1 database-first. New approved content should not require manual deploy. 13 website locales, archive, quote/category/verified-author pages, sitemap/hreflang/canonical/internal links. Social readiness is evaluated only for connected social locales.\n'
+          addition='\n**Generic publication rule — HARD:** Starting with WQ016, website publication must use the shared D1 publication engine and its 13-locale readiness gate. Do not create topic-specific `wq0xx_finalize.js`/website-publish modules unless a genuinely exceptional migration requires one. Website publication and social scheduling remain separate gates: publishing `quote_pages` must not falsely mark social Planner/Metricool work as scheduled or published. A successful website publication automatically feeds the dynamic `/xx/start/`, D1 sitemap and IndexNow path.\n'
+          if 'Generic publication rule — HARD' not in s:
+              assert anchor in s, 'website/database anchor missing'
+              s=s.replace(anchor,anchor+addition,1)
+          p.write_text(s)
+          PY
+      - name: Validate anchors
+        run: |
+          grep -F 'Generic publication rule — HARD' ops/MASTER_RULES.md
+          node --check lib/publication_engine.js
+          node --check lib/publication_api.js
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/MASTER_RULES.md
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Make generic publication canonical for WQ016 plus'
+          git push

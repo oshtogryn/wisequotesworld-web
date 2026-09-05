@@ -1,0 +1,35 @@
+name: Hotfix start analytics render
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/hotfix-start-analytics-render.yml'
+permissions:
+  contents: write
+jobs:
+  hotfix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Disable malformed inline custom analytics injection
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text()
+          old="if(locale&&!html.includes('wqw-analytics-v1'))injections+=analyticsEventsScript(locale);"
+          new="/* HOTFIX 2026-09-05: custom inline analytics injection disabled because it can corrupt rendered /<locale>/start/ HTML. GA4 + Metricool remain active. */"
+          if old not in s:
+              raise SystemExit('expected analytics injection not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+          git diff --check
+          grep -n "HOTFIX 2026-09-05" _worker.js
+      - name: Commit hotfix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git commit -m 'Hotfix malformed analytics injection on start pages'
+          git push

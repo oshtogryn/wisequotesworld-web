@@ -17,89 +17,38 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           VIS=" AND (COALESCE(ci.sequence_no,CAST(SUBSTR(ci.id,3) AS INTEGER),0)<=15 OR EXISTS (SELECT 1 FROM content_approvals sva WHERE sva.content_item_id=ci.id AND sva.approval_scope='website_visibility' AND sva.language_code IS NULL AND sva.status='approved'))"
-
-          # start latest only
-          p=Path('lib/start_unified.js'); s=p.read_text()
-          old="AND qp.status='published' ORDER BY COALESCE(ci.sequence_no"
-          if old in s:
-              s=s.replace(old,"AND qp.status='published'"+VIS+" ORDER BY COALESCE(ci.sequence_no",1)
+          p=Path('lib/start_unified.js'); s=p.read_text(); old="AND qp.status='published' ORDER BY COALESCE(ci.sequence_no"
+          if old in s:s=s.replace(old,"AND qp.status='published'"+VIS+" ORDER BY COALESCE(ci.sequence_no",1)
           p.write_text(s)
-
-          # main site listing/category/author queries: all published-list queries are user navigation
-          p=Path('lib/site_v2.js'); s=p.read_text()
-          s=s.replace("AND qp.status='published'", "AND qp.status='published'"+VIS)
-          p.write_text(s)
-
-          # taxonomy pages are all navigation/list surfaces
-          p=Path('lib/taxonomy_site.js'); s=p.read_text()
-          s=s.replace("AND qp.status='published'", "AND qp.status='published'"+VIS)
-          p.write_text(s)
-
-          # locale13: patch list/categories/authors only; direct detail + alternates stay indexable and reachable
-          p=Path('lib/locale13_site.js'); s=p.read_text()
-          marker="async function one(env,lang,quoteSlug)"
-          a,b=s.split(marker,1)
-          a=a.replace("AND qp.status='published'", "AND qp.status='published'"+VIS)
-          # after one(), categories/authors also need filtering, but one/alternates must not
-          marker2="async function categories(env,lang)"
-          pre,rest=b.split(marker2,1)
-          # leave pre (one + alternates) untouched
-          rest=rest.replace("AND qp.status='published'", "AND qp.status='published'"+VIS)
-          s=a+marker+pre+marker2+rest
-          p.write_text(s)
-
-          # Worker route
-          p=Path('_worker.js'); s=p.read_text()
-          imp="import {adminTopicsApi} from './lib/admin_topics_api.js';"
-          if "site_visibility_api.js" not in s:
-              s=s.replace(imp,imp+"\nimport {siteVisibilityApi} from './lib/site_visibility_api.js';")
+          p=Path('lib/site_v2.js'); s=p.read_text(); s=s.replace("AND qp.status='published'", "AND qp.status='published'"+VIS); p.write_text(s)
+          p=Path('lib/taxonomy_site.js'); s=p.read_text(); s=s.replace("AND qp.status='published'", "AND qp.status='published'"+VIS); p.write_text(s)
+          p=Path('lib/locale13_site.js'); s=p.read_text(); marker="async function one(env,lang,quoteSlug)"; a,b=s.split(marker,1); a=a.replace("AND qp.status='published'", "AND qp.status='published'"+VIS); marker2="async function categories(env,lang)"; pre,rest=b.split(marker2,1); rest=rest.replace("AND qp.status='published'", "AND qp.status='published'"+VIS); s=a+marker+pre+marker2+rest; p.write_text(s)
+          p=Path('_worker.js'); s=p.read_text(); imp="import {adminTopicsApi} from './lib/admin_topics_api.js';"
+          if "site_visibility_api.js" not in s:s=s.replace(imp,imp+"\nimport {siteVisibilityApi} from './lib/site_visibility_api.js';")
           needle="const adminTopicsResponse=await adminTopicsApi(request,env);if(adminTopicsResponse)return adminTopicsResponse;"
-          if needle in s and "siteVisibilityResponse" not in s:
-              s=s.replace(needle,needle+"const siteVisibilityResponse=await siteVisibilityApi(request,env);if(siteVisibilityResponse)return siteVisibilityResponse;")
+          if needle in s and "siteVisibilityResponse" not in s:s=s.replace(needle,needle+"const siteVisibilityResponse=await siteVisibilityApi(request,env);if(siteVisibilityResponse)return siteVisibilityResponse;")
           else:
               needle2="const productionResponse=await productionConsoleApi(request,env);if(productionResponse)return productionResponse;"
-              if needle2 in s and "siteVisibilityResponse" not in s:
-                  s=s.replace(needle2,"const siteVisibilityResponse=await siteVisibilityApi(request,env);if(siteVisibilityResponse)return siteVisibilityResponse;"+needle2)
+              if needle2 in s and "siteVisibilityResponse" not in s:s=s.replace(needle2,"const siteVisibilityResponse=await siteVisibilityApi(request,env);if(siteVisibilityResponse)return siteVisibilityResponse;"+needle2)
           p.write_text(s)
-
-          # Admin HTML controls + cache bump
-          p=Path('admin/console/index.html'); s=p.read_text()
-          old='<button id="scheduleBtn">Перевірити / підготувати</button><div id="scheduleStatus" class="status">Вибери тему.</div>'
-          new='<div class="actions"><button id="sitePublishBtn" class="success">Опублікувати на сайт</button><button id="scheduleBtn">Перевірити готовність до постів</button></div><div id="sitePublishStatus" class="status">Перевіряю видимість статті…</div><div id="scheduleStatus" class="status">Вибери тему.</div>'
+          p=Path('admin/console/index.html'); s=p.read_text(); old='<button id="scheduleBtn">Перевірити / підготувати</button><div id="scheduleStatus" class="status">Вибери тему.</div>'; new='<div class="actions"><button id="sitePublishBtn" class="success">Опублікувати на сайт</button><button id="scheduleBtn">Перевірити готовність до постів</button></div><div id="sitePublishStatus" class="status">Перевіряю видимість статті…</div><div id="scheduleStatus" class="status">Вибери тему.</div>'
           if old in s:s=s.replace(old,new)
-          s=s.replace('style.css?v=21','style.css?v=22').replace('app.js?v=21','app.js?v=22')
-          p.write_text(s)
-
-          # Admin JS
-          p=Path('admin/console/app.js'); s=p.read_text()
-          anchor="async function checkSchedule(){"
+          s=s.replace('style.css?v=21','style.css?v=22').replace('app.js?v=21','app.js?v=22'); p.write_text(s)
+          p=Path('admin/console/app.js'); s=p.read_text(); anchor="async function checkSchedule(){"
           if "async function loadSiteVisibility()" not in s:
-              block="""async function loadSiteVisibility(){const id=$('scheduleTopic')?.value,box=$('sitePublishStatus'),btn=$('sitePublishBtn');if(!id||!box)return;try{const j=await api('/api/admin/site-visibility/'+id),v=!!j.state?.visible;box.className='status '+(v?'ok':'warn');box.textContent=v?`${id}: стаття видима на сайті й бере участь у Latest.`:`${id}: стаття індексується за прямим URL, але прихована з навігації та Latest.`;if(btn){btn.disabled=v;btn.textContent=v?'На сайті ✓':'Опублікувати на сайт'}}catch(e){box.className='status bad';box.textContent=e.message}}
-async function publishSite(){const id=$('scheduleTopic')?.value;if(!id)return;const ok=await modalConfirm('Опублікувати на сайт?',`${id}: стаття стане видимою в навігації Wise Quotes World і новою останньою публікацією. Social posts НЕ будуть заплановані цією кнопкою.`);if(!ok)return;const btn=$('sitePublishBtn');setBusy(btn,true,'Публікую…');try{await api('/api/admin/site-visibility/'+id+'/publish',{method:'POST'});setBusy(btn,false);markDone(btn,'На сайті ✓');flash(`${id}: опубліковано на сайт`);await loadSiteVisibility()}catch(e){setBusy(btn,false);$('sitePublishStatus').className='status bad';$('sitePublishStatus').textContent=e.message}}
-"""
+              block="""async function loadSiteVisibility(){const id=$('scheduleTopic')?.value,box=$('sitePublishStatus'),btn=$('sitePublishBtn');if(!id||!box)return;try{const j=await api('/api/admin/site-visibility/'+id),v=!!j.state?.visible;box.className='status '+(v?'ok':'warn');box.textContent=v?`${id}: стаття видима на сайті й бере участь у Latest.`:`${id}: стаття індексується за прямим URL, але прихована з навігації та Latest.`;if(btn){btn.disabled=v;btn.textContent=v?'На сайті ✓':'Опублікувати на сайт'}}catch(e){box.className='status bad';box.textContent=e.message}}\nasync function publishSite(){const id=$('scheduleTopic')?.value;if(!id)return;const ok=await modalConfirm('Опублікувати на сайт?',`${id}: стаття стане видимою в навігації Wise Quotes World і новою останньою публікацією. Social posts НЕ будуть заплановані цією кнопкою.`);if(!ok)return;const btn=$('sitePublishBtn');setBusy(btn,true,'Публікую…');try{await api('/api/admin/site-visibility/'+id+'/publish',{method:'POST'});setBusy(btn,false);markDone(btn,'На сайті ✓');flash(`${id}: опубліковано на сайт`);await loadSiteVisibility()}catch(e){setBusy(btn,false);$('sitePublishStatus').className='status bad';$('sitePublishStatus').textContent=e.message}}\n"""
               s=s.replace(anchor,block+anchor)
-          # schedule readiness includes website visibility warning but does not block technical readiness
-          old="async function checkSchedule(){const id=$('scheduleTopic').value;if(!id)return;try{const p=await api('/api/admin/production/'+id),r=p.readiness,issues=[];"
-          new="async function checkSchedule(){const id=$('scheduleTopic').value;if(!id)return;try{const [p,v]=await Promise.all([api('/api/admin/production/'+id),api('/api/admin/site-visibility/'+id)]),r=p.readiness,issues=[];if(!v.state?.visible)issues.push('стаття прихована на сайті');"
+          old="async function checkSchedule(){const id=$('scheduleTopic').value;if(!id)return;try{const p=await api('/api/admin/production/'+id),r=p.readiness,issues=[];"; new="async function checkSchedule(){const id=$('scheduleTopic').value;if(!id)return;try{const [p,v]=await Promise.all([api('/api/admin/production/'+id),api('/api/admin/site-visibility/'+id)]),r=p.readiness,issues=[];if(!v.state?.visible)issues.push('стаття прихована на сайті');"
           if old in s:s=s.replace(old,new)
-          # bindings
           bind="$('scheduleBtn').onclick=checkSchedule;"
-          if "sitePublishBtn').onclick" not in s:
-              s=s.replace(bind,"$('sitePublishBtn').onclick=publishSite;"+bind)
+          if "sitePublishBtn').onclick" not in s:s=s.replace(bind,"$('sitePublishBtn').onclick=publishSite;"+bind)
           oldchg="$('scheduleMode').onchange=()=>{$('manualTimeWrap').hidden=$('scheduleMode').value!=='manual'};"
-          if oldchg in s and "scheduleTopic').onchange" not in s:
-              s=s.replace(oldchg,"$('scheduleTopic').onchange=loadSiteVisibility;"+oldchg)
+          if oldchg in s and "scheduleTopic').onchange" not in s:s=s.replace(oldchg,"$('scheduleTopic').onchange=loadSiteVisibility;"+oldchg)
           oldfill="function fillScheduleTopics(){if(!$('scheduleTopic'))return;const selected=$('scheduleTopic').value;$('scheduleTopic').innerHTML=TOPICS.filter(x=>!['published','skipped'].includes(x.status)).map(x=>`<option value=\"${x.id}\" ${selected===x.id?'selected':''}>${x.id} — ${esc(x.canonical_title||'')}</option>`).join('')}"
-          if oldfill in s:
-              s=s.replace(oldfill,oldfill[:-1]+";setTimeout(loadSiteVisibility,0)}")
+          if oldfill in s:s=s.replace(oldfill,oldfill[:-1]+";setTimeout(loadSiteVisibility,0)}")
           p.write_text(s)
-
-          # Master Rules explicit editorial visibility rule
-          p=Path('ops/MASTER_RULES.md'); s=p.read_text()
-          key="**Generic publication rule — HARD:**"
-          note="""**Editorial website visibility — HARD:** Starting with WQ016, technical article existence/indexability and editorial website visibility are separate. Prepared articles may remain reachable by direct canonical URL and in sitemap for indexing, but they MUST stay hidden from `/xx/start/` Latest, homepage/archive cards, category pages and author pages until an explicit `website_visibility` approval is recorded. Admin action `Опублікувати на сайт` controls this gate independently from social scheduling. Publishing to the website must not schedule social posts; scheduling social posts must warn when the article is still hidden and must not silently publish it.\n\n"""
-          if note.strip() not in s:
-              s=s.replace(key,note+key)
+          p=Path('ops/MASTER_RULES.md'); s=p.read_text(); key="**Generic publication rule — HARD:**"; note="**Editorial website visibility — HARD:** Starting with WQ016, technical article existence/indexability and editorial website visibility are separate. Prepared articles may remain reachable by direct canonical URL and in sitemap for indexing, but they MUST stay hidden from `/xx/start/` Latest, homepage/archive cards, category pages and author pages until an explicit `website_visibility` approval is recorded. Admin action `Опублікувати на сайт` controls this gate independently from social scheduling. Publishing to the website must not schedule social posts; scheduling social posts must warn when the article is still hidden and must not silently publish it.\n\n"
+          if note.strip() not in s:s=s.replace(key,note+key)
           p.write_text(s)
           PY
       - name: Commit patches

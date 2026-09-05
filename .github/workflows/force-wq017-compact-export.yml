@@ -1,0 +1,43 @@
+name: force-wq017-compact-export
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/force-wq017-compact-export.yml'
+permissions:
+  contents: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Force Worker deploy
+        run: |
+          printf '\n// deploy-marker: wq017-compact-export-v1\n' >> _worker.js
+          git config user.name oshtogryn
+          git config user.email alex.shtogryn@gmail.com
+          git add _worker.js
+          git commit -m 'Force WQ017 compact export deployment'
+          git pull --rebase
+          git push
+      - name: Wait for Cloudflare
+        run: sleep 90
+      - name: Read compact WQ017 package
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl --fail --retry 5 --retry-all-errors --retry-delay 10 https://wisequotesworld.com/ops/export/wq017-9c7f4e2a -o ops/readback/WQ017-schedule.json
+          python3 - <<'PY'
+          import json
+          j=json.load(open('ops/readback/WQ017-schedule.json'))
+          assert j.get('ok') is True,j
+          assert set(j['pack'])=={'uk','ru','pl','en','sv','de','es','fr'}
+          for l,p in j['pack'].items(): assert len(p['outputs'])==9,(l,p['outputs'].keys())
+          print('WQ017 compact schedule package PASS')
+          PY
+      - name: Commit compact readback
+        run: |
+          git pull --rebase
+          git add ops/readback/WQ017-schedule.json
+          git commit -m 'Read back compact WQ017 schedule package' || exit 0
+          git push

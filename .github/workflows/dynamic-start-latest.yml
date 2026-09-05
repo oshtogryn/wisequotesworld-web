@@ -23,28 +23,31 @@ jobs:
           p = Path('lib/start_unified.js')
           s = p.read_text()
 
-          marker = "function htmlLang(l){return l==='pt'?'pt-BR':l}\n"
-          helper = """function htmlLang(l){return l==='pt'?'pt-BR':l}\nasync function latestPublished(env,l){\n if(!env?.DB)return LATEST[l]||`/${l}/`;\n try{\n  const r=await env.DB.prepare(`SELECT canonical_path FROM quote_pages WHERE project_id=? AND language_code=? AND status='published' ORDER BY COALESCE(published_at,updated_at) DESC, COALESCE(updated_at,published_at) DESC LIMIT 1`).bind(PROJECT_ID,l).first();\n  return r?.canonical_path||LATEST[l]||`/${l}/`;\n }catch{return LATEST[l]||`/${l}/`}\n}\n"""
           if 'async function latestPublished(env,l)' not in s:
+              marker = "function htmlLang(l){return l==='pt'?'pt-BR':l}\n"
+              helper = marker + """async function latestPublished(env,l){
+ if(!env?.DB)return LATEST[l]||`/${l}/`;
+ try{
+  const r=await env.DB.prepare(`SELECT canonical_path FROM quote_pages WHERE project_id=? AND language_code=? AND status='published' ORDER BY COALESCE(published_at,updated_at) DESC, COALESCE(updated_at,published_at) DESC LIMIT 1`).bind(PROJECT_ID,l).first();
+  return r?.canonical_path||LATEST[l]||`/${l}/`;
+ }catch{return LATEST[l]||`/${l}/`}
+}
+"""
               if marker not in s:
                   raise SystemExit('htmlLang marker not found')
               s = s.replace(marker, helper, 1)
 
-          if 'export async function startUnified(request){' in s:
-              s = s.replace('export async function startUnified(request){','export async function startUnified(request,env){',1)
+          s = s.replace('export async function startUnified(request){','export async function startUnified(request,env){',1)
 
-          needle = "const l=m[1],t=T[l]||T.en,dir=l==='ar'?' dir=\\\"rtl\\\"':'',subject=encodeURIComponent(t.subject);"
-          repl = needle + "\n const latest=await latestPublished(env,l);"
           if 'const latest=await latestPublished(env,l);' not in s:
-              if needle not in s:
-                  raise SystemExit('start locale marker not found')
-              s = s.replace(needle,repl,1)
+              marker = 'subject=encodeURIComponent(t.subject);'
+              if marker not in s:
+                  raise SystemExit('subject marker not found')
+              s = s.replace(marker, marker+'\n const latest=await latestPublished(env,l);', 1)
 
-          if 'href=\\\"${LATEST[l]}\\\"' in s:
-              s = s.replace('href=\\\"${LATEST[l]}\\\"','href=\\\"${latest}\\\"',1)
-          elif 'href="${LATEST[l]}"' in s:
-              s = s.replace('href="${LATEST[l]}"','href="${latest}"',1)
-
+          if '${LATEST[l]}' not in s:
+              raise SystemExit('LATEST href marker not found')
+          s = s.replace('${LATEST[l]}','${latest}',1)
           p.write_text(s)
 
           w = Path('_worker.js')
@@ -54,13 +57,11 @@ jobs:
                   raise SystemExit('worker startUnified marker not found')
               x = x.replace('startUnified(request)','startUnified(request,env)',1)
           w.write_text(x)
-
-          print('dynamic latest patch prepared')
       - name: Verify patch markers
         run: |
           grep -q "async function latestPublished(env,l)" lib/start_unified.js
           grep -q "const latest=await latestPublished(env,l)" lib/start_unified.js
-          grep -q 'href="${latest}"' lib/start_unified.js
+          grep -q '${latest}' lib/start_unified.js
           grep -q "startUnified(request,env)" _worker.js
       - name: Commit patch
         run: |

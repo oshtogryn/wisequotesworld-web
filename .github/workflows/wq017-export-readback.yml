@@ -12,27 +12,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Wait for deploy
-        run: sleep 15
-      - name: Fetch temporary export
+        run: sleep 20
+      - name: Fetch compact export
         run: |
           set -euo pipefail
           mkdir -p ops/readback
           code=$(curl -sS -w '%{http_code}' https://wisequotesworld.com/ops/export/wq017-9c7f4e2a -o ops/readback/WQ017-export.json)
-          cat ops/readback/WQ017-export.json
           test "$code" = "200"
           python3 - <<'PY'
           import json
           j=json.load(open('ops/readback/WQ017-export.json'))
           assert j.get('ok') is True, j
-          print('outputs',len(j.get('outputs',[])))
-          print('media',len(j.get('media',[])))
-          print('approvals',len(j.get('approvals',[])))
+          assert set(j['pack'])=={'uk','ru','pl','en','sv','de','es','fr'}
+          for l,p in j['pack'].items():
+              assert len(p['outputs'])==9,(l,p['outputs'].keys())
+          print('pack 8/8; media',len(j.get('media',[])),'approval',j.get('approval'))
           PY
       - name: Commit readback
         run: |
           git config user.name oshtogryn
           git config user.email alex.shtogryn@gmail.com
           git add ops/readback/WQ017-export.json
-          git commit -m 'Read back WQ017 scheduling export' || exit 0
+          git commit -m 'Read compact WQ017 scheduling package' || exit 0
           git pull --rebase
           git push

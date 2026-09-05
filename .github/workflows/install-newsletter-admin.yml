@@ -1,0 +1,66 @@
+name: Install newsletter admin and scheduler runtime
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/install-newsletter-admin.yml'
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire newsletter admin and scheduler
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text()
+          imp="import {newsletterAdminApi,maybeRunNewsletterScheduler} from './lib/newsletter_admin.js';\n"
+          anchor="import {brevoNewsletterApi} from './lib/brevo_newsletter.js';\n"
+          if imp not in s:
+              if anchor not in s: raise SystemExit('brevo import anchor missing')
+              s=s.replace(anchor,anchor+imp,1)
+          fetch_anchor="export default {async fetch(request,env,ctx){try{const url=new URL(request.url);"
+          repl=fetch_anchor+"const newsletterAdminResponse=await newsletterAdminApi(request,env);if(newsletterAdminResponse)return newsletterAdminResponse;if(request.method==='GET'&&!url.pathname.startsWith('/api/')&&!url.pathname.startsWith('/ops/')&&!url.pathname.startsWith('/admin/')){try{ctx?.waitUntil?.(maybeRunNewsletterScheduler(env))}catch{}}"
+          if "const newsletterAdminResponse=await newsletterAdminApi(request,env);" not in s:
+              if fetch_anchor not in s: raise SystemExit('worker fetch anchor missing')
+              s=s.replace(fetch_anchor,repl,1)
+          p.write_text(s)
+          PY
+      - name: Commit runtime wiring
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898242+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git diff --cached --quiet || git commit -m 'Enable newsletter admin and automatic digest scheduler'
+          git push
+      - name: Wait for production deploy
+        run: sleep 55
+      - name: Verify public Brevo health and protected admin route
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request,urllib.error,time,json
+          health='https://wisequotesworld.com/ops/readback/brevo-health.json'
+          admin='https://wisequotesworld.com/api/admin/newsletter'
+          for i in range(24):
+              try:
+                  with urllib.request.urlopen(health,timeout=20) as r:
+                      h=json.loads(r.read().decode())
+                  if r.status==200 and h.get('configured') is True:
+                      try:
+                          urllib.request.urlopen(admin,timeout=20)
+                          raise SystemExit('admin route unexpectedly public')
+                      except urllib.error.HTTPError as e:
+                          if e.code==401:
+                              print('PASS: Brevo healthy; newsletter admin protected')
+                              raise SystemExit(0)
+              except SystemExit: raise
+              except Exception as e: print('retry',i+1,repr(e))
+              time.sleep(5)
+          raise SystemExit('production verification failed')
+          PY

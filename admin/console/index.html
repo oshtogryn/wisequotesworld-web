@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Wise Quotes — Production Admin</title>
-  <link rel="stylesheet" href="/admin/console/style.css?v=21">
+  <link rel="stylesheet" href="/admin/console/style.css?v=22">
 </head>
 <body>
 <header class="top"><div><div class="brand">Wise Quotes World</div><div class="topsub">Editorial & Production</div></div><div id="health" class="offline">● offline</div></header>
@@ -39,11 +39,11 @@
 
   <section id="approval" class="section"><div class="card"><h2>Final approval</h2><p class="muted">Approve тільки після source/native/media QA.</p><div id="approvalList"></div></div></section>
 
-  <section id="metricool" class="section"><div class="card"><h2>Планування</h2><p class="muted">Вибери тему та дату. Планування дозволяється лише після readiness gate.</p><label>Тема<select id="scheduleTopic"></select></label><div class="form2"><label>Дата<input id="scheduleDate" type="date"></label><label>Режим<select id="scheduleMode"><option value="best">Найкращий час</option><option value="manual">Власний час</option></select></label></div><label id="manualTimeWrap" hidden>Час<input id="scheduleTime" type="time" value="18:00"></label><button id="scheduleBtn">Перевірити / підготувати</button><div id="scheduleStatus" class="status">Вибери тему.</div></div></section>
+  <section id="metricool" class="section"><div class="card"><h2>Планування</h2><p class="muted">Вибери тему та дату. Планування дозволяється лише після readiness gate.</p><label>Тема<select id="scheduleTopic"></select></label><div class="form2"><label>Дата<input id="scheduleDate" type="date"></label><label>Режим<select id="scheduleMode"><option value="best">Найкращий час</option><option value="manual">Власний час</option></select></label></div><label id="manualTimeWrap" hidden>Час<input id="scheduleTime" type="time" value="18:00"></label><div class="actions"><button id="sitePublishBtn" class="success">Опублікувати на сайт</button><button id="scheduleBtn">Перевірити готовність до постів</button></div><div id="sitePublishStatus" class="status">Перевіряю видимість статті…</div><div id="scheduleStatus" class="status">Вибери тему.</div></div></section>
 
   <section id="dashboard" class="section"><div class="grid"><div class="kpi"><span>Контент</span><strong id="kContent">—</strong></div><div class="kpi"><span>Media pending</span><strong id="kPending">—</strong></div><div class="kpi"><span>Scheduled</span><strong id="kScheduled">—</strong></div><div class="kpi"><span>Published</span><strong id="kPublished">—</strong></div></div><div class="card"><h2>Система</h2><div id="sys" class="status">Введи ADMIN_TOKEN.</div></div></section>
 </main>
 <div id="confirmModal" class="modal" hidden><div class="modalbox"><h3 id="confirmTitle">Підтвердження</h3><p id="confirmText"></p><div class="actions"><button id="confirmYes">Так, продовжити</button><button id="confirmNo" class="secondary">Ні</button></div></div></div>
-<script src="/admin/console/app.js?v=21"></script>
+<script src="/admin/console/app.js?v=22"></script>
 <script src="/admin/console/sort_fix.js?v=1"></script>
 </body></html>

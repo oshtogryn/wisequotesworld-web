@@ -23,6 +23,7 @@ import {newsletterApi,startUnified} from './lib/start_unified.js';
 import {brevoNewsletterApi} from './lib/brevo_newsletter.js';
 import {productionConsoleApi,readbackProductionStatus} from './lib/production_console_api.js';
 import {adminTopicsApi} from './lib/admin_topics_api.js';
+import {siteVisibilityApi} from './lib/site_visibility_api.js';
 import {readbackWQ011Prompts} from './lib/wq011_prompt_sync.js';
 import {readbackWQ011Copy} from './lib/wq011_copy_sync.js';
 import {readbackWQ012Site} from './lib/wq012_site_publish.js';

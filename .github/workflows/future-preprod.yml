@@ -19,6 +19,7 @@ jobs:
           set -euo pipefail
           mkdir -p ops/readback
           ok=0
+          # Re-run after editorial/native-language QA changes so D1 and live pages stay aligned with the canonical payload.
           for i in $(seq 1 24); do
             code=$(curl -L -sS --retry 3 --retry-all-errors --retry-delay 3 -X POST 'https://wisequotesworld.com/ops/run/future-preprod' -o ops/readback/future-preprod.json -w '%{http_code}' || true)
             echo "Attempt $i HTTP $code"

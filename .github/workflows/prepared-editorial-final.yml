@@ -1,0 +1,90 @@
+name: Prepared editorial final
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/prepared-editorial-final.yml'
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire final editorial operations and deploy latest quality module
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js'); s=p.read_text()
+          fix="if(url.pathname==='/ops/run/mark-wq016-skipped'&&request.method==='POST'){const ts=new Date().toISOString();await env.DB.prepare(\"UPDATE content_items SET status='skipped',notes=?,updated_at=? WHERE project_id='wisequotesworld' AND id='WQ016'\").bind('Редакційно пропущено. Не запускати без нового explicit рішення користувача.',ts).run();try{await env.DB.prepare(\"UPDATE content_versions SET status='skipped' WHERE content_id='WQ016' AND status<>'published'\").run()}catch{}return json({ok:true,id:'WQ016',status:(await env.DB.prepare(\"SELECT status FROM content_items WHERE project_id='wisequotesworld' AND id='WQ016'\").first())?.status})}"
+          loc="if(url.pathname==='/ops/readback/prepared-localizations.json'&&request.method==='GET'){const rows=(await env.DB.prepare(\"SELECT cv.content_id,cv.language_code,cv.adapted_text,cv.language_check_status FROM content_versions cv JOIN (SELECT content_id,language_code,MAX(version) v FROM content_versions WHERE content_id BETWEEN 'WQ018' AND 'WQ026' GROUP BY content_id,language_code) x ON x.content_id=cv.content_id AND x.language_code=cv.language_code AND x.v=cv.version WHERE cv.content_id BETWEEN 'WQ018' AND 'WQ026' ORDER BY cv.content_id,cv.language_code\").all()).results||[];return json({ok:true,count:rows.length,items:rows})}"
+          anchor="if(url.pathname==='/ops/readback/editorial-status.json'&&request.method==='GET')"
+          assert anchor in s
+          if fix not in s:s=s.replace(anchor,fix+loc+anchor,1)
+          marker='// deploy-marker: prepared-editorial-final-v1'
+          if marker not in s:s=marker+'\n'+s
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git commit -m 'Wire final editorial status and localization readbacks'
+          git push
+      - name: Wait for Cloudflare deployment
+        run: sleep 90
+      - name: Mark Franko skipped and apply final native refinements
+        run: |
+          set -euo pipefail
+          curl -L -sS --max-time 30 --fail --retry 8 --retry-all-errors --retry-delay 4 -X POST 'https://wisequotesworld.com/ops/run/mark-wq016-skipped' -o /tmp/franko.json
+          cat /tmp/franko.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/franko.json'));assert d.get('ok') and d.get('status')=='skipped',d
+          PY
+          for id in WQ018 WQ022 WQ025 WQ026; do
+            ok=0
+            for i in $(seq 1 10); do
+              code=$(curl -L -sS --max-time 30 --retry 2 --retry-all-errors --retry-delay 2 -X POST "https://wisequotesworld.com/ops/run/prepared-quality/$id" -o /tmp/$id.json -w '%{http_code}' || true)
+              cat /tmp/$id.json || true; echo
+              if [ "$code" = "200" ] && ID="$id" python - <<'PY'
+          import json,os
+          d=json.load(open('/tmp/'+os.environ['ID']+'.json'))
+          raise SystemExit(0 if d.get('ok') is True and d.get('readback',{}).get('ok') is True else 1)
+          PY
+              then ok=1; break; fi
+              sleep 6
+            done
+            [ "$ok" = 1 ] || exit 1
+          done
+      - name: Final readbacks and assertions
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --max-time 30 --fail --retry 10 --retry-all-errors --retry-delay 4 'https://wisequotesworld.com/ops/readback/prepared-quality.json' -o ops/readback/prepared-quality-final.json
+          curl -L -sS --max-time 30 --fail --retry 10 --retry-all-errors --retry-delay 4 'https://wisequotesworld.com/ops/readback/editorial-status.json' -o ops/readback/editorial-status-015-026.json
+          curl -L -sS --max-time 30 --fail --retry 10 --retry-all-errors --retry-delay 4 'https://wisequotesworld.com/ops/readback/prepared-localizations.json' -o ops/readback/prepared-localizations-final.json
+          python - <<'PY'
+          import json
+          q=json.load(open('ops/readback/prepared-quality-final.json'))
+          assert q.get('ok') is True and q.get('count')==9,q
+          assert all(x.get('ok') for x in q['rows']),q
+          s=json.load(open('ops/readback/editorial-status-015-026.json'));rows={x['id']:x for x in s['items']}
+          expected={'WQ015':'scheduled','WQ016':'skipped','WQ017':'media_pending',**{f'WQ{n:03d}':'media_pending' for n in range(18,27)}}
+          for k,v in expected.items():assert rows[k]['status']==v,(k,rows[k])
+          l=json.load(open('ops/readback/prepared-localizations-final.json'))
+          assert l.get('ok') is True and l.get('count')==117,l
+          assert all(x.get('language_check_status')=='native_qa_pass' for x in l['items']),[x for x in l['items'] if x.get('language_check_status')!='native_qa_pass']
+          print('FINAL: quality 9/9, statuses PASS, localizations 117/117 native_qa_pass')
+          PY
+          cat ops/readback/prepared-quality-final.json
+          cat ops/readback/editorial-status-015-026.json
+      - name: Save canonical final readbacks
+        run: |
+          set -euo pipefail
+          git pull --rebase
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/prepared-quality-final.json ops/readback/editorial-status-015-026.json ops/readback/prepared-localizations-final.json
+          git commit -m 'Save final editorial and native localization readbacks' || exit 0
+          git push

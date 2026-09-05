@@ -1,0 +1,75 @@
+name: Dynamic Start Latest Patch
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[dynamic-start]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch start runtime safely
+        shell: python
+        run: |
+          from pathlib import Path
+
+          p = Path('lib/start_unified.js')
+          s = p.read_text()
+
+          marker = "function htmlLang(l){return l==='pt'?'pt-BR':l}\n"
+          helper = """function htmlLang(l){return l==='pt'?'pt-BR':l}\nasync function latestPublished(env,l){\n if(!env?.DB)return LATEST[l]||`/${l}/`;\n try{\n  const r=await env.DB.prepare(`SELECT canonical_path FROM quote_pages WHERE project_id=? AND language_code=? AND status='published' ORDER BY COALESCE(published_at,updated_at) DESC, COALESCE(updated_at,published_at) DESC LIMIT 1`).bind(PROJECT_ID,l).first();\n  return r?.canonical_path||LATEST[l]||`/${l}/`;\n }catch{return LATEST[l]||`/${l}/`}\n}\n"""
+          if 'async function latestPublished(env,l)' not in s:
+              if marker not in s:
+                  raise SystemExit('htmlLang marker not found')
+              s = s.replace(marker, helper, 1)
+
+          if 'export async function startUnified(request){' in s:
+              s = s.replace('export async function startUnified(request){','export async function startUnified(request,env){',1)
+
+          needle = "const l=m[1],t=T[l]||T.en,dir=l==='ar'?' dir=\\\"rtl\\\"':'',subject=encodeURIComponent(t.subject);"
+          repl = needle + "\n const latest=await latestPublished(env,l);"
+          if 'const latest=await latestPublished(env,l);' not in s:
+              if needle not in s:
+                  raise SystemExit('start locale marker not found')
+              s = s.replace(needle,repl,1)
+
+          if 'href=\\\"${LATEST[l]}\\\"' in s:
+              s = s.replace('href=\\\"${LATEST[l]}\\\"','href=\\\"${latest}\\\"',1)
+          elif 'href="${LATEST[l]}"' in s:
+              s = s.replace('href="${LATEST[l]}"','href="${latest}"',1)
+
+          p.write_text(s)
+
+          w = Path('_worker.js')
+          x = w.read_text()
+          if 'startUnified(request,env)' not in x:
+              if 'startUnified(request)' not in x:
+                  raise SystemExit('worker startUnified marker not found')
+              x = x.replace('startUnified(request)','startUnified(request,env)',1)
+          w.write_text(x)
+
+          print('dynamic latest patch prepared')
+      - name: Verify patch markers
+        run: |
+          grep -q "async function latestPublished(env,l)" lib/start_unified.js
+          grep -q "const latest=await latestPublished(env,l)" lib/start_unified.js
+          grep -q 'href="${latest}"' lib/start_unified.js
+          grep -q "startUnified(request,env)" _worker.js
+      - name: Commit patch
+        run: |
+          if git diff --quiet; then
+            echo "Nothing to change"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/start_unified.js _worker.js
+          git commit -m "Make start latest article D1-driven [dynamic-start]"
+          git push

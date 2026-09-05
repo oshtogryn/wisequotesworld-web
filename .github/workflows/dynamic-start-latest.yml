@@ -38,6 +38,11 @@ jobs:
                   raise SystemExit('htmlLang marker not found')
               s = s.replace(marker, helper, 1)
 
+          old_sql = "const r=await env.DB.prepare(`SELECT canonical_path FROM quote_pages WHERE project_id=? AND language_code=? AND status='published' ORDER BY COALESCE(published_at,updated_at) DESC, COALESCE(updated_at,published_at) DESC LIMIT 1`).bind(PROJECT_ID,l).first();"
+          new_sql = "const r=await env.DB.prepare(`SELECT qp.slug FROM quote_pages qp JOIN content_items ci ON ci.id=qp.content_item_id WHERE qp.project_id=? AND qp.language_code=? AND qp.status='published' ORDER BY COALESCE(ci.sequence_no,CAST(SUBSTR(ci.id,3) AS INTEGER),0) DESC, COALESCE(qp.published_at,qp.updated_at) DESC, qp.updated_at DESC LIMIT 1`).bind(PROJECT_ID,l).first();"
+          s = s.replace(old_sql, new_sql, 1)
+          s = s.replace("return r?.canonical_path||LATEST[l]||`/${l}/`;", "return r?.slug?`/${l}/quotes/${encodeURIComponent(r.slug)}/`:(LATEST[l]||`/${l}/`);", 1)
+
           s = s.replace('export async function startUnified(request){','export async function startUnified(request,env){',1)
 
           if 'const latest=await latestPublished(env,l);' not in s:
@@ -65,9 +70,11 @@ jobs:
         run: |
           grep -q "async function latestPublished(env,l)" lib/start_unified.js
           grep -q "SELECT qp.slug FROM quote_pages" lib/start_unified.js
+          grep -q "content_items ci" lib/start_unified.js
           grep -q "const latest=await latestPublished(env,l)" lib/start_unified.js
           grep -q 'href="${latest}"' lib/start_unified.js
           grep -q "startUnified(request,env)" _worker.js
+          ! grep -q "SELECT canonical_path FROM quote_pages" lib/start_unified.js
 
       - name: Commit patch
         run: |
@@ -78,5 +85,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add lib/start_unified.js _worker.js
-          git commit -m "Make start latest article D1-driven [dynamic-start]"
+          git commit -m "Fix D1 latest article lookup [dynamic-start]"
           git push

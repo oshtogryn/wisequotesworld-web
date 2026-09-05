@@ -1,0 +1,87 @@
+name: Prepared quality and Admin verify
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/prepared-quality-admin-verify.yml'
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire one-time quality endpoints and force deploy
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js'); s=p.read_text()
+          imp="import {applyPreparedBatchQualityPatch,readPreparedBatchQuality} from './lib/prepared_batch_quality_patch.js';"
+          if imp not in s:
+            anchor="import {prepareOne018026,readBatch018026} from './lib/prepared_batch_018_026.js';"
+            assert anchor in s
+            s=s.replace(anchor,anchor+'\n'+imp,1)
+          route="if(url.pathname==='/ops/run/prepared-quality-patch'&&request.method==='POST')return json(await applyPreparedBatchQualityPatch(env));if(url.pathname==='/ops/readback/prepared-quality.json'&&request.method==='GET')return json(await readPreparedBatchQuality(env));"
+          if route not in s:
+            anchor="if(url.pathname==='/ops/run/future-preprod'&&request.method==='POST')"
+            assert anchor in s
+            s=s.replace(anchor,route+anchor,1)
+          marker='// deploy-marker: prepared-quality-admin-v1'
+          if marker not in s:s=marker+'\n'+s
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git commit -m 'Wire prepared content quality audit endpoint'
+          git push
+      - name: Wait for Cloudflare deployment
+        run: sleep 80
+      - name: Apply native and Master Rules quality patch
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 12); do
+            code=$(curl -L -sS --retry 2 --retry-all-errors --retry-delay 3 -X POST 'https://wisequotesworld.com/ops/run/prepared-quality-patch' -o /tmp/quality.json -w '%{http_code}' || true)
+            cat /tmp/quality.json || true; echo
+            if [ "$code" = "200" ] && python - <<'PY'
+          import json
+          d=json.load(open('/tmp/quality.json'))
+          raise SystemExit(0 if d.get('ok') is True else 1)
+          PY
+            then break; fi
+            sleep 8
+          done
+      - name: Read back quality and Admin topic state
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --fail --retry 10 --retry-all-errors --retry-delay 5 'https://wisequotesworld.com/ops/readback/prepared-quality.json' -o ops/readback/prepared-quality.json
+          curl -L -sS --fail --retry 10 --retry-all-errors --retry-delay 5 -H "Authorization: Bearer $ADMIN_TOKEN" 'https://wisequotesworld.com/api/admin/topics' -o ops/readback/admin-topics.json
+          python - <<'PY'
+          import json
+          q=json.load(open('ops/readback/prepared-quality.json'))
+          assert q['ok'] is True,q
+          assert q['count']==9,q
+          assert all(x['ok'] for x in q['rows']),q
+          a=json.load(open('ops/readback/admin-topics.json'))
+          assert a['ok'] is True,a
+          rows={x['id']:x for x in a['items']}
+          assert rows['WQ015']['status']=='scheduled',rows['WQ015']
+          assert rows['WQ016']['status']=='skipped',rows['WQ016']
+          assert rows['WQ017']['status']=='media_pending',rows['WQ017']
+          for n in range(18,27):
+            assert rows[f'WQ{n:03d}']['status']=='media_pending',rows[f'WQ{n:03d}']
+          print('Prepared QA 9/9 and Admin statuses verified')
+          PY
+          cat ops/readback/prepared-quality.json
+      - name: Save verified readbacks
+        run: |
+          git pull --rebase
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/prepared-quality.json ops/readback/admin-topics.json
+          git commit -m 'Save prepared quality and Admin status readbacks' || exit 0
+          git push

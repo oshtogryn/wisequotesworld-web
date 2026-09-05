@@ -1,8 +1,8 @@
 # MASTER RULES — Wise Quotes World
 
-Останнє оновлення: 2026-09-04
+Останнє оновлення: 2026-09-05
 Статус: CANONICAL
-Версія: database-first v4.8
+Версія: database-first v4.9
 
 ## 1. Джерела істини
 1. `ops/MASTER_RULES.md` — канонічне джерело операційних правил.
@@ -41,8 +41,9 @@ WQ006 RU successful generation is the confirmed benchmark for `adapted`. Кор�
 3. Exact localized text card(s); no other visible text.
 4. Typography: clean, large, elegant, upper-middle safe area; complete stable cards; no individual word/letter animation.
 5. `Audio:` calm native narrator reads exact intended quote/attribution naturally and completely; restrained music below voice.
-6. One concise negative line: `No subtitles. No captions. No emoji. No decorative symbols. No logo. No branding. No watermark. No other readable text.`
-7. Clean emotional final shot/hold.
+6. For `verbatim`, before prompt-ready status verify the author name's correct native pronunciation for the target language/locale, including stress where relevant. The Audio instruction must enforce that pronunciation. Visible attribution keeps normal orthography; stress marks, phonetic spellings or pronunciation diagnostics must never leak into visible text.
+7. One concise negative line: `No subtitles. No captions. No emoji. No decorative symbols. No logo. No branding. No watermark. No other readable text.`
+8. Clean emotional final shot/hold.
 
 ### 6A. Two prompt families — HARD
 **A. `adapted` / own Wise Quotes World quote**
@@ -75,7 +76,7 @@ WQ006 RU successful generation is the confirmed benchmark for `adapted`. Кор�
 Accuracy does not mean prompt length. Use only instructions needed for the cinematic concept, exact text, typography, audio, concise negatives and final shot.
 
 ## 7. Generated-video QA + CapCut
-QA happens AFTER generation, not inside prompt. REJECT for wrong/missing text, broken diacritics/punctuation, clipped first/last word, rushed/clipped voice, extra readable text/random letters/auto captions/emoji, AI logo/branding/watermark, or scene contradicting meaning. For verbatim also REJECT incorrect/missing author attribution or fake historical-footage implication. After PASS add only correct Wise Quotes World language logo in CapCut. Do not duplicate quote with CapCut text.
+QA happens AFTER generation, not inside prompt. REJECT for wrong/missing text, broken diacritics/punctuation, clipped first/last word, rushed/clipped voice, extra readable text/random letters/auto captions/emoji, AI logo/branding/watermark, or scene contradicting meaning. For verbatim also REJECT incorrect/missing author attribution, incorrect locale-specific pronunciation or stress of the author's name, or fake historical-footage implication. After PASS add only correct Wise Quotes World language logo in CapCut. Do not duplicate quote with CapCut text.
 
 ## 8. Pinterest
 2:3 target 1000×1500; finished image contains exact localized quote; mobile-readable typography; no unrelated text/random letters/watermark; no generated Wise Quotes World logo by default. User generates manually → Admin upload → R2 → QA → approval.

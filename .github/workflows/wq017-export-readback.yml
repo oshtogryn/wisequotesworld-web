@@ -12,14 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Wait for deploy
-        run: sleep 45
+        run: sleep 15
       - name: Fetch temporary export
         run: |
           set -euo pipefail
           mkdir -p ops/readback
-          code=$(curl -sS --retry 5 --retry-all-errors --retry-delay 5 -w '%{http_code}' \
-            https://wisequotesworld.com/ops/export/wq017-9c7f4e2a \
-            -o ops/readback/WQ017-export.json)
+          code=$(curl -sS -w '%{http_code}' https://wisequotesworld.com/ops/export/wq017-9c7f4e2a -o ops/readback/WQ017-export.json)
           cat ops/readback/WQ017-export.json
           test "$code" = "200"
           python3 - <<'PY'

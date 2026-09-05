@@ -1,0 +1,56 @@
+name: site-visibility-live-check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/site-visibility-live-check.yml'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Cloudflare deployment
+        run: sleep 35
+
+      - name: Verify Admin control is live
+        run: |
+          set -euo pipefail
+          curl -fsS --retry 6 --retry-delay 5 https://wisequotesworld.com/admin/console/ -o /tmp/admin.html
+          grep -q 'sitePublishBtn' /tmp/admin.html
+          grep -q 'Опублікувати на сайт' /tmp/admin.html
+
+      - name: Verify WQ017 editorial visibility state
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          curl -fsS --retry 6 --retry-delay 5 \
+            -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+            https://wisequotesworld.com/api/admin/site-visibility/WQ017 \
+            -o /tmp/state.json
+          jq -e '.ok == true' /tmp/state.json
+          jq -e '.state.published_pages == 13' /tmp/state.json
+          jq -e '.state.visible == false' /tmp/state.json
+          jq -c '{id:.state.id,visible:.state.visible,published_pages:.state.published_pages,website_visibility:.state.website_visibility.status}' /tmp/state.json
+
+      - name: Verify direct article remains public and indexed
+        run: |
+          set -euo pipefail
+          ARTICLE='https://wisequotesworld.com/uk/quotes/avraham-linkoln-pravda-daie-sylu/'
+          SLUG='avraham-linkoln-pravda-daie-sylu'
+          curl -fsS --retry 6 --retry-delay 5 "$ARTICLE" -o /tmp/article.html
+          test -s /tmp/article.html
+          curl -fsS --retry 6 --retry-delay 5 https://wisequotesworld.com/sitemap.xml -o /tmp/sitemap.xml
+          grep -q "$SLUG" /tmp/sitemap.xml
+
+      - name: Verify WQ017 is hidden from Latest/navigation
+        run: |
+          set -euo pipefail
+          SLUG='avraham-linkoln-pravda-daie-sylu'
+          curl -fsS --retry 6 --retry-delay 5 https://wisequotesworld.com/uk/start/ -o /tmp/start.html
+          if grep -q "$SLUG" /tmp/start.html; then
+            echo 'WQ017 unexpectedly visible on /uk/start/' >&2
+            exit 1
+          fi
+          echo 'WQ017 direct URL+sitemap are live, while /uk/start/ remains hidden until website_visibility approval.'

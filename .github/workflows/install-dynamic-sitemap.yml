@@ -1,0 +1,60 @@
+name: install-dynamic-sitemap
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/install-dynamic-sitemap.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch Worker routing and validation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('_worker.js')
+          s=p.read_text()
+          anchor="import {submitAllPublished,submitRecentPublished} from './lib/indexnow_runtime.js';"
+          imp="import {dynamicSitemap} from './lib/sitemap_runtime.js';"
+          if imp not in s:
+              if anchor not in s: raise SystemExit('indexnow import anchor missing')
+              s=s.replace(anchor,anchor+'\n'+imp,1)
+          old="if(url.pathname==='/sitemap.xml'&&request.method==='GET')scheduleIndexNow(ctx,submitAllPublished(env));"
+          new="if(url.pathname==='/sitemap.xml'&&request.method==='GET'){scheduleIndexNow(ctx,submitAllPublished(env));return dynamicSitemap(env)}"
+          if old in s:
+              s=s.replace(old,new,1)
+          elif new not in s:
+              raise SystemExit('sitemap routing anchor missing')
+          p.write_text(s)
+
+          p=Path('.github/workflows/automation-v3-check.yml')
+          s=p.read_text()
+          check='          node --check lib/sitemap_runtime.js\n'
+          anchor='          node --check lib/site_v2.js\n'
+          if check not in s:
+              if anchor not in s: raise SystemExit('validation anchor missing')
+              s=s.replace(anchor,anchor+check,1)
+          p.write_text(s)
+          PY
+          node --check _worker.js
+          node --check lib/sitemap_runtime.js
+          git diff --check
+      - name: Commit production patch
+        run: |
+          git config user.name oshtogryn
+          git config user.email alex.shtogryn@gmail.com
+          git add _worker.js .github/workflows/automation-v3-check.yml
+          if git diff --cached --quiet; then
+            echo 'Already patched.'
+            exit 0
+          fi
+          git commit -m 'Serve sitemap dynamically from D1'
+          git pull --rebase
+          git push

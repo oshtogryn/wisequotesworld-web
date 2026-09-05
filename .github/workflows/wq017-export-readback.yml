@@ -1,0 +1,38 @@
+name: wq017-export-readback
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/wq017-export-readback.yml'
+permissions:
+  contents: write
+jobs:
+  readback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for deploy
+        run: sleep 75
+      - name: Fetch temporary export
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl --fail --retry 8 --retry-all-errors --retry-delay 10 \
+            https://wisequotesworld.com/ops/export/wq017-9c7f4e2a \
+            -o ops/readback/WQ017-export.json
+          python3 - <<'PY'
+          import json
+          j=json.load(open('ops/readback/WQ017-export.json'))
+          assert j.get('ok') is True, j
+          print('outputs',len(j.get('outputs',[])))
+          print('media',len(j.get('media',[])))
+          print('approvals',len(j.get('approvals',[])))
+          PY
+      - name: Commit readback
+        run: |
+          git config user.name oshtogryn
+          git config user.email alex.shtogryn@gmail.com
+          git add ops/readback/WQ017-export.json
+          git commit -m 'Read back WQ017 scheduling export' || exit 0
+          git pull --rebase
+          git push

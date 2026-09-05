@@ -1,0 +1,81 @@
+name: Enforce newsletter email uniqueness
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/enforce-newsletter-email-uniqueness.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enforce one subscriber row per email
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('lib/start_unified.js')
+          s=p.read_text()
+
+          old=""" if(!cols.has('consent_version'))await env.DB.prepare(`ALTER TABLE newsletter_subscribers ADD COLUMN consent_version TEXT NOT NULL DEFAULT '2026-09-04-v2-biweekly'`).run();"""
+          new=""" if(!cols.has('consent_version'))await env.DB.prepare(`ALTER TABLE newsletter_subscribers ADD COLUMN consent_version TEXT NOT NULL DEFAULT '2026-09-04-v2-biweekly'`).run();
+ // Canonical rule: one e-mail address = one subscriber record per project, regardless of language.
+ // Normalize legacy rows first, collapse any historical duplicates, then enforce it at DB level.
+ await env.DB.prepare(`UPDATE newsletter_subscribers SET email=LOWER(TRIM(email)) WHERE project_id=?`).bind(PROJECT_ID).run();
+ await env.DB.prepare(`DELETE FROM newsletter_subscribers WHERE project_id=? AND rowid NOT IN (SELECT MAX(rowid) FROM newsletter_subscribers WHERE project_id=? GROUP BY LOWER(email))`).bind(PROJECT_ID,PROJECT_ID).run();
+ await env.DB.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS uq_newsletter_project_email ON newsletter_subscribers(project_id,email COLLATE NOCASE)`).run();"""
+          if old not in s:
+              raise SystemExit('ensureNewsletterTable anchor not found')
+          s=s.replace(old,new,1)
+
+          old2="""  await env.DB.prepare(`INSERT INTO newsletter_subscribers(id,project_id,email,language_code,status,source,consent_version,consent_at,unsubscribe_token,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(project_id,email,language_code) DO UPDATE SET status='active',source=excluded.source,consent_version=excluded.consent_version,consent_at=excluded.consent_at,updated_at=excluded.updated_at`).bind(id,PROJECT_ID,email,lang,'active','start_page','2026-09-04-v2-biweekly',now,token,now,now).run();
+  return new Response(JSON.stringify({ok:true,language:lang}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});"""
+          new2="""  const existing=await env.DB.prepare(`SELECT id,status,language_code FROM newsletter_subscribers WHERE project_id=? AND email=? COLLATE NOCASE LIMIT 1`).bind(PROJECT_ID,email).first();
+  if(existing){
+   await env.DB.prepare(`UPDATE newsletter_subscribers SET language_code=?,status='active',source='start_page',consent_version='2026-09-04-v2-biweekly',consent_at=?,updated_at=? WHERE project_id=? AND email=? COLLATE NOCASE`).bind(lang,now,now,PROJECT_ID,email).run();
+   return new Response(JSON.stringify({ok:true,language:lang,already_subscribed:true}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
+  }
+  try{
+   await env.DB.prepare(`INSERT INTO newsletter_subscribers(id,project_id,email,language_code,status,source,consent_version,consent_at,unsubscribe_token,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)`).bind(id,PROJECT_ID,email,lang,'active','start_page','2026-09-04-v2-biweekly',now,token,now,now).run();
+  }catch(e){
+   // The unique index is the final race-condition guard if two identical signups arrive simultaneously.
+   if(String(e?.message||e).toLowerCase().includes('unique')){
+    await env.DB.prepare(`UPDATE newsletter_subscribers SET language_code=?,status='active',source='start_page',consent_version='2026-09-04-v2-biweekly',consent_at=?,updated_at=? WHERE project_id=? AND email=? COLLATE NOCASE`).bind(lang,now,now,PROJECT_ID,email).run();
+    return new Response(JSON.stringify({ok:true,language:lang,already_subscribed:true}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
+   }
+   throw e;
+  }
+  return new Response(JSON.stringify({ok:true,language:lang,already_subscribed:false}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});"""
+          if old2 not in s:
+              raise SystemExit('subscribe UPSERT anchor not found')
+          s=s.replace(old2,new2,1)
+          p.write_text(s)
+          PY
+
+      - name: Record canonical rule
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('ops/MASTER_RULES.md')
+          s=p.read_text()
+          rule='Newsletter subscriber identity is unique by normalized e-mail address within the project: the same address must never create duplicate subscriber rows, even when submitted from a different language page. A repeat subscription reactivates the existing record and updates its preferred language to the latest submitted language.\n'
+          if rule not in s:
+              s += '\n' + rule
+          p.write_text(s)
+          PY
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898242+github-actions[bot]@users.noreply.github.com'
+          git add lib/start_unified.js ops/MASTER_RULES.md
+          git commit -m 'Enforce unique newsletter subscribers by email'
+          git push

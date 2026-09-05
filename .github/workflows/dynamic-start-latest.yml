@@ -1,4 +1,4 @@
-name: Dynamic Start Latest Patch
+name: dynamic-start-latest-patch
 
 on:
   push:
@@ -9,15 +9,14 @@ permissions:
 
 jobs:
   patch:
-    if: "${{ !contains(github.event.head_commit.message, '[dynamic-start]') }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Patch start runtime safely
-        shell: python
         run: |
+          python3 - <<'PY'
           from pathlib import Path
 
           p = Path('lib/start_unified.js')
@@ -26,13 +25,13 @@ jobs:
           if 'async function latestPublished(env,l)' not in s:
               marker = "function htmlLang(l){return l==='pt'?'pt-BR':l}\n"
               helper = marker + """async function latestPublished(env,l){
- if(!env?.DB)return LATEST[l]||`/${l}/`;
- try{
-  const r=await env.DB.prepare(`SELECT canonical_path FROM quote_pages WHERE project_id=? AND language_code=? AND status='published' ORDER BY COALESCE(published_at,updated_at) DESC, COALESCE(updated_at,published_at) DESC LIMIT 1`).bind(PROJECT_ID,l).first();
-  return r?.canonical_path||LATEST[l]||`/${l}/`;
- }catch{return LATEST[l]||`/${l}/`}
-}
-"""
+           if(!env?.DB)return LATEST[l]||`/${l}/`;
+           try{
+            const r=await env.DB.prepare(`SELECT canonical_path FROM quote_pages WHERE project_id=? AND language_code=? AND status='published' ORDER BY COALESCE(published_at,updated_at) DESC, COALESCE(updated_at,published_at) DESC LIMIT 1`).bind(PROJECT_ID,l).first();
+            return r?.canonical_path||LATEST[l]||`/${l}/`;
+           }catch{return LATEST[l]||`/${l}/`}
+          }
+          """
               if marker not in s:
                   raise SystemExit('htmlLang marker not found')
               s = s.replace(marker, helper, 1)
@@ -45,9 +44,10 @@ jobs:
                   raise SystemExit('subject marker not found')
               s = s.replace(marker, marker+'\n const latest=await latestPublished(env,l);', 1)
 
-          if '${LATEST[l]}' not in s:
-              raise SystemExit('LATEST href marker not found')
-          s = s.replace('${LATEST[l]}','${latest}',1)
+          if '${LATEST[l]}' in s:
+              s = s.replace('${LATEST[l]}','${latest}',1)
+          elif '${latest}' not in s:
+              raise SystemExit('latest href marker not found')
           p.write_text(s)
 
           w = Path('_worker.js')
@@ -57,12 +57,15 @@ jobs:
                   raise SystemExit('worker startUnified marker not found')
               x = x.replace('startUnified(request)','startUnified(request,env)',1)
           w.write_text(x)
+          PY
       - name: Verify patch markers
         run: |
           grep -q "async function latestPublished(env,l)" lib/start_unified.js
           grep -q "const latest=await latestPublished(env,l)" lib/start_unified.js
           grep -q '${latest}' lib/start_unified.js
           grep -q "startUnified(request,env)" _worker.js
+          node --check lib/start_unified.js
+          node --check _worker.js
       - name: Commit patch
         run: |
           if git diff --quiet; then

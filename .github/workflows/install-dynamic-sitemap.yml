@@ -14,11 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch Worker routing and validation
+      - name: Patch Worker routing
         run: |
           python3 - <<'PY'
           from pathlib import Path
-
           p=Path('_worker.js')
           s=p.read_text()
           anchor="import {submitAllPublished,submitRecentPublished} from './lib/indexnow_runtime.js';"
@@ -33,15 +32,6 @@ jobs:
           elif new not in s:
               raise SystemExit('sitemap routing anchor missing')
           p.write_text(s)
-
-          p=Path('.github/workflows/automation-v3-check.yml')
-          s=p.read_text()
-          check='          node --check lib/sitemap_runtime.js\n'
-          anchor='          node --check lib/site_v2.js\n'
-          if check not in s:
-              if anchor not in s: raise SystemExit('validation anchor missing')
-              s=s.replace(anchor,anchor+check,1)
-          p.write_text(s)
           PY
           node --check _worker.js
           node --check lib/sitemap_runtime.js
@@ -50,7 +40,7 @@ jobs:
         run: |
           git config user.name oshtogryn
           git config user.email alex.shtogryn@gmail.com
-          git add _worker.js .github/workflows/automation-v3-check.yml
+          git add _worker.js
           if git diff --cached --quiet; then
             echo 'Already patched.'
             exit 0

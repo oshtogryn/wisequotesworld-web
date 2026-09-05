@@ -1,0 +1,65 @@
+name: WQ017 finalize D1
+on:
+  push:
+    paths:
+      - '.github/workflows/wq017-finalize-d1.yml'
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install narrow one-time WQ017 route
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text()
+          anchor="const wq017ExportResponse=await wq017ScheduleExport(request,env);"
+          route="""if(url.pathname==='/ops/finalize/wq017-9f3c1a7e'&&request.method==='POST'){const ts=new Date().toISOString();const cur=await env.DB.prepare(\"SELECT status FROM content_items WHERE project_id='wisequotesworld' AND id='WQ017'\").first();if(!cur)return json({ok:false,error:'WQ017 not found'},404);await env.DB.prepare(\"UPDATE content_items SET status='scheduled',updated_at=? WHERE project_id='wisequotesworld' AND id='WQ017'\").bind(ts).run();try{await env.DB.prepare(\"UPDATE content_versions SET status=CASE WHEN status='published' THEN status ELSE 'scheduled' END,updated_at=? WHERE content_id='WQ017'\").bind(ts).run()}catch{}try{await env.DB.prepare(\"INSERT INTO editorial_status_history(project_id,content_item_id,from_status,to_status,notes,actor,created_at) VALUES('wisequotesworld','WQ017',?,'scheduled','Metricool 64/64 readback confirmed','automation',?)\").bind(cur.status,ts).run()}catch{}const row=await env.DB.prepare(\"SELECT id,status,updated_at FROM content_items WHERE project_id='wisequotesworld' AND id='WQ017'\").first();return json({ok:true,item:row,from_status:cur.status});}"""
+          if route not in s:
+              if anchor not in s: raise SystemExit('anchor missing')
+              s=s.replace(anchor,route+anchor,1)
+          p.write_text(s)
+          PY
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add _worker.js
+          git commit -m 'Install one-time WQ017 D1 finalize route'
+          git push
+      - name: Wait for production and finalize
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          ok=0
+          for i in $(seq 1 12); do
+            sleep 15
+            body=$(curl -sS --max-time 20 -X POST https://wisequotesworld.com/ops/finalize/wq017-9f3c1a7e || true)
+            echo "$body"
+            if echo "$body" | grep -q '"status":"scheduled"'; then
+              printf '%s\n' "$body" > ops/readback/wq017-scheduled-final.json
+              ok=1
+              break
+            fi
+          done
+          test "$ok" = 1
+      - name: Remove route and persist readback
+        if: always()
+        run: |
+          set -euo pipefail
+          git pull --rebase
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text()
+          anchor="const wq017ExportResponse=await wq017ScheduleExport(request,env);"
+          route="""if(url.pathname==='/ops/finalize/wq017-9f3c1a7e'&&request.method==='POST'){const ts=new Date().toISOString();const cur=await env.DB.prepare(\"SELECT status FROM content_items WHERE project_id='wisequotesworld' AND id='WQ017'\").first();if(!cur)return json({ok:false,error:'WQ017 not found'},404);await env.DB.prepare(\"UPDATE content_items SET status='scheduled',updated_at=? WHERE project_id='wisequotesworld' AND id='WQ017'\").bind(ts).run();try{await env.DB.prepare(\"UPDATE content_versions SET status=CASE WHEN status='published' THEN status ELSE 'scheduled' END,updated_at=? WHERE content_id='WQ017'\").bind(ts).run()}catch{}try{await env.DB.prepare(\"INSERT INTO editorial_status_history(project_id,content_item_id,from_status,to_status,notes,actor,created_at) VALUES('wisequotesworld','WQ017',?,'scheduled','Metricool 64/64 readback confirmed','automation',?)\").bind(cur.status,ts).run()}catch{}const row=await env.DB.prepare(\"SELECT id,status,updated_at FROM content_items WHERE project_id='wisequotesworld' AND id='WQ017'\").first();return json({ok:true,item:row,from_status:cur.status});}"""
+          s=s.replace(route,'')
+          p.write_text(s)
+          PY
+          rm -f .github/workflows/wq017-finalize-d1.yml
+          git add -A
+          git diff --cached --quiet || git commit -m 'Record WQ017 scheduled readback and remove one-time route'
+          git push

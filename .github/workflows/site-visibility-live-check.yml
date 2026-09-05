@@ -19,6 +19,7 @@ jobs:
           curl -fsS --retry 6 --retry-delay 5 https://wisequotesworld.com/admin/console/ -o /tmp/admin.html
           grep -q 'sitePublishBtn' /tmp/admin.html
           grep -q 'Опублікувати на сайт' /tmp/admin.html
+          echo 'PASS admin: Опублікувати на сайт is live'
 
       - name: Verify visibility API is protected and live
         run: |
@@ -26,24 +27,43 @@ jobs:
           code=$(curl -sS -o /tmp/api.json -w '%{http_code}' https://wisequotesworld.com/api/admin/site-visibility/WQ017)
           test "$code" = '401'
           grep -q 'unauthorized' /tmp/api.json
+          echo 'PASS API: protected endpoint is live (401 without token)'
 
-      - name: Verify direct article remains public and indexed
+      - name: Verify direct WQ017 article is public
         run: |
           set -euo pipefail
           ARTICLE='https://wisequotesworld.com/uk/quotes/avraham-linkoln-pravda-daie-sylu/'
-          SLUG='avraham-linkoln-pravda-daie-sylu'
-          curl -fsS --retry 6 --retry-delay 5 "$ARTICLE" -o /tmp/article.html
+          code=$(curl -sS --retry 6 --retry-delay 5 -o /tmp/article.html -w '%{http_code}' "$ARTICLE")
+          test "$code" = '200'
           test -s /tmp/article.html
-          curl -fsS --retry 6 --retry-delay 5 https://wisequotesworld.com/sitemap.xml -o /tmp/sitemap.xml
-          grep -q "$SLUG" /tmp/sitemap.xml
+          grep -q 'Вірмо, що правда дає силу' /tmp/article.html
+          echo "PASS article: HTTP $code and Lincoln content rendered"
 
-      - name: Verify WQ017 is hidden from Latest/navigation
+      - name: Verify dynamic D1 sitemap contains WQ017
         run: |
           set -euo pipefail
           SLUG='avraham-linkoln-pravda-daie-sylu'
-          curl -fsS --retry 6 --retry-delay 5 https://wisequotesworld.com/uk/start/ -o /tmp/start.html
-          if grep -q "$SLUG" /tmp/start.html; then
-            echo 'WQ017 unexpectedly visible on /uk/start/' >&2
-            exit 1
-          fi
-          echo 'PASS: WQ017 direct URL+sitemap are live, while /uk/start/ remains hidden until website_visibility approval.'
+          found=0
+          for i in $(seq 1 12); do
+            curl -fsS https://wisequotesworld.com/sitemap.xml -o /tmp/sitemap.xml
+            if grep -q "$SLUG" /tmp/sitemap.xml; then found=1; break; fi
+            echo "Waiting for dynamic sitemap deployment ($i/12)..."
+            sleep 5
+          done
+          test "$found" = '1'
+          grep -q 'xmlns:xhtml="http://www.w3.org/1999/xhtml"' /tmp/sitemap.xml
+          grep -q 'hreflang="uk"' /tmp/sitemap.xml
+          echo "PASS sitemap: WQ017 is indexable and hreflang sitemap is D1-backed"
+
+      - name: Verify WQ017 is hidden from editorial listings
+        run: |
+          set -euo pipefail
+          SLUG='avraham-linkoln-pravda-daie-sylu'
+          for path in uk/start/ uk/ uk/quotes/; do
+            curl -fsS --retry 6 --retry-delay 5 "https://wisequotesworld.com/$path" -o /tmp/list.html
+            if grep -q "$SLUG" /tmp/list.html; then
+              echo "WQ017 unexpectedly visible on /$path" >&2
+              exit 1
+            fi
+          done
+          echo 'PASS visibility: WQ017 is hidden from start/home/archive until explicit website_visibility approval'

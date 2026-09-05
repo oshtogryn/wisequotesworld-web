@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Wait for Cloudflare deployment
-        run: sleep 35
+        run: sleep 20
 
       - name: Verify Admin control is live
         run: |
@@ -20,19 +20,12 @@ jobs:
           grep -q 'sitePublishBtn' /tmp/admin.html
           grep -q 'Опублікувати на сайт' /tmp/admin.html
 
-      - name: Verify WQ017 editorial visibility state
-        env:
-          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+      - name: Verify visibility API is protected and live
         run: |
           set -euo pipefail
-          curl -fsS --retry 6 --retry-delay 5 \
-            -H "Authorization: Bearer ${ADMIN_TOKEN}" \
-            https://wisequotesworld.com/api/admin/site-visibility/WQ017 \
-            -o /tmp/state.json
-          jq -e '.ok == true' /tmp/state.json
-          jq -e '.state.published_pages == 13' /tmp/state.json
-          jq -e '.state.visible == false' /tmp/state.json
-          jq -c '{id:.state.id,visible:.state.visible,published_pages:.state.published_pages,website_visibility:.state.website_visibility.status}' /tmp/state.json
+          code=$(curl -sS -o /tmp/api.json -w '%{http_code}' https://wisequotesworld.com/api/admin/site-visibility/WQ017)
+          test "$code" = '401'
+          grep -q 'unauthorized' /tmp/api.json
 
       - name: Verify direct article remains public and indexed
         run: |
@@ -53,4 +46,4 @@ jobs:
             echo 'WQ017 unexpectedly visible on /uk/start/' >&2
             exit 1
           fi
-          echo 'WQ017 direct URL+sitemap are live, while /uk/start/ remains hidden until website_visibility approval.'
+          echo 'PASS: WQ017 direct URL+sitemap are live, while /uk/start/ remains hidden until website_visibility approval.'

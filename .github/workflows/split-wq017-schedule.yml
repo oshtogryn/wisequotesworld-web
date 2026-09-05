@@ -1,0 +1,32 @@
+name: split-wq017-schedule
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/split-wq017-schedule.yml'
+permissions:
+  contents: write
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch and split package
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback/WQ017-schedule
+          curl --fail https://wisequotesworld.com/ops/export/wq017-9c7f4e2a -o /tmp/wq017.json
+          python3 - <<'PY'
+          import json, pathlib
+          j=json.load(open('/tmp/wq017.json'))
+          for lang,p in j['pack'].items():
+            pathlib.Path(f'ops/readback/WQ017-schedule/{lang}.json').write_text(json.dumps(p,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit locale files
+        run: |
+          git config user.name oshtogryn
+          git config user.email alex.shtogryn@gmail.com
+          git add ops/readback/WQ017-schedule
+          git commit -m 'Split WQ017 schedule package by locale' || exit 0
+          git pull --rebase
+          git push

@@ -1,0 +1,46 @@
+name: Install Pinterest domain verification
+on:
+  push:
+    paths:
+      - 'ops/PINTEREST_VERIFY_TRIGGER'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch worker
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text()
+          token='34e807c160fbe36927c697b28167e2f5'
+          const_anchor="const GA4_MEASUREMENT_ID='G-WP83P40P2R';"
+          const_line=const_anchor+"\nconst PINTEREST_DOMAIN_VERIFY='"+token+"';"
+          if 'PINTEREST_DOMAIN_VERIFY' not in s:
+              assert const_anchor in s, 'GA4 anchor missing'
+              s=s.replace(const_anchor,const_line,1)
+          old="let injections='';if(!html.includes(GA4_MEASUREMENT_ID))injections+=ga4Script();"
+          new="let injections='';if(!html.includes('p:domain_verify'))injections+=`<meta name=\"p:domain_verify\" content=\"${PINTEREST_DOMAIN_VERIFY}\">`;if(!html.includes(GA4_MEASUREMENT_ID))injections+=ga4Script();"
+          if "p:domain_verify" not in s:
+              assert old in s, 'tracking injection anchor missing'
+              s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Validate
+        run: |
+          node --check _worker.js
+          grep -F "const PINTEREST_DOMAIN_VERIFY='34e807c160fbe36927c697b28167e2f5';" _worker.js
+          grep -F 'p:domain_verify' _worker.js
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Add Pinterest domain verification meta tag'
+          git push

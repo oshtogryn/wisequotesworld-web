@@ -1,0 +1,42 @@
+name: wq017-live-readback
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/wq017-live-readback.yml'
+permissions:
+  contents: write
+jobs:
+  readback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for production
+        run: sleep 15
+      - name: Fetch WQ017 production package
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl --fail --retry 5 --retry-all-errors --retry-delay 5 \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            https://wisequotesworld.com/api/admin/production/WQ017 \
+            -o ops/readback/WQ017-live.json
+          python3 - <<'PY'
+          import json
+          p='ops/readback/WQ017-live.json'
+          j=json.load(open(p))
+          print('ready=', j.get('readiness',{}).get('ready_for_metricool'))
+          print('outputs=', len(j.get('outputs',[])))
+          print('media=', len(j.get('media',[])))
+          print('approval=', j.get('approval'))
+          PY
+      - name: Commit readback
+        run: |
+          git config user.name oshtogryn
+          git config user.email alex.shtogryn@gmail.com
+          git add ops/readback/WQ017-live.json
+          git commit -m 'Read back WQ017 production state' || exit 0
+          git pull --rebase
+          git push

@@ -1,0 +1,43 @@
+name: Fix WQ017 language QA
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-wq017-language-qa.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply language QA corrections
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('lib/wq017_site_payload.js')
+          s=p.read_text()
+          pairs={
+            'I det fullständiga avslutningen':'I den fullständiga avslutningen',
+            "quote:'Mari kita percaya bahwa kebenaran memberi kekuatan.'":"quote:'Mari kita percaya bahwa yang benar memberi kekuatan.'",
+            'title:\'Abraham Lincoln: “Kebenaran memberi kekuatan”\'':'title:\'Abraham Lincoln: “Yang benar memberi kekuatan”\'',
+            'seo_title:\'Abraham Lincoln: kebenaran memberi kekuatan — kutipan\'':'seo_title:\'Abraham Lincoln: yang benar memberi kekuatan — kutipan\'',
+            'Makna kutipan Abraham Lincoln tentang kebenaran dan kekuatan':'Makna kutipan Abraham Lincoln tentang apa yang benar dan kekuatan',
+            '“Mari kita percaya bahwa kebenaran memberi kekuatan” adalah adaptasi bahasa Indonesia':'“Mari kita percaya bahwa yang benar memberi kekuatan” adalah adaptasi bahasa Indonesia',
+            'Ketika kebenaran menjadi sumber kekuatan':'Ketika yang benar menjadi sumber kekuatan'
+          }
+          for a,b in pairs.items():
+            if a not in s:
+              raise SystemExit(f'missing expected text: {a}')
+            s=s.replace(a,b)
+          p.write_text(s)
+          PY
+          git diff --check
+          git diff -- lib/wq017_site_payload.js
+      - name: Commit corrections
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/wq017_site_payload.js
+          git commit -m 'Refine WQ017 Swedish and Indonesian language QA'
+          git push

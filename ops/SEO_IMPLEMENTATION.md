@@ -29,6 +29,17 @@ Build organic search visibility across all 13 website locales by combining index
 9. `sitemap.xml` is generated from D1 and contains locale homes, quote archives, start pages, author hubs, topic hubs and all published quote articles. Quote entries include hreflang alternates.
 10. Search-engine discovery uses IndexNow for newly published/updated public URLs.
 
+## Author/topic SEO clusters
+- Author and topic hubs are generated from published D1 data; no empty or invented SEO pages.
+- One unified runtime renderer serves author/topic hubs across all 13 locales so metadata/schema/link behavior cannot drift between locale implementations.
+- Each hub has native-language SEO title, meta description, H1 and introductory copy.
+- Known verified author names use locale-appropriate display forms while the canonical D1 author value remains unchanged for data integrity and routing.
+- Author hubs use `CollectionPage` + `BreadcrumbList` schema and identify the verified author as a `Person`.
+- Topic hubs use `CollectionPage` + `BreadcrumbList` schema.
+- Hreflang on taxonomy hubs is generated only for locales that actually have published matching D1 content, plus `x-default`.
+- Each hub links to its quote articles and to additional available topics/authors in the same locale to strengthen crawl paths and semantic clustering.
+- Existing public URLs are preserved; taxonomy SEO improvements must not rename routes or mutate D1 schema.
+
 ## IndexNow
 Key location is served by the production Worker.
 

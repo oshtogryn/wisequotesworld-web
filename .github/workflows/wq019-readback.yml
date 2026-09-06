@@ -11,29 +11,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Wait for production deploy
-        run: sleep 25
-      - name: Read WQ019 from production D1
+      - name: Read and format WQ019 from production D1
         run: |
           set -euo pipefail
           mkdir -p ops/readback
-          curl --fail --retry 12 --retry-all-errors --retry-delay 10 \
-            https://wisequotesworld.com/ops/export/wq019-31f6c8aa \
-            -o ops/readback/wq019-production.json
+          curl --fail --retry 12 --retry-all-errors --retry-delay 10 https://wisequotesworld.com/ops/export/wq019-31f6c8aa -o /tmp/wq019.json
           python3 - <<'PY'
           import json
-          p='ops/readback/wq019-production.json'
-          j=json.load(open(p))
-          assert j.get('ok') is True, j
-          assert j.get('item',{}).get('id')=='WQ019', j
-          print(json.dumps(j,ensure_ascii=False)[:12000])
+          src='/tmp/wq019.json'; dst='ops/readback/wq019-production.json'
+          j=json.load(open(src))
+          assert j.get('ok') is True and j.get('item',{}).get('id')=='WQ019', j
+          with open(dst,'w') as f: json.dump(j,f,ensure_ascii=False,indent=2)
           PY
       - name: Commit readback
         run: |
           git config user.name oshtogryn
           git config user.email alex.shtogryn@gmail.com
           git add ops/readback/wq019-production.json
-          git commit -m 'Read back WQ019 production data' || exit 0
+          git commit -m 'Format WQ019 production readback' || exit 0
           git pull --rebase
           git push
-# retry after schema-safe route update

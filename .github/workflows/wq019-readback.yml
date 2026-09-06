@@ -36,3 +36,4 @@ jobs:
           git commit -m 'Read back WQ019 production data' || exit 0
           git pull --rebase
           git push
+# retry after schema-safe route update

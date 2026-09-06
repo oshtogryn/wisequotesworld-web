@@ -1,0 +1,174 @@
+{
+  "ok": true,
+  "item": {
+    "id": "WQ019",
+    "status": "media_pending",
+    "author_name": "Marcus Aurelius",
+    "attribution_status": "verified",
+    "quote_type": "verbatim"
+  },
+  "languages": {
+    "uk": {
+      "quote": "«Душа забарвлюється думками». — Марк Аврелій",
+      "video_prompt": true,
+      "pinterest_prompt": true,
+      "output_keys": [
+        "article_url",
+        "facebook",
+        "instagram",
+        "pinterest_description",
+        "pinterest_prompt",
+        "pinterest_title",
+        "threads",
+        "tiktok",
+        "website_reflection",
+        "youtube_description",
+        "youtube_title"
+      ]
+    },
+    "ru": {
+      "quote": "«Душа окрашивается мыслями». — Марк Аврелий",
+      "video_prompt": true,
+      "pinterest_prompt": true,
+      "output_keys": [
+        "article_url",
+        "facebook",
+        "instagram",
+        "pinterest_description",
+        "pinterest_prompt",
+        "pinterest_title",
+        "threads",
+        "tiktok",
+        "website_reflection",
+        "youtube_description",
+        "youtube_title"
+      ]
+    },
+    "pl": {
+      "quote": "„Dusza nabiera barwy naszych myśli.” — Marek Aureliusz",
+      "video_prompt": true,
+      "pinterest_prompt": true,
+      "output_keys": [
+        "article_url",
+        "facebook",
+        "instagram",
+        "pinterest_description",
+        "pinterest_prompt",
+        "pinterest_title",
+        "threads",
+        "tiktok",
+        "website_reflection",
+        "youtube_description",
+        "youtube_title"
+      ]
+    },
+    "en": {
+      "quote": "“The soul is dyed by the thoughts.” — Marcus Aurelius",
+      "video_prompt": true,
+      "pinterest_prompt": true,
+      "output_keys": [
+        "article_url",
+        "facebook",
+        "instagram",
+        "pinterest_description",
+        "pinterest_prompt",
+        "pinterest_title",
+        "threads",
+        "tiktok",
+        "website_reflection",
+        "youtube_description",
+        "youtube_title"
+      ]
+    },
+    "sv": {
+      "quote": "”Själen färgas av tankarna.” — Marcus Aurelius",
+      "video_prompt": true,
+      "pinterest_prompt": true,
+      "output_keys": [
+        "article_url",
+        "facebook",
+        "instagram",
+        "pinterest_description",
+        "pinterest_prompt",
+        "pinterest_title",
+        "threads",
+        "tiktok",
+        "website_reflection",
+        "youtube_description",
+        "youtube_title"
+      ]
+    },
+    "de": {
+      "quote": "„Die Seele wird von den Gedanken gefärbt.“ — Marc Aurel",
+      "video_prompt": true,
+      "pinterest_prompt": true,
+      "output_keys": [
+        "article_url",
+        "facebook",
+        "instagram",
+        "pinterest_description",
+        "pinterest_prompt",
+        "pinterest_title",
+        "threads",
+        "tiktok",
+        "website_reflection",
+        "youtube_description",
+        "youtube_title"
+      ]
+    },
+    "es": {
+      "quote": "«El alma se tiñe con los pensamientos». — Marco Aurelio",
+      "video_prompt": true,
+      "pinterest_prompt": true,
+      "output_keys": [
+        "article_url",
+        "facebook",
+        "instagram",
+        "pinterest_description",
+        "pinterest_prompt",
+        "pinterest_title",
+        "threads",
+        "tiktok",
+        "website_reflection",
+        "youtube_description",
+        "youtube_title"
+      ]
+    },
+    "fr": {
+      "quote": "«L’âme se colore de nos pensées.» — Marc Aurèle",
+      "video_prompt": true,
+      "pinterest_prompt": true,
+      "output_keys": [
+        "article_url",
+        "facebook",
+        "instagram",
+        "pinterest_description",
+        "pinterest_prompt",
+        "pinterest_title",
+        "threads",
+        "tiktok",
+        "website_reflection",
+        "youtube_description",
+        "youtube_title"
+      ]
+    },
+    "it": {
+      "quote": "«L’anima si tinge dei pensieri.» — Marco Aurelio",
+      "video_prompt": true,
+      "pinterest_prompt": true,
+      "output_keys": [
+        "article_url",
+        "facebook",
+        "instagram",
+        "pinterest_description",
+        "pinterest_prompt",
+        "pinterest_title",
+        "threads",
+        "tiktok",
+        "website_reflection",
+        "youtube_description",
+        "youtube_title"
+      ]
+    }
+  }
+}

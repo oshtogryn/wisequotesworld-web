@@ -1,0 +1,58 @@
+name: Verify follower production once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ops/trigger-follower-production-verify.txt'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify production follower counters
+        shell: bash
+        run: |
+          set -euo pipefail
+          fetch(){ curl -L -f -sS --connect-timeout 10 --max-time 30 --retry 10 --retry-all-errors --retry-delay 5 -H 'Cache-Control: no-cache' "$1"; }
+
+          root=$(fetch 'https://wisequotesworld.com/start/?follower-check=20260906')
+          for total in '1,087' '261' '117' '108' '34' '220' '340' '31'; do
+            grep -Fq ">$total</b>" <<<"$root"
+          done
+
+          uk=$(fetch 'https://wisequotesworld.com/uk/start/?follower-check=20260906')
+          for x in '10 підписників' '938 підписників' '43 підписників' '58 підписників' '38 підписників'; do grep -Fq "$x" <<<"$uk"; done
+          ru=$(fetch 'https://wisequotesworld.com/ru/start/?follower-check=20260906')
+          for x in '7 подписчиков' '44 подписчиков' '13 подписчиков' '93 подписчиков' '104 подписчиков'; do grep -Fq "$x" <<<"$ru"; done
+          pl=$(fetch 'https://wisequotesworld.com/pl/start/?follower-check=20260906')
+          for x in '17 obserwujących' '6 obserwujących' '40 obserwujących' '37 obserwujących'; do grep -Fq "$x" <<<"$pl"; done
+          en=$(fetch 'https://wisequotesworld.com/en/start/?follower-check=20260906')
+          for x in '13 followers / subscribers' '17 followers / subscribers' '10 followers / subscribers' '34 followers / subscribers'; do grep -Fq "$x" <<<"$en"; done
+          sv=$(fetch 'https://wisequotesworld.com/sv/start/?follower-check=20260906')
+          for x in '4 följare / prenumeranter' '9 följare / prenumeranter' '6 följare / prenumeranter' '11 följare / prenumeranter'; do grep -Fq "$x" <<<"$sv"; done
+          de=$(fetch 'https://wisequotesworld.com/de/start/?follower-check=20260906')
+          for x in '19 Follower / Abonnenten' '105 Follower / Abonnenten' '4 Follower / Abonnenten' '68 Follower / Abonnenten' '24 Follower / Abonnenten'; do grep -Fq "$x" <<<"$de"; done
+          es=$(fetch 'https://wisequotesworld.com/es/start/?follower-check=20260906')
+          for x in '28 seguidores / suscriptores' '195 seguidores / suscriptores' '3 seguidores / suscriptores' '14 seguidores / suscriptores' '100 seguidores / suscriptores'; do grep -Fq "$x" <<<"$es"; done
+          fr=$(fetch 'https://wisequotesworld.com/fr/start/?follower-check=20260906')
+          for x in '1 abonnés' '0 abonnés' '7 abonnés' '23 abonnés'; do grep -Fq "$x" <<<"$fr"; done
+
+          version=$(grep -oE 'localized\.js\?v=[0-9-]+' uk/start/index.html | head -1 | cut -d= -f2)
+          test "$version" = '20260905-2300'
+          for l in uk ru pl en sv de es fr; do grep -Fq "localized.js?v=$version" "$l/start/index.html"; done
+
+          js=$(fetch "https://wisequotesworld.com/start/localized.js?v=$version&follower-check=20260906")
+          for token in \
+            'uk:{facebook:10,instagram:938,threads:43,tiktok:58,youtube:38}' \
+            'ru:{facebook:7,instagram:44,threads:13,tiktok:93,youtube:104}' \
+            'pl:{facebook:17,instagram:17,threads:6,tiktok:40,youtube:37}' \
+            'en:{facebook:13,instagram:17,threads:10,tiktok:34,youtube:34}' \
+            'sv:{facebook:4,instagram:9,threads:6,tiktok:11,youtube:4}' \
+            'de:{facebook:19,instagram:105,threads:4,tiktok:68,youtube:24}' \
+            'es:{facebook:28,instagram:195,threads:3,tiktok:14,youtube:100}' \
+            'fr:{facebook:1,instagram:0,threads:0,tiktok:7,youtube:23}'; do
+              grep -Fq "$token" <<<"$js"
+          done
+          echo 'Follower production verification PASS'

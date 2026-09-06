@@ -1,0 +1,152 @@
+{
+  "uk": {
+    "quote": "«Душа забарвлюється думками». — Марк Аврелій",
+    "article_url": "https://wisequotesworld.com/uk/quotes/marcus-aurelius-soul-thoughts/",
+    "has_video_prompt": true,
+    "output_keys": [
+      "article_url",
+      "facebook",
+      "instagram",
+      "pinterest_description",
+      "pinterest_prompt",
+      "pinterest_title",
+      "threads",
+      "tiktok",
+      "website_reflection",
+      "youtube_description",
+      "youtube_title"
+    ]
+  },
+  "ru": {
+    "quote": "«Душа окрашивается мыслями». — Марк Аврелий",
+    "article_url": "https://wisequotesworld.com/ru/quotes/marcus-aurelius-soul-thoughts/",
+    "has_video_prompt": true,
+    "output_keys": [
+      "article_url",
+      "facebook",
+      "instagram",
+      "pinterest_description",
+      "pinterest_prompt",
+      "pinterest_title",
+      "threads",
+      "tiktok",
+      "website_reflection",
+      "youtube_description",
+      "youtube_title"
+    ]
+  },
+  "pl": {
+    "quote": "„Dusza nabiera barwy naszych myśli.” — Marek Aureliusz",
+    "article_url": "https://wisequotesworld.com/pl/quotes/marcus-aurelius-soul-thoughts/",
+    "has_video_prompt": true,
+    "output_keys": [
+      "article_url",
+      "facebook",
+      "instagram",
+      "pinterest_description",
+      "pinterest_prompt",
+      "pinterest_title",
+      "threads",
+      "tiktok",
+      "website_reflection",
+      "youtube_description",
+      "youtube_title"
+    ]
+  },
+  "en": {
+    "quote": "“The soul is dyed by the thoughts.” — Marcus Aurelius",
+    "article_url": "https://wisequotesworld.com/en/quotes/marcus-aurelius-soul-thoughts/",
+    "has_video_prompt": true,
+    "output_keys": [
+      "article_url",
+      "facebook",
+      "instagram",
+      "pinterest_description",
+      "pinterest_prompt",
+      "pinterest_title",
+      "threads",
+      "tiktok",
+      "website_reflection",
+      "youtube_description",
+      "youtube_title"
+    ]
+  },
+  "sv": {
+    "quote": "”Själen färgas av tankarna.” — Marcus Aurelius",
+    "article_url": "https://wisequotesworld.com/sv/quotes/marcus-aurelius-soul-thoughts/",
+    "has_video_prompt": true,
+    "output_keys": [
+      "article_url",
+      "facebook",
+      "instagram",
+      "pinterest_description",
+      "pinterest_prompt",
+      "pinterest_title",
+      "threads",
+      "tiktok",
+      "website_reflection",
+      "youtube_description",
+      "youtube_title"
+    ]
+  },
+  "de": {
+    "quote": "„Die Seele wird von den Gedanken gefärbt.“ — Marc Aurel",
+    "article_url": "https://wisequotesworld.com/de/quotes/marcus-aurelius-soul-thoughts/",
+    "has_video_prompt": true,
+    "output_keys": [
+      "article_url",
+      "facebook",
+      "instagram",
+      "pinterest_description",
+      "pinterest_prompt",
+      "pinterest_title",
+      "threads",
+      "tiktok",
+      "website_reflection",
+      "youtube_description",
+      "youtube_title"
+    ]
+  },
+  "es": {
+    "quote": "«El alma se tiñe con los pensamientos». — Marco Aurelio",
+    "article_url": "https://wisequotesworld.com/es/quotes/marcus-aurelius-soul-thoughts/",
+    "has_video_prompt": true,
+    "output_keys": [
+      "article_url",
+      "facebook",
+      "instagram",
+      "pinterest_description",
+      "pinterest_prompt",
+      "pinterest_title",
+      "threads",
+      "tiktok",
+      "website_reflection",
+      "youtube_description",
+      "youtube_title"
+    ]
+  },
+  "fr": {
+    "quote": "«L’âme se colore de nos pensées.» — Marc Aurèle",
+    "article_url": "https://wisequotesworld.com/fr/quotes/marcus-aurelius-soul-thoughts/",
+    "has_video_prompt": true,
+    "output_keys": [
+      "article_url",
+      "facebook",
+      "instagram",
+      "pinterest_description",
+      "pinterest_prompt",
+      "pinterest_title",
+      "threads",
+      "tiktok",
+      "website_reflection",
+      "youtube_description",
+      "youtube_title"
+    ]
+  },
+  "it": {
+    "quote": "«L’anima si tinge dei pensieri.» — Marco Aurelio",
+    "article_url": null,
+    "has_video_prompt": false,
+    "output_keys": []
+  }
+}

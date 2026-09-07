@@ -19,14 +19,16 @@ jobs:
           mkdir -p ops/readback
           curl -L -sS --retry 15 --retry-all-errors --retry-delay 5 -X POST \
             -H 'x-wq019-schedule: wq019-64-confirmed-20260907' \
-            'https://wisequotesworld.com/ops/run/wq019-scheduled-64-v1' \
+            'https://wisequotesworld.com/ops/export/wq019-scheduled-64-20260907-5f9c1b7d' \
             -o ops/readback/wq019-scheduled-64-20260907.json
+          cat ops/readback/wq019-scheduled-64-20260907.json
           python - <<'PY'
           import json
           p='ops/readback/wq019-scheduled-64-20260907.json'
           d=json.load(open(p,encoding='utf-8'))
           assert d.get('ok') is True,d
           assert d.get('after',{}).get('status')=='scheduled',d
+          assert int(d.get('approved_media',0))>=16,d
           print('WQ019 scheduled D1 readback OK')
           PY
           git config user.name 'github-actions[bot]'

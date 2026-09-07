@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'start/**'
+      - 'lib/start_unified.js'
       - 'uk/start/**'
       - 'ru/start/**'
       - 'pl/start/**'
@@ -26,7 +27,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Wait for production propagation
         run: sleep 45
-      - name: Verify DNS and start pages
+      - name: Verify production start pages
         shell: bash
         run: |
           set -euo pipefail
@@ -34,11 +35,23 @@ jobs:
           report=ops/readback/start-pages-live.txt
           : > "$report"
 
-          echo 'DNS wisequotesworld.com:' | tee -a "$report"
-          if ! getent ahostsv4 wisequotesworld.com | awk '{print $1}' | sort -u | tee -a "$report" | grep -qE '^[0-9]+\.'; then
-            echo 'FAIL dns=unresolved wisequotesworld.com' | tee -a "$report"
+          # Local runner DNS is diagnostic only. If it cannot resolve the custom
+          # domain, resolve the A record independently through Cloudflare DoH.
+          mapfile -t ips < <(getent ahostsv4 wisequotesworld.com 2>/dev/null | awk '{print $1}' | sort -u || true)
+          if [[ "${#ips[@]}" -eq 0 ]]; then
+            echo 'WARN local_dns=unresolved; trying Cloudflare DoH' | tee -a "$report"
+            doh=$(curl -fsS --connect-timeout 10 --max-time 20 \
+              --resolve cloudflare-dns.com:443:1.1.1.1 \
+              -H 'accept: application/dns-json' \
+              'https://cloudflare-dns.com/dns-query?name=wisequotesworld.com&type=A' || true)
+            mapfile -t ips < <(printf '%s' "$doh" | jq -r '.Answer[]? | select(.type==1) | .data' 2>/dev/null | grep -E '^[0-9]+(\.[0-9]+){3}$' | sort -u || true)
+          fi
+          if [[ "${#ips[@]}" -eq 0 ]]; then
+            echo 'FAIL dns=no_A_record_from_local_or_cloudflare_doh' | tee -a "$report"
             exit 1
           fi
+          printf 'production_ip=%s\n' "${ips[0]}" | tee -a "$report"
+          resolve=(--resolve "wisequotesworld.com:443:${ips[0]}")
 
           fetch_contains(){
             url="$1"; shift
@@ -47,7 +60,10 @@ jobs:
             for attempt in $(seq 1 "$attempts"); do
               out=$(mktemp)
               sep='?'; [[ "$url" == *\?* ]] && sep='&'
-              code=$(curl -L -sS -o "$out" -w '%{http_code}' --connect-timeout 10 --max-time 30 --retry 3 --retry-all-errors --retry-delay 2 -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' "${url}${sep}rb=$(date +%s)-${attempt}" || true)
+              code=$(curl "${resolve[@]}" -L -sS -o "$out" -w '%{http_code}' \
+                --connect-timeout 10 --max-time 30 --retry 3 --retry-all-errors --retry-delay 2 \
+                -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' \
+                "${url}${sep}rb=$(date +%s)-${attempt}" || true)
               ok=1
               [[ "$code" == "200" ]] || ok=0
               for needle in "$@"; do grep -Fq "$needle" "$out" || ok=0; done
@@ -70,15 +86,28 @@ jobs:
             done
           }
 
-          mapfile -t totals < <(grep -oE '<b>[^<]+</b>' start/index.html | sed -E 's#</?b>##g')
+          # /start/ has totals only for the eight connected social locales.
+          mapfile -t totals < <(grep -oE '<b data-total="(uk|ru|pl|en|sv|de|es|fr)">[^<]+</b>' start/index.html | sed -E 's#.*>([^<]+)</b>#\1#')
           [[ "${#totals[@]}" -eq 8 ]]
           fetch_contains 'https://wisequotesworld.com/start/' "${totals[@]}"
 
+          # Static locale files must all use the same cache-busted follower source.
           version=$(grep -oE 'localized\.js\?v=[0-9-]+' uk/start/index.html | head -1 | cut -d= -f2)
           [[ -n "$version" ]]
           for l in uk ru pl en sv de es fr; do
             grep -Fq "localized.js?v=$version" "$l/start/index.html"
-            fetch_contains "https://wisequotesworld.com/$l/start/" "localized.js?v=$version"
+          done
+
+          # The runtime renders locale /start/ pages from lib/start_unified.js.
+          # Verify the five network values there; do not require localized.js markup.
+          for l in uk ru pl en sv de es fr; do
+            token=$(grep -oE "${l}:\{facebook:[0-9]+,instagram:[0-9]+,threads:[0-9]+,tiktok:[0-9]+,youtube:[0-9]+\}" lib/start_unified.js | head -1)
+            [[ -n "$token" ]]
+            mapfile -t vals < <(printf '%s' "$token" | grep -oE ':[0-9]+' | tr -d ':')
+            [[ "${#vals[@]}" -eq 5 ]]
+            needles=()
+            for v in "${vals[@]}"; do needles+=("<small>${v} "); done
+            fetch_contains "https://wisequotesworld.com/$l/start/" "${needles[@]}"
           done
 
           mapfile -t stat_tokens < <(grep -oE '(uk|ru|pl|en|sv|de|es|fr):\{facebook:[0-9]+,instagram:[0-9]+,threads:[0-9]+,tiktok:[0-9]+,youtube:[0-9]+\}' start/localized.js)
@@ -97,4 +126,5 @@ jobs:
           git add ops/readback/start-pages-live.txt || true
           git diff --cached --quiet && exit 0
           git commit -m 'Record start pages live readback'
+          git pull --rebase origin main || true
           git push

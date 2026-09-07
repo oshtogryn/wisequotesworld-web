@@ -1,0 +1,88 @@
+name: Apply WQ019 full quote package 2026-09-07
+on:
+  push:
+    paths:
+      - 'lib/wq019_full_quote_patch_20260907.js'
+      - '.github/workflows/apply-wq019-fullquote-20260907.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add temporary authenticated route
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js'); s=p.read_text()
+          imp="import {unifiedQuoteArticle} from './lib/unified_quote_article.js';"
+          s=s.replace(imp,imp+"\nimport {applyWQ019FullQuotePatch} from './lib/wq019_full_quote_patch_20260907.js';",1)
+          marker="const sensitiveOps=url.pathname.startsWith('/ops/run/')"
+          route="if(url.pathname==='/ops/run/wq019-fullquote-20260907'&&request.method==='POST'&&request.headers.get('x-wq019-patch')==='wq019-20260907-fullquote-v1')return json(await applyWQ019FullQuotePatch(env));"
+          s=s.replace(marker,route+marker,1)
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git commit -m 'Add temporary authenticated WQ019 patch route'
+          git push
+      - name: Wait for deploy
+        run: sleep 75
+      - name: Apply and verify D1
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --retry 15 --retry-all-errors --retry-delay 6 -X POST \
+            -H 'x-wq019-patch: wq019-20260907-fullquote-v1' \
+            'https://wisequotesworld.com/ops/run/wq019-fullquote-20260907' \
+            -o ops/readback/wq019-fullquote-20260907.json
+          python - <<'PY'
+          import json
+          d=json.load(open('ops/readback/wq019-fullquote-20260907.json',encoding='utf-8'))
+          assert d.get('ok') is True,d
+          rb=d['readback']
+          assert rb.get('ok') is True,rb
+          assert rb.get('versions_count')==13 and rb.get('all_video_prompts')==13 and rb.get('pages_count')==13,rb
+          assert len(rb.get('outputs_by_locale') or [])==13,rb
+          assert all(int(x['c'])>=11 and int(x['ready'])>=11 for x in rb['outputs_by_locale']),rb
+          assert rb['item']['status']=='media_pending',rb
+          print('WQ019 full quote D1 readback OK')
+          PY
+      - name: Cleanup route and persist canonical source
+        if: always()
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js'); s=p.read_text()
+          s=s.replace("\nimport {applyWQ019FullQuotePatch} from './lib/wq019_full_quote_patch_20260907.js';",'')
+          s=s.replace("if(url.pathname==='/ops/run/wq019-fullquote-20260907'&&request.method==='POST'&&request.headers.get('x-wq019-patch')==='wq019-20260907-fullquote-v1')return json(await applyWQ019FullQuotePatch(env));",'')
+          p.write_text(s)
+          p=Path('lib/prepared_batch_018_026.js'); s=p.read_text()
+          repl=[
+          ('«Душа забарвлюється думками». — Марк Аврелій','«Якими є думки, до яких ти постійно повертаєшся, таким стане й твій розум; адже душа забарвлюється думками.» — Марк Аврелій'),
+          ('«Душа окрашивается мыслями». — Марк Аврелий','«Каковы мысли, к которым ты постоянно возвращаешься, таким станет и твой ум; ведь душа окрашивается мыслями.» — Марк Аврелий'),
+          ('„Dusza nabiera barwy naszych myśli.” — Marek Aureliusz','„Jakie są myśli, do których wciąż powracasz, taki staje się twój umysł; dusza bowiem nabiera barwy od myśli.” — Marek Aureliusz'),
+          ('“The soul is dyed by the thoughts.” — Marcus Aurelius','“Such as are your habitual thoughts, such also will be the character of your mind; for the soul is dyed by the thoughts.” — Marcus Aurelius'),
+          ('”Själen färgas av tankarna.” — Marcus Aurelius','”Sådana som dina återkommande tankar är, sådan blir också din sinnesart; själen färgas nämligen av tankarna.” — Marcus Aurelius'),
+          ('„Die Seele wird von den Gedanken gefärbt.“ — Marc Aurel','„Wie deine wiederkehrenden Gedanken sind, so wird auch dein Geist; denn die Seele nimmt die Farbe der Gedanken an.“ — Marc Aurel'),
+          ('«El alma se tiñe con los pensamientos». — Marco Aurelio','«Como sean los pensamientos a los que vuelves una y otra vez, así será también tu mente; porque el alma se tiñe de pensamientos». — Marco Aurelio'),
+          ('«L’âme se colore de nos pensées.» — Marc Aurèle','«Telles sont les pensées auxquelles tu reviens sans cesse, tel devient ton esprit ; car l’âme se colore de nos pensées.» — Marc Aurèle'),
+          ('«L’anima si tinge dei pensieri.» — Marco Aurelio','«Come sono i pensieri a cui torni continuamente, così diventa anche la tua mente; perché l’anima si tinge dei pensieri.» — Marco Aurelio'),
+          ('“A alma é tingida pelos pensamentos.” — Marco Aurélio','“Assim como são os pensamentos aos quais você volta repetidamente, assim também se torna a sua mente; pois a alma é tingida pelos pensamentos.” — Marco Aurélio'),
+          ('“Jiwa diwarnai oleh pikiran.” — Marcus Aurelius','“Pikiran yang terus-menerus hadir dalam benakmu akan membentuk keadaan batinmu; sebab jiwa diwarnai oleh pikiran.” — Marcus Aurelius'),
+          ('“Ruh, düşüncelerle renklenir.” — Marcus Aurelius','“Sık sık zihninde taşıdığın düşünceler nasılsa, zihnin de öyle olur; çünkü ruh düşüncelerle renklenir.” — Marcus Aurelius'),
+          ('«تتلون الروح بالأفكار.» — ماركوس أوريليوس','«كما تكون الأفكار التي تداوم عليها، يكون حال ذهنك؛ فالنفس تتلوّن بالأفكار.» — ماركوس أوريليوس')]
+          n=0
+          for a,b in repl:
+              if a in s:
+                  s=s.replace(a,b,1); n+=1
+          assert n==13,n
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js lib/prepared_batch_018_026.js ops/readback/wq019-fullquote-20260907.json || true
+          git commit -m 'Finalize WQ019 full quote across 13 locales with readback' || true
+          git push

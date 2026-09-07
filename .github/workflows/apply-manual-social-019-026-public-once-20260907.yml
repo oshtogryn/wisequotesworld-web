@@ -1,0 +1,77 @@
+name: Apply WQ019-WQ026 manual packages one-time 2026-09-07
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-manual-social-019-026-public-once-20260907.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Expose one-time route
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text()
+          imp="import {unifiedQuoteArticle} from './lib/unified_quote_article.js';"
+          newimp=imp+"\nimport {applyManualSocial019026} from './lib/manual_social_019_026.js';"
+          assert imp in s and 'applyManualSocial019026' not in s
+          s=s.replace(imp,newimp,1)
+          marker="export default {async fetch(request,env,ctx){try{const url=new URL(request.url);"
+          inject=marker+"if(url.pathname==='/ops/run/manual-social-019-026-4d93a7'&&request.method==='POST')return json(await applyManualSocial019026(env));"
+          assert marker in s
+          s=s.replace(marker,inject,1)
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git commit -m 'Expose one-time WQ019-WQ026 manual package route'
+          git push
+      - name: Wait for deploy
+        run: sleep 70
+      - name: Apply and verify D1
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --retry 15 --retry-all-errors --retry-delay 6 \
+            -X POST 'https://wisequotesworld.com/ops/run/manual-social-019-026-4d93a7' \
+            -o ops/readback/manual-social-019-026-20260907.json
+          cat ops/readback/manual-social-019-026-20260907.json
+          python - <<'PY'
+          import json
+          d=json.load(open('ops/readback/manual-social-019-026-20260907.json',encoding='utf-8'))
+          assert d.get('ok') is True,d
+          rb=d.get('readback') or {}
+          assert rb.get('ok') is True,rb
+          rows=rb.get('rows') or []
+          assert len(rows)==8,rows
+          for r in rows:
+              assert r['manual_outputs']==55,r
+              assert r['manual_ready']==55,r
+              assert r['manual_video_prompts']==5,r
+              assert r['website_locales']>=13,r
+              assert r['complete'] is True,r
+          assert len(d.get('corrected_quotes') or [])==4,d.get('corrected_quotes')
+          print('PASS: WQ019-WQ026 complete for 5 manual locales; 440 outputs + 40 video prompts verified')
+          PY
+      - name: Remove one-time route and persist readback
+        if: always()
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text()
+          s=s.replace("\nimport {applyManualSocial019026} from './lib/manual_social_019_026.js';",'')
+          s=s.replace("if(url.pathname==='/ops/run/manual-social-019-026-4d93a7'&&request.method==='POST')return json(await applyManualSocial019026(env));",'')
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js ops/readback/manual-social-019-026-20260907.json || true
+          git commit -m 'Finalize WQ019-WQ026 manual package readback' || true
+          git push

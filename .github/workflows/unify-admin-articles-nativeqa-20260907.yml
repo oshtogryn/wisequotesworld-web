@@ -1,0 +1,117 @@
+name: Unify 13-locale Admin articles and native QA 2026-09-07
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/unify-admin-articles-nativeqa-20260907.yml'
+permissions:
+  contents: write
+jobs:
+  rollout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch Admin, runtime and canonical rules
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p=Path('admin/console/app.js')
+          s=p.read_text()
+          old="const SOCIAL_LANGS=['uk','ru','pl','en','sv','de','es','fr'];"
+          new="const ALL_LANGS=['uk','ru','pl','en','sv','de','es','fr','it','pt','id','tr','ar'];\nconst SOCIAL_LANGS=['uk','ru','pl','en','sv','de','es','fr'];"
+          assert old in s
+          s=s.replace(old,new,1)
+          s=s.replace('<div class="jumpbar">${SOCIAL_LANGS.map(l=>', '<div class="jumpbar">${ALL_LANGS.map(l=>',1)
+          s=s.replace('<div class="langgrid">${SOCIAL_LANGS.map(l=>', '<div class="langgrid">${ALL_LANGS.map(l=>',1)
+          oldh='<header><b>${l.toUpperCase()}</b>${statusPill(v.status||\'—\')}</header>'
+          newh='<header><b>${l.toUpperCase()}</b>${statusPill(v.status||\'—\')}<span class="pill">${esc(r.publishing_mode||\'manual\')}${r.social_connected?\' · social\':\' · manual\'}</span></header>'
+          assert oldh in s
+          s=s.replace(oldh,newh,1)
+          p.write_text(s)
+
+          p=Path('_worker.js')
+          s=p.read_text()
+          old="import {productionConsoleApi,readbackProductionStatus} from './lib/production_console_api.js';"
+          new="import {productionConsoleApi,readbackProductionStatus} from './lib/production_console_api_v2.js';\nimport {unifiedQuoteArticle} from './lib/unified_quote_article.js';\nimport {runUnify20260907} from './lib/unify_20260907.js';"
+          assert old in s
+          s=s.replace(old,new,1)
+          marker="export default {async fetch(request,env,ctx){try{const url=new URL(request.url);"
+          inject="export default {async fetch(request,env,ctx){try{const url=new URL(request.url);if(url.pathname==='/ops/run/unify-20260907'&&request.method==='POST')return json(await runUnify20260907(env));const unifiedArticle=await unifiedQuoteArticle(request,env);if(unifiedArticle)return withLocaleTracking(unifiedArticle,url);"
+          assert marker in s
+          s=s.replace(marker,inject,1)
+          p.write_text(s)
+
+          p=Path('ops/MASTER_RULES.md')
+          s=p.read_text()
+          s=s.replace('Версія: database-first v4.9','Версія: database-first v4.10',1)
+          anchor='Social/media requirements apply only to connected social locales; it, pt-BR, id, tr and ar join those gates once their accounts are connected.'
+          addition=' Social preparation is independent from Metricool connectivity: Admin must display all 13 locales. Until connected, it, pt-BR, id, tr and ar use `publishing_mode=manual`; their localized articles/prompts/copy may be prepared and used for manual posting, but they are excluded from Metricool Planner completeness/readback gates. Connected uk, ru, pl, en, sv, de, es, fr use `publishing_mode=metricool`.'
+          assert anchor in s
+          if addition.strip() not in s:
+              s=s.replace(anchor,anchor+addition,1)
+          article_anchor='WQ006 final version is the emotional editorial benchmark for adapted content. For verbatim content, include verified attribution/source/original wording and interpret context responsibly.'
+          article_add=' All quote detail pages, past and future, must render through one shared 13-locale article presentation standard: breadcrumbs → category → quote card → exactly one attribution line → substantive reflection → verified source/original where applicable → related/internal links. Locale-specific wording is native, but layout/order must not diverge by locale. Never render attribution twice when localized quote storage already contains it.'
+          assert article_anchor in s
+          if article_add.strip() not in s:
+              s=s.replace(article_anchor,article_anchor+article_add,1)
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin/console/app.js _worker.js ops/MASTER_RULES.md lib/production_console_api_v2.js lib/unified_quote_article.js lib/unify_20260907.js
+          git commit -m 'Unify 13-locale Admin and quote article presentation'
+          git push
+      - name: Wait for production deploy
+        run: sleep 65
+      - name: Apply D1 locale modes and native-QA audit
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --retry 15 --retry-all-errors --retry-delay 6 -X POST 'https://wisequotesworld.com/ops/run/unify-20260907' -o ops/readback/unify-admin-articles-nativeqa-20260907.json
+          cat ops/readback/unify-admin-articles-nativeqa-20260907.json
+          python - <<'PY'
+          import json
+          d=json.load(open('ops/readback/unify-admin-articles-nativeqa-20260907.json',encoding='utf-8'))
+          assert d.get('ok') is True,d
+          st={x['language_code']:(x['publishing_mode'],x['social_connected']) for x in d['settings']}
+          assert len(st)==13,st
+          for l in ['uk','ru','pl','en','sv','de','es','fr']: assert st[l]==('metricool',1),(l,st[l])
+          for l in ['it','pt','id','tr','ar']: assert st[l]==('manual',0),(l,st[l])
+          assert d.get('qa_count',0)>=117,d.get('qa_count')
+          print('D1 settings and native QA audit verified:',d['qa_count'])
+          PY
+      - name: Verify unified live article rendering
+        run: |
+          set -euo pipefail
+          for lang in uk it en ar; do
+            # Resolve a current WQ018 canonical URL through sitemap/readback-friendly site search.
+            page=$(curl -L -sS --retry 10 --retry-all-errors --retry-delay 4 "https://wisequotesworld.com/$lang/quotes/" )
+            url=$(printf '%s' "$page" | grep -oE "/$lang/quotes/[^"]+" | grep -E 'nietzsche|nitsshe|nic|why|perche|warum|لماذا' | head -1 || true)
+            if [ -z "$url" ]; then
+              case "$lang" in
+                uk) url='/uk/quotes/nitsshe-navishcho-zhyty/' ;;
+                it) url='/it/quotes/nietzsche-why-to-live/' ;;
+                en) url='/en/quotes/nietzsche-why-to-live/' ;;
+                ar) continue ;;
+              esac
+            fi
+            curl -L -f -sS --retry 10 --retry-all-errors --retry-delay 4 "https://wisequotesworld.com$url" -o "/tmp/$lang.html"
+            grep -q 'quote-card' "/tmp/$lang.html"
+            grep -q 'article-grid' "/tmp/$lang.html"
+            ! grep -q '— Friedrich Nietzsche— Friedrich Nietzsche' "/tmp/$lang.html"
+          done
+          echo 'Unified article renderer verified on live pages'
+      - name: Remove one-time write endpoint and save readback
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text()
+          s=s.replace("\nimport {runUnify20260907} from './lib/unify_20260907.js';",'')
+          s=s.replace("if(url.pathname==='/ops/run/unify-20260907'&&request.method==='POST')return json(await runUnify20260907(env));",'')
+          p.write_text(s)
+          PY
+          git add _worker.js ops/readback/unify-admin-articles-nativeqa-20260907.json
+          git commit -m 'Finalize verified 13-locale Admin article rollout'
+          git push

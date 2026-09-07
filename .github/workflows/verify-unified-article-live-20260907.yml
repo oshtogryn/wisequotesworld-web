@@ -1,0 +1,27 @@
+name: Verify unified article live 2026-09-07
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-unified-article-live-20260907.yml'
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify WQ018 Italian live HTML
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 15); do
+            code=$(curl -A 'Mozilla/5.0 (iPhone; CPU iPhone OS 26_6 like Mac OS X) AppleWebKit/605.1.15 Version/26.0 Mobile/15E148 Safari/604.1' -L -sS -o /tmp/page.html -w '%{http_code}' 'https://wisequotesworld.com/it/quotes/nietzsche-why-to-live/' || true)
+            if [ "$code" = 200 ] && grep -q 'quote-card' /tmp/page.html && grep -q 'article-grid' /tmp/page.html; then
+              ! grep -q '— Friedrich Nietzsche— Friedrich Nietzsche' /tmp/page.html
+              grep -q 'Chi ha un perché per vivere può sopportare quasi ogni come' /tmp/page.html
+              echo 'LIVE_ARTICLE_OK'
+              exit 0
+            fi
+            echo "attempt $i http=$code"
+            sleep 5
+          done
+          echo 'Live article verification failed'
+          head -c 1000 /tmp/page.html || true
+          exit 1

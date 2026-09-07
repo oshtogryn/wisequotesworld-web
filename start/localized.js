@@ -29,7 +29,7 @@
   };
   // Updated automatically by the existing daily Metricool follower-sync workflow.
   const S={
-    uk:{facebook:10,instagram:938,threads:43,tiktok:58,youtube:38},ru:{facebook:7,instagram:44,threads:13,tiktok:93,youtube:104},pl:{facebook:17,instagram:17,threads:6,tiktok:40,youtube:37},en:{facebook:13,instagram:17,threads:10,tiktok:36,youtube:34},sv:{facebook:4,instagram:9,threads:6,tiktok:11,youtube:4},de:{facebook:19,instagram:105,threads:4,tiktok:70,youtube:24},es:{facebook:28,instagram:195,threads:3,tiktok:16,youtube:100},fr:{facebook:1,instagram:0,threads:0,tiktok:8,youtube:23}
+    uk:{facebook:10,instagram:939,threads:43,tiktok:58,youtube:39},ru:{facebook:7,instagram:44,threads:13,tiktok:93,youtube:104},pl:{facebook:17,instagram:17,threads:6,tiktok:40,youtube:37},en:{facebook:13,instagram:18,threads:10,tiktok:36,youtube:34},sv:{facebook:4,instagram:9,threads:6,tiktok:11,youtube:4},de:{facebook:19,instagram:106,threads:4,tiktok:70,youtube:25},es:{facebook:30,instagram:196,threads:3,tiktok:16,youtube:102},fr:{facebook:1,instagram:0,threads:0,tiktok:8,youtube:25}
   };
   const A=T[l]||T.en,links=R[l]||R.en,stats=S[l]||null,contactEmail='wisequotesofworld@gmail.com';
   const social=[['facebook','Facebook','📘'],['instagram','Instagram','📸'],['threads','Threads','🧵'],['tiktok','TikTok','🎵'],['youtube','YouTube','▶️'],['pinterest','Pinterest','📌']];

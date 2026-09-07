@@ -2,7 +2,7 @@
 
 Останнє оновлення: 2026-09-05
 Статус: CANONICAL
-Версія: database-first v4.9
+Версія: database-first v4.10
 
 ## 1. Джерела істини
 1. `ops/MASTER_RULES.md` — канонічне джерело операційних правил.
@@ -102,7 +102,7 @@ Platform link routing is mandatory:
 
 ## 11. Website article
 Separate substantive editorial asset: quote; verified attribution when applicable; meaning; why it matters; life example/reflection; strong conclusion; CTA/internal links. Target 250–500 words, multi-paragraph, native, no filler.
-WQ006 final version is the emotional editorial benchmark for adapted content. For verbatim content, include verified attribution/source/original wording and interpret context responsibly.
+WQ006 final version is the emotional editorial benchmark for adapted content. For verbatim content, include verified attribution/source/original wording and interpret context responsibly. All quote detail pages, past and future, must render through one shared 13-locale article presentation standard: breadcrumbs → category → quote card → exactly one attribution line → substantive reflection → verified source/original where applicable → related/internal links. Locale-specific wording is native, but layout/order must not diverge by locale. Never render attribution twice when localized quote storage already contains it.
 
 ## 12. Website/database
 D1 database-first. New approved content should not require manual deploy. 13 website locales, archive, quote/category/verified-author pages, sitemap/hreflang/canonical/internal links. Social readiness is evaluated only for connected social locales.
@@ -117,7 +117,7 @@ All 13 localized `/start` pages use one unified presentation: compact contact bl
 R2 canonical binaries; D1 metadata. Upload once/reuse. User generates video/Pinterest manually and uploads via Admin.
 
 ## 14. Admin
-Create/edit topic, 13 website localizations, prompts, copy, article/URL, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Social/media requirements apply only to connected social locales; it, pt-BR, id, tr and ar join those gates once their accounts are connected. Empty author = NO AUTHOR everywhere.
+Create/edit topic, 13 website localizations, prompts, copy, article/URL, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Social/media requirements apply only to connected social locales; it, pt-BR, id, tr and ar join those gates once their accounts are connected. Social preparation is independent from Metricool connectivity: Admin must display all 13 locales. Until connected, it, pt-BR, id, tr and ar use `publishing_mode=manual`; their localized articles/prompts/copy may be prepared and used for manual posting, but they are excluded from Metricool Planner completeness/readback gates. Connected uk, ru, pl, en, sv, de, es, fr use `publishing_mode=metricool`. Empty author = NO AUTHOR everywhere.
 
 ## 15. Scheduling
 Metricool PRIMARY during stabilization. No `scheduled` without Planner readback. Before scheduling verify article opens, CTA, media QA PASS, approval, network/date/time/timezone/text/media.

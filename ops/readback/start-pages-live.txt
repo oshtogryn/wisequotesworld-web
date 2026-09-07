@@ -1,3 +1,14 @@
-DNS wisequotesworld.com:
-104.21.57.154
-172.67.146.223
+production_ip=104.21.57.154
+PASS https://wisequotesworld.com/start/ attempt=1
+PASS https://wisequotesworld.com/uk/start/ attempt=1
+PASS https://wisequotesworld.com/ru/start/ attempt=1
+PASS https://wisequotesworld.com/pl/start/ attempt=1
+PASS https://wisequotesworld.com/en/start/ attempt=1
+PASS https://wisequotesworld.com/sv/start/ attempt=1
+PASS https://wisequotesworld.com/de/start/ attempt=1
+PASS https://wisequotesworld.com/es/start/ attempt=1
+PASS https://wisequotesworld.com/fr/start/ attempt=1
+PASS https://wisequotesworld.com/start/localized.js?v=20260907-0305 attempt=1
+cache_version=20260907-0305
+checked_at=2026-09-07T01:13:34Z
+overall=PASS

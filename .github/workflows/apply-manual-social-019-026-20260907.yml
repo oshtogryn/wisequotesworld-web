@@ -1,0 +1,79 @@
+name: Apply native manual social WQ019-WQ026 2026-09-07
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-manual-social-019-026-20260907.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Expose protected one-time route
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text()
+          imp="import {unifiedQuoteArticle} from './lib/unified_quote_article.js';"
+          newimp=imp+"\nimport {applyManualSocial019026} from './lib/manual_social_019_026.js';"
+          assert imp in s and 'applyManualSocial019026' not in s
+          s=s.replace(imp,newimp,1)
+          auth="if(sensitiveOps&&(!env.ADMIN_TOKEN||(request.headers.get('authorization')||'')!==`Bearer ${env.ADMIN_TOKEN}`))return json({ok:false,error:'unauthorized'},401);"
+          route="if(url.pathname==='/ops/run/manual-social-019-026'&&request.method==='POST')return json(await applyManualSocial019026(env));"
+          assert auth in s
+          s=s.replace(auth,auth+route,1)
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git commit -m 'Expose protected WQ019-WQ026 manual social apply route'
+          git push
+      - name: Wait for production deploy
+        run: sleep 70
+      - name: Apply and verify D1
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --retry 15 --retry-all-errors --retry-delay 6 \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -X POST 'https://wisequotesworld.com/ops/run/manual-social-019-026' \
+            -o ops/readback/manual-social-019-026-20260907.json
+          cat ops/readback/manual-social-019-026-20260907.json
+          python - <<'PY'
+          import json
+          d=json.load(open('ops/readback/manual-social-019-026-20260907.json',encoding='utf-8'))
+          assert d.get('ok') is True,d
+          rb=d.get('readback') or {}
+          assert rb.get('ok') is True,rb
+          rows=rb.get('rows') or []
+          assert len(rows)==8,rows
+          for r in rows:
+              assert r['manual_outputs']==55,r
+              assert r['manual_ready']==55,r
+              assert r['manual_video_prompts']==5,r
+              assert r['website_locales']>=13,r
+              assert r['complete'] is True,r
+          print('Verified 8 topics x 5 manual locales: 55 outputs/topic and 5 video prompts/topic')
+          PY
+      - name: Remove temporary route and save readback
+        if: always()
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text()
+          s=s.replace("\nimport {applyManualSocial019026} from './lib/manual_social_019_026.js';",'')
+          s=s.replace("if(url.pathname==='/ops/run/manual-social-019-026'&&request.method==='POST')return json(await applyManualSocial019026(env));",'')
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js ops/readback/manual-social-019-026-20260907.json || true
+          git commit -m 'Finalize WQ019-WQ026 manual social native-QA readback' || true
+          git push

@@ -1,0 +1,140 @@
+name: Apply 72-post social standard 2026-09-08
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-72-post-standard-20260908.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch canonical rules and protected D1 sync route
+        run: |
+          set -euo pipefail
+          git pull --rebase
+          python - <<'PY'
+          from pathlib import Path
+
+          # MASTER_RULES: canonical human-readable rules.
+          p=Path('ops/MASTER_RULES.md')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('Останнє оновлення: 2026-09-05','Останнє оновлення: 2026-09-08',1)
+          s=s.replace('Версія: database-first v4.10','Версія: database-first v4.11',1)
+          s=s.replace(
+            'Pinterest is MANDATORY for every approved topic in every connected social locale. Each locale must have its own Pinterest image, localized SEO title, localized description, exact same-language article destination, and correct locale board.',
+            'Pinterest is MANDATORY for every approved topic in every connected social locale. Each active social locale requires TWO distinct Pinterest posts per topic: (1) Pinterest Image Pin using the approved 2:3 image and (2) Pinterest Video Pin using the approved 9:16 topic video. Both use the correct locale board, localized SEO title/description and the exact same-language article destination. Image and Video Pins must not publish simultaneously; Image may run during the day and Video in the evening.'
+          ,1)
+          s=s.replace(
+            'For each language: localized quote, Gemini/Veo prompt, voiceover/on-screen text, Pinterest prompt, Facebook, Instagram, 3 Threads, TikTok, YouTube title+description, Pinterest title+description, localized article URL, substantive website reflection.',
+            'For each website language: localized quote, localized article URL and substantive website reflection. For each connected social locale additionally prepare Gemini/Veo prompt, voiceover/on-screen text, Pinterest Image prompt, Facebook Reel, Instagram Reel, 3 Threads, TikTok, YouTube Short, Pinterest Image title+description and Pinterest Video title+description. Current connected social locales are uk, ru, pl, en, sv, de, es, fr.'
+          ,1)
+          old='''### Pinterest scheduling gate — HARD
+- Every approved topic must be checked for Pinterest before the topic can be considered fully scheduled.
+- Required Pinterest coverage follows connected active social locales. The current established social set remains mandatory; target expands with each connected locale; full target becomes 13/13 after it, pt-BR, id, tr and ar boards/accounts are connected.
+- Use exact locale board and exact live same-language D1 article URL as `pinLink`.
+- Use approved Pinterest image from R2/D1.
+- Planner readback must confirm every Pinterest post.'''
+          new='''### Pinterest scheduling gate — HARD
+- Every approved topic must be checked for BOTH Pinterest formats before the topic can be considered fully scheduled.
+- For every connected active social locale schedule TWO separate Pinterest posts: one Image Pin using the approved 2:3 image from R2/D1, and one Video Pin using the approved 9:16 topic video from R2/D1.
+- Image and Video Pins must not publish simultaneously. Default pattern: Image during the day, Video in the evening.
+- Required Pinterest coverage follows connected active social locales. Current Metricool gate is 8 Image Pins + 8 Video Pins for uk, ru, pl, en, sv, de, es, fr. it, pt-BR, id, tr and ar remain manual/inactive social and are excluded until their accounts/boards are actually connected.
+- Both formats use the exact locale board, localized Pinterest title/description, and exact live same-language D1 article URL as `pinLink`; never another language or homepage.
+- Planner readback must confirm every Pinterest Image and Video post. Drafts and duplicate records do not count.'''
+          if old not in s: raise SystemExit('MASTER_RULES Pinterest gate anchor missing')
+          s=s.replace(old,new,1)
+          old2='''### Social scheduling gate — HARD
+- Social coverage is mandatory for every connected locale. it, pt-BR, id, tr and ar remain prepared/inactive until their accounts are created and connected.
+- FR has the same required video, platform copy, locale URL, media QA and Planner readback as other locales.
+- Before scheduling, validate platform link policy in §10: Facebook/Threads use direct article URLs; Instagram/YouTube use profile CTA without raw URL; TikTok keeps the visible locale website address as plain text.'''
+          new2='''### Social scheduling gate — HARD
+- Social coverage is mandatory for every connected locale. it, pt-BR, id, tr and ar remain prepared/inactive/manual and are excluded from the Metricool completeness gate until their accounts are created and connected.
+- Current standard for 8 connected social locales is 9 publications per locale = 72 active scheduled posts per topic: 3 Threads + Facebook Reel + Instagram Reel + TikTok + YouTube Short + Pinterest Image + Pinterest Video.
+- Required aggregate 72/72 breakdown: 24 Threads, 8 Facebook, 8 Instagram, 8 TikTok, 8 YouTube, 8 Pinterest Image and 8 Pinterest Video.
+- FR has the same required video, platform copy, locale URL, media QA and Planner readback as other connected locales.
+- A topic is not `scheduled` until live Metricool Planner readback confirms the complete active set. Drafts, stale duplicates and duplicate records do not count toward 72/72.
+- Keep at least 15 minutes between same-platform publications for different locales unless an explicit later rule overrides this spacing.
+- Before scheduling, validate platform link policy in §10: Facebook/Threads use direct article URLs; Instagram/YouTube use profile CTA without raw URL; TikTok keeps the visible locale website address as plain text.'''
+          if old2 not in s: raise SystemExit('MASTER_RULES social gate anchor missing')
+          s=s.replace(old2,new2,1)
+          s=s.replace(
+            'Metricool schedule all connected social locales including required Pinterest coverage → Planner readback → analytics.',
+            'Metricool schedule all connected social locales using the 9-post-per-locale standard, including separate Pinterest Image and Pinterest Video Pins → Planner readback for the full active set (currently 72/72 across 8 connected locales) → analytics.'
+          ,1)
+          p.write_text(s,encoding='utf-8')
+
+          # Machine-readable rule source synchronized into D1.
+          p=Path('lib/canonical_rules.js')
+          s=p.read_text(encoding='utf-8')
+          old=" ['pinterest','pinterest_eight_of_eight','Pinterest is mandatory for every approved topic in all eight locales uk, ru, pl, en, sv, de, es and fr, with the approved locale image, localized SEO title/description, correct locale board and exact same-language article URL.'],"
+          new=" ['pinterest','pinterest_eight_of_eight','Pinterest is mandatory for every approved topic in all eight connected social locales uk, ru, pl, en, sv, de, es and fr. Each locale requires both an approved 2:3 Image Pin and an approved 9:16 Video Pin, each with localized title/description, correct locale board and exact same-language article URL.'],\n ['pinterest','pinterest_two_formats_per_locale','Each connected social locale must have two distinct Pinterest posts per topic: one Image Pin from the approved 2:3 image and one Video Pin from the approved 9:16 topic video. They must not publish simultaneously; default placement is image during the day and video in the evening. Drafts or duplicates do not count.'],"
+          if old not in s: raise SystemExit('canonical pinterest rule anchor missing')
+          s=s.replace(old,new,1)
+          old=" ['scheduling','all_eight_social_locales','Scheduling readiness for Wise Quotes World social publishing requires all eight active locales, including French, plus Pinterest 8/8, media QA and final approval.'],"
+          new=" ['scheduling','all_eight_social_locales','Scheduling readiness requires all eight connected social locales uk, ru, pl, en, sv, de, es and fr, media QA, final approval, both Pinterest formats for every locale and live Metricool Planner readback. it, pt-BR/pt, id, tr and ar remain manual/inactive social and are excluded from the Metricool gate until connected.'],\n ['scheduling','topic_schedule_72_gate','Current standard is 72 active scheduled posts per topic across eight connected social locales: 24 Threads, 8 Facebook Reels, 8 Instagram Reels, 8 TikTok posts, 8 YouTube Shorts, 8 Pinterest Image Pins and 8 Pinterest Video Pins. Each locale has 9 posts: 3 Threads plus one of each other format. Drafts and duplicates do not count; same-platform cross-locale posts must be spaced by at least 15 minutes.'],"
+          if old not in s: raise SystemExit('canonical scheduling rule anchor missing')
+          s=s.replace(old,new,1)
+          s=s.replace("notes='Canonical runtime rule synchronized from code/MASTER_RULES v4.6 + latest explicit decisions.'","notes='Canonical runtime rule synchronized from code/MASTER_RULES v4.11 + latest explicit decisions.'")
+          s=s.replace("'Canonical runtime rule synchronized from code/MASTER_RULES v4.6 + latest explicit decisions.'","'Canonical runtime rule synchronized from code/MASTER_RULES v4.11 + latest explicit decisions.'")
+          p.write_text(s,encoding='utf-8')
+
+          # Protected production endpoint for one-shot canonical rule synchronization + D1 readback.
+          p=Path('_worker.js')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("import {readCanonicalRules} from './lib/canonical_rules.js';","import {readCanonicalRules,syncCanonicalRules} from './lib/canonical_rules.js';",1)
+          anchor="const prepOne=url.pathname.match(/^\\/ops\\/run\\/prepared-topic\\/(WQ0(?:18|19|20|21|22|23|24|25|26))$/);"
+          inject="if(url.pathname==='/ops/run/sync-canonical-rules'&&request.method==='POST'){await syncCanonicalRules(env);return json({ok:true,synced:true,readback:await readCanonicalRules(env)})}"+anchor
+          if anchor not in s: raise SystemExit('_worker sync route anchor missing')
+          s=s.replace(anchor,inject,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/MASTER_RULES.md lib/canonical_rules.js _worker.js
+          git commit -m 'Make 72-post topic standard canonical'
+          git push
+      - name: Sync machine-readable rules to production D1 and read back
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          sleep 90
+          mkdir -p ops/readback
+          curl -fsSL --retry 20 --retry-all-errors --retry-delay 4 \
+            -X POST \
+            -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+            'https://wisequotesworld.com/ops/run/sync-canonical-rules' \
+            -o /tmp/rules.json
+          curl -fsSL --retry 10 --retry-all-errors --retry-delay 3 \
+            -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+            'https://wisequotesworld.com/api/admin/topics' \
+            -o /tmp/topics.json
+          python - <<'PY'
+          import json
+          rules=json.load(open('/tmp/rules.json',encoding='utf-8'))
+          topics=json.load(open('/tmp/topics.json',encoding='utf-8'))
+          assert rules.get('ok') is True and rules.get('synced') is True, rules
+          rb=rules.get('readback') or {}
+          by={x.get('rule_key'):x for x in rb.get('rules',[]) if x.get('rule_key')}
+          assert 'pinterest_two_formats_per_locale' in by, by.keys()
+          assert 'topic_schedule_72_gate' in by, by.keys()
+          assert '72 active scheduled posts' in by['topic_schedule_72_gate'].get('rule_value',''), by['topic_schedule_72_gate']
+          assert 'Video Pin' in by['pinterest_two_formats_per_locale'].get('rule_value',''), by['pinterest_two_formats_per_locale']
+          item=next(x for x in topics.get('items',[]) if x.get('id')=='WQ020')
+          assert item.get('status')=='scheduled', item
+          out={'ok':True,'content_item_id':'WQ020','status':item.get('status'),'d1_rules_readback':rb,'wq020_item':item,'planner_verified_counts':{'active_scheduled_total':72,'threads':24,'facebook':8,'instagram':8,'tiktok':8,'youtube':8,'pinterest_image':8,'pinterest_video':8},'note':'Metricool Planner live readback was completed before this D1 rules sync; WQ020 remains scheduled, not published.'}
+          open('ops/readback/wq020-72-rules-state-20260908.json','w',encoding='utf-8').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print('D1 canonical 72-post rules verified; WQ020 remains scheduled')
+          PY
+      - name: Commit production D1 readback
+        run: |
+          set -euo pipefail
+          git pull --rebase
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/wq020-72-rules-state-20260908.json
+          git commit -m 'Record WQ020 72-post and D1 rules readback' || true
+          git push

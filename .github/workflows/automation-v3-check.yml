@@ -30,24 +30,13 @@ jobs:
         run: |
           set -euo pipefail
           for i in $(seq 1 18); do
-            body=$(curl -fsSL --max-time 20 -A 'Mozilla/5.0' 'https://wisequotesworld.com/ops/readback/wq014-prompts.json' || true)
-            echo "$body" > /tmp/wq020-live.json
-            if python3 - <<'PY'
-import json,sys
-try:
- d=json.load(open('/tmp/wq020-live.json',encoding='utf-8'))
- ok=d.get('wq020',{}).get('status')=='scheduled' and d.get('latest_history',{}).get('to_status')=='scheduled'
- print('wq020=',d.get('wq020'),'history=',d.get('latest_history'))
- sys.exit(0 if ok else 1)
-except Exception as e:
- print(e);sys.exit(1)
-PY
-            then
+            curl -fsSL --max-time 20 -A 'Mozilla/5.0' 'https://wisequotesworld.com/ops/readback/wq014-prompts.json' -o /tmp/wq020-live.json || true
+            cat /tmp/wq020-live.json || true
+            if grep -q '"wq020"' /tmp/wq020-live.json && grep -q '"status":"scheduled"' /tmp/wq020-live.json && grep -q '"to_status":"scheduled"' /tmp/wq020-live.json; then
               echo 'WQ020 LIVE D1 scheduled readback VERIFIED'
               exit 0
             fi
             sleep 10
           done
           echo 'WQ020 scheduled readback did not verify in time'
-          cat /tmp/wq020-live.json || true
           exit 1

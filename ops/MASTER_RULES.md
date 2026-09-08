@@ -1,8 +1,8 @@
 # MASTER RULES — Wise Quotes World
 
-Останнє оновлення: 2026-09-05
+Останнє оновлення: 2026-09-08
 Статус: CANONICAL
-Версія: database-first v4.10
+Версія: database-first v4.11
 
 ## 1. Джерела істини
 1. `ops/MASTER_RULES.md` — канонічне джерело операційних правил.
@@ -79,12 +79,20 @@ Accuracy does not mean prompt length. Use only instructions needed for the cinem
 QA happens AFTER generation, not inside prompt. REJECT for wrong/missing text, broken diacritics/punctuation, clipped first/last word, rushed/clipped voice, extra readable text/random letters/auto captions/emoji, AI logo/branding/watermark, or scene contradicting meaning. For verbatim also REJECT incorrect/missing author attribution, incorrect locale-specific pronunciation or stress of the author's name, or fake historical-footage implication. After PASS add only correct Wise Quotes World language logo in CapCut. Do not duplicate quote with CapCut text.
 
 ## 8. Pinterest
-2:3 target 1000×1500; finished image contains exact localized quote; mobile-readable typography; no unrelated text/random letters/watermark; no generated Wise Quotes World logo by default. User generates manually → Admin upload → R2 → QA → approval.
+Image Pin: 2:3 target 1000×1500; finished image contains exact localized quote; mobile-readable typography; no unrelated text/random letters/watermark; no generated Wise Quotes World logo by default. User generates manually → Admin upload → R2 → QA → approval.
 
-Pinterest is MANDATORY for every approved topic in every connected social locale. Each locale must have its own Pinterest image, localized SEO title, localized description, exact same-language article destination, and correct locale board.
+Video Pin: approved 9:16 topic video from R2/D1. Do not substitute the Pinterest image or another locale’s video.
+
+Pinterest is MANDATORY for every approved topic in every connected social locale. Each active social locale requires TWO separate Pinterest posts:
+1. Pinterest Image Pin — approved 2:3 locale image.
+2. Pinterest Video Pin — approved 9:16 locale topic video.
+
+Both require the correct locale board, localized Pinterest title, localized description and exact same-language article destination. Never use another language or homepage. Image and Video Pins must not publish simultaneously; default pattern is Image during the day and Video in the evening.
 
 ## 9. Required outputs
-For each language: localized quote, Gemini/Veo prompt, voiceover/on-screen text, Pinterest prompt, Facebook, Instagram, 3 Threads, TikTok, YouTube title+description, Pinterest title+description, localized article URL, substantive website reflection.
+For each website language: localized quote, localized article URL and substantive website reflection.
+For each connected social locale additionally: Gemini/Veo prompt, voiceover/on-screen text, Pinterest Image prompt, Facebook Reel, Instagram Reel, 3 Threads, TikTok, YouTube Short, Pinterest Image title+description and Pinterest Video title+description.
+Current connected Metricool social locales: uk, ru, pl, en, sv, de, es, fr. it, pt-BR, id, tr and ar remain manual/inactive social until connected.
 
 ## 10. Social copy + link policy — HARD
 Posts must be self-contained and substantive. Working targets: Facebook 550–1000 chars; Instagram 400–800; Threads 3 independent posts; TikTok 250–500; YouTube 2–4 substantive sentences; Pinterest SEO-natural title + 2–4 sentences. Check actual platform limits before scheduling.
@@ -123,22 +131,28 @@ Create/edit topic, 13 website localizations, prompts, copy, article/URL, media u
 Metricool PRIMARY during stabilization. No `scheduled` without Planner readback. Before scheduling verify article opens, CTA, media QA PASS, approval, network/date/time/timezone/text/media.
 
 ### Pinterest scheduling gate — HARD
-- Every approved topic must be checked for Pinterest before the topic can be considered fully scheduled.
-- Required Pinterest coverage follows connected active social locales. The current established social set remains mandatory; target expands with each connected locale; full target becomes 13/13 after it, pt-BR, id, tr and ar boards/accounts are connected.
-- Use exact locale board and exact live same-language D1 article URL as `pinLink`.
-- Use approved Pinterest image from R2/D1.
-- Planner readback must confirm every Pinterest post.
+- Every approved topic must be checked for BOTH Pinterest formats before the topic can be considered fully scheduled.
+- For every connected active social locale schedule TWO separate Pinterest posts: one Image Pin using the approved 2:3 image from R2/D1, and one Video Pin using the approved 9:16 topic video from R2/D1.
+- Image and Video Pins must not publish simultaneously. Default pattern: Image during the day, Video in the evening.
+- Current Metricool gate is 8 Image Pins + 8 Video Pins for uk, ru, pl, en, sv, de, es, fr.
+- it, pt-BR, id, tr and ar remain manual/inactive social and are excluded until their accounts/boards are actually connected.
+- Both formats use the exact locale board, localized Pinterest title/description, and exact live same-language D1 article URL as `pinLink`; never another language or homepage.
+- Planner readback must confirm every Pinterest Image and Video post. Drafts and duplicate records do not count.
 
 ### Social scheduling gate — HARD
-- Social coverage is mandatory for every connected locale. it, pt-BR, id, tr and ar remain prepared/inactive until their accounts are created and connected.
-- FR has the same required video, platform copy, locale URL, media QA and Planner readback as other locales.
+- Social coverage is mandatory for every connected locale. it, pt-BR, id, tr and ar remain prepared/inactive/manual and are excluded from the Metricool completeness gate until their accounts are created and connected.
+- Current standard for 8 connected social locales is 9 publications per locale = 72 active scheduled posts per topic: 3 Threads + Facebook Reel + Instagram Reel + TikTok + YouTube Short + Pinterest Image + Pinterest Video.
+- Required aggregate 72/72 breakdown: 24 Threads, 8 Facebook, 8 Instagram, 8 TikTok, 8 YouTube, 8 Pinterest Image and 8 Pinterest Video.
+- FR has the same required video, platform copy, locale URL, media QA and Planner readback as other connected locales.
+- A topic is not `scheduled` until live Metricool Planner readback confirms the complete active set. Drafts, stale duplicates and duplicate records do not count toward 72/72.
+- Keep at least 15 minutes between same-platform publications for different locales unless an explicit later rule overrides this spacing.
 - Before scheduling, validate platform link policy in §10: Facebook/Threads use direct article URLs; Instagram/YouTube use profile CTA without raw URL; TikTok keeps the visible locale website address as plain text.
 
 ## 16. Analytics
 24h/72h/7d/30d by language/platform/category/quote_type/author/creative/time. Each locale website must use corresponding Metricool web tracker.
 
 ## 17. Standard command protocol
-`наступна цитата` / `готуй наступну` / `працюємо по правилах` = read MASTER_RULES + D1 → determine `adapted` vs verified `verbatim` → source/quote QA → duration gate → 13 native website localizations → prompts/copy for connected social locales → Pinterest prompts for connected Pinterest locales → full social copy with platform-correct CTA/links + localized URLs → website reflection → D1 → user media generation/upload → media QA → approval → Metricool schedule all connected social locales including required Pinterest coverage → Planner readback → analytics.
+`наступна цитата` / `готуй наступну` / `працюємо по правилах` = read MASTER_RULES + D1 → determine `adapted` vs verified `verbatim` → source/quote QA → duration gate → 13 native website localizations → prompts/copy for connected social locales → Pinterest prompts for connected Pinterest locales → full social copy with platform-correct CTA/links + localized URLs → website reflection → D1 → user media generation/upload → media QA → approval → Metricool schedule all connected social locales using the 9-post-per-locale standard, including separate Pinterest Image and Pinterest Video Pins → Planner readback for the full active set (currently 72/72 across 8 connected locales) → analytics.
 
 ## 18. Validation/fail-safe
 Adapted no author; verbatim verified author/source/original. Technically complete but failed native/exact-text/editorial/media QA = NOT production-ready. If API unavailable, preserve confirmed D1 state and mark only blocked step.

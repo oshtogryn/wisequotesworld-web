@@ -1,3 +1,4 @@
+# trigger-existing-workflow: 2026-09-08
 name: Apply 72-post social standard 2026-09-08
 on:
   push:
@@ -18,19 +19,12 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          # MASTER_RULES: canonical human-readable rules.
           p=Path('ops/MASTER_RULES.md')
           s=p.read_text(encoding='utf-8')
           s=s.replace('Останнє оновлення: 2026-09-05','Останнє оновлення: 2026-09-08',1)
           s=s.replace('Версія: database-first v4.10','Версія: database-first v4.11',1)
-          s=s.replace(
-            'Pinterest is MANDATORY for every approved topic in every connected social locale. Each locale must have its own Pinterest image, localized SEO title, localized description, exact same-language article destination, and correct locale board.',
-            'Pinterest is MANDATORY for every approved topic in every connected social locale. Each active social locale requires TWO distinct Pinterest posts per topic: (1) Pinterest Image Pin using the approved 2:3 image and (2) Pinterest Video Pin using the approved 9:16 topic video. Both use the correct locale board, localized SEO title/description and the exact same-language article destination. Image and Video Pins must not publish simultaneously; Image may run during the day and Video in the evening.'
-          ,1)
-          s=s.replace(
-            'For each language: localized quote, Gemini/Veo prompt, voiceover/on-screen text, Pinterest prompt, Facebook, Instagram, 3 Threads, TikTok, YouTube title+description, Pinterest title+description, localized article URL, substantive website reflection.',
-            'For each website language: localized quote, localized article URL and substantive website reflection. For each connected social locale additionally prepare Gemini/Veo prompt, voiceover/on-screen text, Pinterest Image prompt, Facebook Reel, Instagram Reel, 3 Threads, TikTok, YouTube Short, Pinterest Image title+description and Pinterest Video title+description. Current connected social locales are uk, ru, pl, en, sv, de, es, fr.'
-          ,1)
+          s=s.replace('Pinterest is MANDATORY for every approved topic in every connected social locale. Each locale must have its own Pinterest image, localized SEO title, localized description, exact same-language article destination, and correct locale board.','Pinterest is MANDATORY for every approved topic in every connected social locale. Each active social locale requires TWO distinct Pinterest posts per topic: (1) Pinterest Image Pin using the approved 2:3 image and (2) Pinterest Video Pin using the approved 9:16 topic video. Both use the correct locale board, localized SEO title/description and the exact same-language article destination. Image and Video Pins must not publish simultaneously; Image may run during the day and Video in the evening.',1)
+          s=s.replace('For each language: localized quote, Gemini/Veo prompt, voiceover/on-screen text, Pinterest prompt, Facebook, Instagram, 3 Threads, TikTok, YouTube title+description, Pinterest title+description, localized article URL, substantive website reflection.','For each website language: localized quote, localized article URL and substantive website reflection. For each connected social locale additionally prepare Gemini/Veo prompt, voiceover/on-screen text, Pinterest Image prompt, Facebook Reel, Instagram Reel, 3 Threads, TikTok, YouTube Short, Pinterest Image title+description and Pinterest Video title+description. Current connected social locales are uk, ru, pl, en, sv, de, es, fr.',1)
           old='''### Pinterest scheduling gate — HARD
 - Every approved topic must be checked for Pinterest before the topic can be considered fully scheduled.
 - Required Pinterest coverage follows connected active social locales. The current established social set remains mandatory; target expands with each connected locale; full target becomes 13/13 after it, pt-BR, id, tr and ar boards/accounts are connected.
@@ -60,13 +54,9 @@ jobs:
 - Before scheduling, validate platform link policy in §10: Facebook/Threads use direct article URLs; Instagram/YouTube use profile CTA without raw URL; TikTok keeps the visible locale website address as plain text.'''
           if old2 not in s: raise SystemExit('MASTER_RULES social gate anchor missing')
           s=s.replace(old2,new2,1)
-          s=s.replace(
-            'Metricool schedule all connected social locales including required Pinterest coverage → Planner readback → analytics.',
-            'Metricool schedule all connected social locales using the 9-post-per-locale standard, including separate Pinterest Image and Pinterest Video Pins → Planner readback for the full active set (currently 72/72 across 8 connected locales) → analytics.'
-          ,1)
+          s=s.replace('Metricool schedule all connected social locales including required Pinterest coverage → Planner readback → analytics.','Metricool schedule all connected social locales using the 9-post-per-locale standard, including separate Pinterest Image and Pinterest Video Pins → Planner readback for the full active set (currently 72/72 across 8 connected locales) → analytics.',1)
           p.write_text(s,encoding='utf-8')
 
-          # Machine-readable rule source synchronized into D1.
           p=Path('lib/canonical_rules.js')
           s=p.read_text(encoding='utf-8')
           old=" ['pinterest','pinterest_eight_of_eight','Pinterest is mandatory for every approved topic in all eight locales uk, ru, pl, en, sv, de, es and fr, with the approved locale image, localized SEO title/description, correct locale board and exact same-language article URL.'],"
@@ -81,7 +71,6 @@ jobs:
           s=s.replace("'Canonical runtime rule synchronized from code/MASTER_RULES v4.6 + latest explicit decisions.'","'Canonical runtime rule synchronized from code/MASTER_RULES v4.11 + latest explicit decisions.'")
           p.write_text(s,encoding='utf-8')
 
-          # Protected production endpoint for one-shot canonical rule synchronization + D1 readback.
           p=Path('_worker.js')
           s=p.read_text(encoding='utf-8')
           s=s.replace("import {readCanonicalRules} from './lib/canonical_rules.js';","import {readCanonicalRules,syncCanonicalRules} from './lib/canonical_rules.js';",1)
@@ -103,15 +92,8 @@ jobs:
           set -euo pipefail
           sleep 90
           mkdir -p ops/readback
-          curl -fsSL --retry 20 --retry-all-errors --retry-delay 4 \
-            -X POST \
-            -H "Authorization: Bearer ${ADMIN_TOKEN}" \
-            'https://wisequotesworld.com/ops/run/sync-canonical-rules' \
-            -o /tmp/rules.json
-          curl -fsSL --retry 10 --retry-all-errors --retry-delay 3 \
-            -H "Authorization: Bearer ${ADMIN_TOKEN}" \
-            'https://wisequotesworld.com/api/admin/topics' \
-            -o /tmp/topics.json
+          curl -fsSL --retry 20 --retry-all-errors --retry-delay 4 -X POST -H "Authorization: Bearer ${ADMIN_TOKEN}" 'https://wisequotesworld.com/ops/run/sync-canonical-rules' -o /tmp/rules.json
+          curl -fsSL --retry 10 --retry-all-errors --retry-delay 3 -H "Authorization: Bearer ${ADMIN_TOKEN}" 'https://wisequotesworld.com/api/admin/topics' -o /tmp/topics.json
           python - <<'PY'
           import json
           rules=json.load(open('/tmp/rules.json',encoding='utf-8'))

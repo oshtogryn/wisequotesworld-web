@@ -1,0 +1,53 @@
+{
+  "project": "wisequotesworld",
+  "content_item_id": "WQ020",
+  "date": "2026-09-08",
+  "timezone": "Europe/Stockholm",
+  "status": "scheduled",
+  "published": false,
+  "metricool_planner_readback": {
+    "active_scheduled_total": 72,
+    "drafts_counted": false,
+    "duplicates_counted": false,
+    "counts": {
+      "threads": 24,
+      "facebook": 8,
+      "instagram": 8,
+      "tiktok": 8,
+      "youtube": 8,
+      "pinterest_image": 8,
+      "pinterest_video": 8
+    },
+    "per_locale_active": {
+      "uk": 9,
+      "ru": 9,
+      "pl": 9,
+      "en": 9,
+      "sv": 9,
+      "de": 9,
+      "es": 9,
+      "fr": 9
+    },
+    "pinterest_video_pins": [
+      {"locale":"uk","brand_id":"6774540","post_id":372517013,"scheduled_local":"2026-09-08T18:30:00+02:00"},
+      {"locale":"ru","brand_id":"6774520","post_id":372517038,"scheduled_local":"2026-09-08T18:45:00+02:00"},
+      {"locale":"pl","brand_id":"6774565","post_id":372517056,"scheduled_local":"2026-09-08T19:00:00+02:00"},
+      {"locale":"en","brand_id":"6774568","post_id":372517109,"scheduled_local":"2026-09-08T19:15:00+02:00"},
+      {"locale":"sv","brand_id":"6774579","post_id":372517148,"scheduled_local":"2026-09-08T19:30:00+02:00"},
+      {"locale":"de","brand_id":"6774582","post_id":372517166,"scheduled_local":"2026-09-08T19:45:00+02:00"},
+      {"locale":"es","brand_id":"6774586","post_id":372517250,"scheduled_local":"2026-09-08T20:00:00+02:00"},
+      {"locale":"fr","brand_id":"6803213","post_id":372517280,"scheduled_local":"2026-09-08T20:15:00+02:00"}
+    ]
+  },
+  "d1": {
+    "status_readback_file": "ops/readback/wq020-scheduled-state-20260908.json",
+    "status": "scheduled"
+  },
+  "canonical_rules": {
+    "production_d1_readback_file": "ops/readback/WQ011-production-d1.json",
+    "rules_present": 17,
+    "topic_schedule_72_gate": true,
+    "pinterest_two_formats_per_locale": true
+  },
+  "note": "WQ020 remains scheduled. Do not mark published until actual output is confirmed. Metricool counts in this file were recorded from live Planner readback after adding the eight Pinterest Video Pins."
+}

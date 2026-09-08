@@ -1,0 +1,35 @@
+name: Split WQ020 readback 2026-09-08
+on:
+  push:
+    paths:
+      - '.github/workflows/split-wq020-readback-20260908.yml'
+permissions:
+  contents: write
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Wait for export commit
+        run: |
+          sleep 10
+          git pull --rebase origin main
+      - name: Split export
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json,os
+          p='ops/readback/wq020-scheduling-export-20260908.json'
+          d=json.load(open(p,encoding='utf-8'))
+          os.makedirs('ops/readback/wq020',exist_ok=True)
+          json.dump({'item':d['item'],'approval':d['approval'],'visibility':d['visibility'],'versions':d['versions'],'pages':d['pages'],'media':d['media']},open('ops/readback/wq020/qa.json','w',encoding='utf-8'),ensure_ascii=False,indent=2)
+          for lang,pack in d['pack'].items():
+            json.dump(pack,open(f'ops/readback/wq020/{lang}.json','w',encoding='utf-8'),ensure_ascii=False,indent=2)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/wq020
+          git commit -m 'Split WQ020 scheduling readback'
+          git push

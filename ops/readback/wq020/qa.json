@@ -1,0 +1,351 @@
+{
+  "item": {
+    "id": "WQ020",
+    "status": "approved",
+    "author_name": "Oscar Wilde",
+    "attribution_status": "verified",
+    "quote_type": "verbatim"
+  },
+  "approval": {
+    "approval_scope": "content",
+    "status": "approved",
+    "updated_at": "2026-09-08T04:29:52.082Z"
+  },
+  "visibility": {
+    "approval_scope": "website_visibility",
+    "status": "approved",
+    "updated_at": "2026-09-08T04:29:58.476Z"
+  },
+  "versions": [
+    {
+      "language_code": "ar",
+      "adapted_text": "«نحن جميعًا في الحضيض، لكن بعضنا ينظر إلى النجوم.» — أوسكار وايلد",
+      "voiceover_text": "«نحن جميعًا في الحضيض، لكن بعضنا ينظر إلى النجوم.» — أوسكار وايلد",
+      "on_screen_text": "«نحن جميعًا في الحضيض، لكن بعضنا ينظر إلى النجوم.» — أوسكار وايلد",
+      "language_check_status": "native_qa_pass"
+    },
+    {
+      "language_code": "de",
+      "adapted_text": "„Wir liegen alle in der Gosse, aber einige von uns blicken zu den Sternen.“ — Oscar Wilde",
+      "voiceover_text": "„Wir liegen alle in der Gosse, aber einige von uns blicken zu den Sternen.“ — Oscar Wilde",
+      "on_screen_text": "„Wir liegen alle in der Gosse, aber einige von uns blicken zu den Sternen.“ — Oscar Wilde",
+      "language_check_status": "native_qa_pass"
+    },
+    {
+      "language_code": "en",
+      "adapted_text": "“We are all in the gutter, but some of us are looking at the stars.” — Oscar Wilde",
+      "voiceover_text": "“We are all in the gutter, but some of us are looking at the stars.” — Oscar Wilde",
+      "on_screen_text": "“We are all in the gutter, but some of us are looking at the stars.” — Oscar Wilde",
+      "language_check_status": "native_qa_pass"
+    },
+    {
+      "language_code": "es",
+      "adapted_text": "«Todos estamos en el arroyo, pero algunos miramos las estrellas». — Oscar Wilde",
+      "voiceover_text": "«Todos estamos en el arroyo, pero algunos miramos las estrellas». — Oscar Wilde",
+      "on_screen_text": "«Todos estamos en el arroyo, pero algunos miramos las estrellas». — Oscar Wilde",
+      "language_check_status": "native_qa_pass"
+    },
+    {
+      "language_code": "fr",
+      "adapted_text": "«Nous sommes tous dans le caniveau, mais certains d’entre nous regardent les étoiles.» — Oscar Wilde",
+      "voiceover_text": "«Nous sommes tous dans le caniveau, mais certains d’entre nous regardent les étoiles.» — Oscar Wilde",
+      "on_screen_text": "«Nous sommes tous dans le caniveau, mais certains d’entre nous regardent les étoiles.» — Oscar Wilde",
+      "language_check_status": "native_qa_pass"
+    },
+    {
+      "language_code": "id",
+      "adapted_text": "“Kita semua berada di selokan, tetapi sebagian dari kita memandang bintang-bintang.” — Oscar Wilde",
+      "voiceover_text": "“Kita semua berada di selokan, tetapi sebagian dari kita memandang bintang-bintang.” — Oscar Wilde",
+      "on_screen_text": "“Kita semua berada di selokan, tetapi sebagian dari kita memandang bintang-bintang.” — Oscar Wilde",
+      "language_check_status": "native_qa_pass"
+    },
+    {
+      "language_code": "it",
+      "adapted_text": "«Siamo tutti nel fango, ma alcuni di noi guardano le stelle.» — Oscar Wilde",
+      "voiceover_text": "«Siamo tutti nel fango, ma alcuni di noi guardano le stelle.» — Oscar Wilde",
+      "on_screen_text": "«Siamo tutti nel fango, ma alcuni di noi guardano le stelle.» — Oscar Wilde",
+      "language_check_status": "native_qa_pass"
+    },
+    {
+      "language_code": "pl",
+      "adapted_text": "„Wszyscy tkwimy w rynsztoku, ale niektórzy z nas patrzą w gwiazdy.” — Oscar Wilde",
+      "voiceover_text": "„Wszyscy tkwimy w rynsztoku, ale niektórzy z nas patrzą w gwiazdy.” — Oscar Wilde",
+      "on_screen_text": "„Wszyscy tkwimy w rynsztoku, ale niektórzy z nas patrzą w gwiazdy.” — Oscar Wilde",
+      "language_check_status": "native_qa_pass"
+    },
+    {
+      "language_code": "pt",
+      "adapted_text": "“Estamos todos na sarjeta, mas alguns de nós olham para as estrelas.” — Oscar Wilde",
+      "voiceover_text": "“Estamos todos na sarjeta, mas alguns de nós olham para as estrelas.” — Oscar Wilde",
+      "on_screen_text": "“Estamos todos na sarjeta, mas alguns de nós olham para as estrelas.” — Oscar Wilde",
+      "language_check_status": "native_qa_pass"
+    },
+    {
+      "language_code": "ru",
+      "adapted_text": "«Мы все в сточной канаве, но некоторые из нас смотрят на звёзды». — Оскар Уайльд",
+      "voiceover_text": "«Мы все в сточной канаве, но некоторые из нас смотрят на звёзды». — Оскар Уайльд",
+      "on_screen_text": "«Мы все в сточной канаве, но некоторые из нас смотрят на звёзды». — Оскар Уайльд",
+      "language_check_status": "native_qa_pass"
+    },
+    {
+      "language_code": "sv",
+      "adapted_text": "”Vi ligger alla i rännstenen, men några av oss ser upp mot stjärnorna.” — Oscar Wilde",
+      "voiceover_text": "”Vi ligger alla i rännstenen, men några av oss ser upp mot stjärnorna.” — Oscar Wilde",
+      "on_screen_text": "”Vi ligger alla i rännstenen, men några av oss ser upp mot stjärnorna.” — Oscar Wilde",
+      "language_check_status": "native_qa_pass"
+    },
+    {
+      "language_code": "tr",
+      "adapted_text": "“Hepimiz çukurdayız, ama bazılarımız yıldızlara bakıyor.” — Oscar Wilde",
+      "voiceover_text": "“Hepimiz çukurdayız, ama bazılarımız yıldızlara bakıyor.” — Oscar Wilde",
+      "on_screen_text": "“Hepimiz çukurdayız, ama bazılarımız yıldızlara bakıyor.” — Oscar Wilde",
+      "language_check_status": "native_qa_pass"
+    },
+    {
+      "language_code": "uk",
+      "adapted_text": "«Ми всі в стічній канаві, але дехто з нас дивиться на зорі». — Оскар Вайльд",
+      "voiceover_text": "«Ми всі в стічній канаві, але дехто з нас дивиться на зорі». — Оскар Вайльд",
+      "on_screen_text": "«Ми всі в стічній канаві, але дехто з нас дивиться на зорі». — Оскар Вайльд",
+      "language_check_status": "native_qa_pass"
+    }
+  ],
+  "pages": [
+    {
+      "language_code": "ar",
+      "slug": "oscar-wilde-gutter-stars",
+      "status": "published",
+      "canonical_path": "/ar/quotes/oscar-wilde-gutter-stars/",
+      "reflection_chars": 1231
+    },
+    {
+      "language_code": "de",
+      "slug": "oscar-wilde-gutter-stars",
+      "status": "published",
+      "canonical_path": "/de/quotes/oscar-wilde-gutter-stars/",
+      "reflection_chars": 1901
+    },
+    {
+      "language_code": "en",
+      "slug": "oscar-wilde-gutter-stars",
+      "status": "published",
+      "canonical_path": "/en/quotes/oscar-wilde-gutter-stars/",
+      "reflection_chars": 1835
+    },
+    {
+      "language_code": "es",
+      "slug": "oscar-wilde-gutter-stars",
+      "status": "published",
+      "canonical_path": "/es/quotes/oscar-wilde-gutter-stars/",
+      "reflection_chars": 1746
+    },
+    {
+      "language_code": "fr",
+      "slug": "oscar-wilde-gutter-stars",
+      "status": "published",
+      "canonical_path": "/fr/quotes/oscar-wilde-gutter-stars/",
+      "reflection_chars": 1958
+    },
+    {
+      "language_code": "id",
+      "slug": "oscar-wilde-gutter-stars",
+      "status": "published",
+      "canonical_path": "/id/quotes/oscar-wilde-gutter-stars/",
+      "reflection_chars": 1557
+    },
+    {
+      "language_code": "it",
+      "slug": "oscar-wilde-gutter-stars",
+      "status": "published",
+      "canonical_path": "/it/quotes/oscar-wilde-gutter-stars/",
+      "reflection_chars": 1415
+    },
+    {
+      "language_code": "pl",
+      "slug": "oscar-wilde-gutter-stars",
+      "status": "published",
+      "canonical_path": "/pl/quotes/oscar-wilde-gutter-stars/",
+      "reflection_chars": 1666
+    },
+    {
+      "language_code": "pt",
+      "slug": "oscar-wilde-gutter-stars",
+      "status": "published",
+      "canonical_path": "/pt/quotes/oscar-wilde-gutter-stars/",
+      "reflection_chars": 1383
+    },
+    {
+      "language_code": "ru",
+      "slug": "oscar-wilde-gutter-stars",
+      "status": "published",
+      "canonical_path": "/ru/quotes/oscar-wilde-gutter-stars/",
+      "reflection_chars": 1718
+    },
+    {
+      "language_code": "sv",
+      "slug": "oscar-wilde-gutter-stars",
+      "status": "published",
+      "canonical_path": "/sv/quotes/oscar-wilde-gutter-stars/",
+      "reflection_chars": 1689
+    },
+    {
+      "language_code": "tr",
+      "slug": "oscar-wilde-gutter-stars",
+      "status": "published",
+      "canonical_path": "/tr/quotes/oscar-wilde-gutter-stars/",
+      "reflection_chars": 1462
+    },
+    {
+      "language_code": "uk",
+      "slug": "oscar-wilde-gutter-stars",
+      "status": "published",
+      "canonical_path": "/uk/quotes/oscar-wilde-gutter-stars/",
+      "reflection_chars": 1699
+    }
+  ],
+  "media": [
+    {
+      "id": "151490f6-0751-461d-ab9f-e7582ea427dc",
+      "language": "de",
+      "asset_type": "pinterest",
+      "mime_type": "image/png",
+      "filename": "0E8E1E2C-AC5C-4154-B7BA-9B50569D3138.png",
+      "qa_status": "approved",
+      "created_at": "2026-09-08T04:29:14.209Z"
+    },
+    {
+      "id": "5f42ae03-fefe-4789-9481-583ecbe918fe",
+      "language": "de",
+      "asset_type": "video",
+      "mime_type": "video/quicktime",
+      "filename": "copy_E09BAC42-1440-420F-B0C6-2EA0EF6D0641.mov",
+      "qa_status": "approved",
+      "created_at": "2026-09-08T04:29:13.087Z"
+    },
+    {
+      "id": "013fabbb-ce29-44a8-ab3f-5c89f9f19861",
+      "language": "en",
+      "asset_type": "pinterest",
+      "mime_type": "image/png",
+      "filename": "9EE00203-E52F-4889-9A81-2B291D5CAA0C.png",
+      "qa_status": "approved",
+      "created_at": "2026-09-08T04:28:50.568Z"
+    },
+    {
+      "id": "b14e52b5-ac9c-4ba6-a37d-02b7cad83a8d",
+      "language": "en",
+      "asset_type": "video",
+      "mime_type": "video/quicktime",
+      "filename": "copy_08E179C2-4E64-4B10-9D04-D772130A16E0.mov",
+      "qa_status": "approved",
+      "created_at": "2026-09-08T04:28:48.964Z"
+    },
+    {
+      "id": "86ee0670-1a13-4be5-8198-04265b970f6f",
+      "language": "es",
+      "asset_type": "pinterest",
+      "mime_type": "image/png",
+      "filename": "85F1DCBF-F0D7-4389-A92F-104BB6E48D24.png",
+      "qa_status": "approved",
+      "created_at": "2026-09-08T04:29:22.559Z"
+    },
+    {
+      "id": "95545a2b-6990-45a2-9ad2-0fbcd1f28622",
+      "language": "es",
+      "asset_type": "video",
+      "mime_type": "video/quicktime",
+      "filename": "copy_ACE5E6AC-D84B-4F83-A26C-921B4457A3F8.mov",
+      "qa_status": "approved",
+      "created_at": "2026-09-08T04:29:21.295Z"
+    },
+    {
+      "id": "056e320e-3387-495e-8940-b8619dd26c46",
+      "language": "fr",
+      "asset_type": "pinterest",
+      "mime_type": "image/png",
+      "filename": "3BF0C23B-1365-4EEE-BC24-339744A9051E.png",
+      "qa_status": "approved",
+      "created_at": "2026-09-08T04:29:35.362Z"
+    },
+    {
+      "id": "78c0a3e6-b1ae-47ca-a9c1-c21b577fd6d3",
+      "language": "fr",
+      "asset_type": "video",
+      "mime_type": "video/quicktime",
+      "filename": "copy_77D2691B-051B-40F7-8F30-34870592E7FB.mov",
+      "qa_status": "approved",
+      "created_at": "2026-09-08T04:29:34.398Z"
+    },
+    {
+      "id": "b6ddfec9-0d7c-437e-a6b8-c3d79d78b1b3",
+      "language": "pl",
+      "asset_type": "pinterest",
+      "mime_type": "image/png",
+      "filename": "F07438CD-FDCA-46ED-A7EF-91EE76635F3E.png",
+      "qa_status": "approved",
+      "created_at": "2026-09-08T04:28:41.274Z"
+    },
+    {
+      "id": "d57ab628-8052-4b67-9c42-27ce36576fbe",
+      "language": "pl",
+      "asset_type": "video",
+      "mime_type": "video/quicktime",
+      "filename": "copy_E3B10F49-7E09-4517-95A2-2F17F77BB256.mov",
+      "qa_status": "approved",
+      "created_at": "2026-09-08T04:28:40.105Z"
+    },
+    {
+      "id": "cb54b68a-b3df-4a45-baa9-427dd0eaa2e8",
+      "language": "ru",
+      "asset_type": "pinterest",
+      "mime_type": "image/png",
+      "filename": "AC703222-6176-4160-B24F-247EA0406E0E.png",
+      "qa_status": "approved",
+      "created_at": "2026-09-08T04:28:24.720Z"
+    },
+    {
+      "id": "5176c279-cdbe-41db-a9a7-c15c7b844a6f",
+      "language": "ru",
+      "asset_type": "video",
+      "mime_type": "video/quicktime",
+      "filename": "copy_88F10CEF-668C-4CC6-8510-0F6D77BD9605.mov",
+      "qa_status": "approved",
+      "created_at": "2026-09-08T04:28:19.226Z"
+    },
+    {
+      "id": "cdf89bc6-db68-48d2-997e-ad99f6a5e7ff",
+      "language": "sv",
+      "asset_type": "pinterest",
+      "mime_type": "image/png",
+      "filename": "93AD3483-E26B-4B7B-8D62-472FAE58D2BD.png",
+      "qa_status": "approved",
+      "created_at": "2026-09-08T04:29:03.124Z"
+    },
+    {
+      "id": "9b042327-5177-45fb-b25b-29dcccd3e9c2",
+      "language": "sv",
+      "asset_type": "video",
+      "mime_type": "video/quicktime",
+      "filename": "copy_60FC7D65-AA3C-4D9C-B03A-12842617C5F3.mov",
+      "qa_status": "approved",
+      "created_at": "2026-09-08T04:29:01.464Z"
+    },
+    {
+      "id": "14e78d0a-6124-4fd4-9115-7e37d08dcf7a",
+      "language": "uk",
+      "asset_type": "pinterest",
+      "mime_type": "image/png",
+      "filename": "15B0BC19-9AE3-4C08-9EFF-3096B0847B05.png",
+      "qa_status": "approved",
+      "created_at": "2026-09-08T04:28:07.223Z"
+    },
+    {
+      "id": "7de06f78-5b61-4531-b4d7-1db75dea5aeb",
+      "language": "uk",
+      "asset_type": "video",
+      "mime_type": "video/quicktime",
+      "filename": "copy_DDDAE3C5-B345-499A-B091-1600D4641A0A.mov",
+      "qa_status": "approved",
+      "created_at": "2026-09-08T04:28:04.877Z"
+    }
+  ]
+}

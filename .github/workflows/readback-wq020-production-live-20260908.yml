@@ -1,0 +1,56 @@
+name: Readback WQ020 production live 2026-09-08
+on:
+  push:
+    paths:
+      - '.github/workflows/readback-wq020-production-live-20260908.yml'
+permissions:
+  contents: write
+jobs:
+  readback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch authenticated WQ020 production and localization readback
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -fsSL --retry 10 --retry-all-errors --retry-delay 3 \
+            -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+            'https://wisequotesworld.com/api/admin/production/WQ020' \
+            -o /tmp/production.json
+          curl -fsSL --retry 10 --retry-all-errors --retry-delay 3 \
+            -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+            'https://wisequotesworld.com/ops/readback/prepared-localizations.json' \
+            -o /tmp/localizations.json
+          curl -fsSL --retry 10 --retry-all-errors --retry-delay 3 \
+            -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+            'https://wisequotesworld.com/ops/readback/prepared-quality/WQ020.json' \
+            -o /tmp/quality.json
+          python - <<'PY'
+          import json
+          prod=json.load(open('/tmp/production.json',encoding='utf-8'))
+          loc=json.load(open('/tmp/localizations.json',encoding='utf-8'))
+          quality=json.load(open('/tmp/quality.json',encoding='utf-8'))
+          assert prod.get('ok') is True,prod
+          r=prod['readiness']
+          assert r.get('ready_for_metricool') is True,r
+          assert r.get('approval',{}).get('status')=='approved',r
+          ml=[x for x in r['languages'] if x['language'] in ['uk','ru','pl','en','sv','de','es','fr']]
+          assert len(ml)==8 and all(x.get('ready') for x in ml),ml
+          wq020=[x for x in loc.get('items',[]) if x.get('content_id')=='WQ020']
+          assert len(wq020)==13,wq020
+          assert all(x.get('language_check_status')=='native_qa_pass' for x in wq020),wq020
+          assert quality.get('ok') is True,quality
+          out={'production':prod,'localizations':wq020,'quality':quality}
+          open('ops/readback/wq020-production-live-20260908.json','w',encoding='utf-8').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print('WQ020 ready_for_metricool=TRUE; 8/8 social locales ready; 13/13 native QA pass')
+          PY
+      - name: Commit readback
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/wq020-production-live-20260908.json
+          git commit -m 'Record WQ020 production and localization readback' || true
+          git push

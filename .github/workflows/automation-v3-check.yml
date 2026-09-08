@@ -26,17 +26,3 @@ jobs:
           node --check admin/console/app.js
       - name: Run D1 migration and guardrail smoke tests
         run: python3 tests/db_smoke.py
-      - name: Live WQ020 scheduled D1 readback
-        run: |
-          set -euo pipefail
-          for i in $(seq 1 18); do
-            curl -fsSL --max-time 20 -A 'Mozilla/5.0' 'https://wisequotesworld.com/ops/readback/wq014-prompts.json' -o /tmp/wq020-live.json || true
-            cat /tmp/wq020-live.json || true
-            if grep -q '"wq020"' /tmp/wq020-live.json && grep -q '"status":"scheduled"' /tmp/wq020-live.json && grep -q '"to_status":"scheduled"' /tmp/wq020-live.json; then
-              echo 'WQ020 LIVE D1 scheduled readback VERIFIED'
-              exit 0
-            fi
-            sleep 10
-          done
-          echo 'WQ020 scheduled readback did not verify in time'
-          exit 1

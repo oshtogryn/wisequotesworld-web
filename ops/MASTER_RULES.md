@@ -1,8 +1,8 @@
 # MASTER RULES — Wise Quotes World
 
-Останнє оновлення: 2026-09-08
+Останнє оновлення: 2026-09-09
 Статус: CANONICAL
-Версія: database-first v4.11
+Версія: database-first v4.12
 
 ## 1. Джерела істини
 1. `ops/MASTER_RULES.md` — канонічне джерело операційних правил.
@@ -88,6 +88,15 @@ Pinterest is MANDATORY for every approved topic in every connected social locale
 2. Pinterest Video Pin — approved 9:16 locale topic video.
 
 Both require the correct locale board, localized Pinterest title, localized description and exact same-language article destination. Never use another language or homepage. Image and Video Pins must not publish simultaneously; default pattern is Image during the day and Video in the evening.
+
+### Pinterest creative differentiation — HARD
+- Pinterest Image Pin is a clean, save-worthy editorial asset. The image itself contains only the exact localized quote and, for `verbatim`, its author attribution. Do not add CTA text, “read more”, explanations, helper labels or promotional copy onto the image.
+- For one content_id, locale images must preserve the same meaning and premium WQW tone but must not look like near-identical language swaps. Vary composition, visual metaphor/details, lighting mood and color treatment where appropriate.
+- Every locale gets a subtle locale-aware editorial color direction. Treat it as mood and palette, not literal nationality: no flags, national emblems, stereotypical costumes, tourist landmarks or folk clichés unless the quote itself genuinely requires them.
+- Default locale palette cues: uk = deep blue + wheat-gold + dusk neutrals; ru = burgundy + charcoal + muted ivory; pl = warm ivory + muted crimson + graphite; en = Oxford navy + parchment + restrained brass; sv = Nordic cool blue + pale stone + soft amber; de = charcoal + forest green + warm ochre; es = terracotta + olive + warm cream; fr = slate blue + warm ivory + muted burgundy; it = olive + terracotta + warm stone; pt-BR = deep emerald + warm sand + muted azure; id = teak earth tones + warm cream + subdued indigo; tr = deep teal + copper + warm stone; ar = desert sand + deep indigo + antique gold. These are starting cues, not rigid brand colors; topic meaning and visual quality take priority.
+- Pinterest titles/descriptions must be native, SEO-natural and meaning-faithful, but not mechanical translations of one fixed template. Vary hooks, phrasing and sentence structure across locales and topics while preserving factual accuracy. Avoid keyword stuffing.
+- Pinterest Image and Video posts may use different native descriptions when that improves naturalness and click motivation, while both keep the exact same-language article destination.
+- This differentiation is required during preparation, before `pinterest_ready`, for all future topics and for prepared topics that have not yet had their media generated.
 
 ## 9. Required outputs
 For each website language: localized quote, localized article URL and substantive website reflection.

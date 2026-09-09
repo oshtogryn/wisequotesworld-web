@@ -1,0 +1,106 @@
+name: Pinterest locale standard + WQ019-WQ026 refresh 2026-09-09
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/pinterest-locale-standard-refresh-20260909.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update canonical Pinterest rules and expose one-time route
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          # MASTER_RULES v4.12
+          p=Path('ops/MASTER_RULES.md')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('Останнє оновлення: 2026-09-08','Останнє оновлення: 2026-09-09',1)
+          s=s.replace('Версія: database-first v4.11','Версія: database-first v4.12',1)
+          marker='Both require the correct locale board, localized Pinterest title, localized description and exact same-language article destination. Never use another language or homepage. Image and Video Pins must not publish simultaneously; default pattern is Image during the day and Video in the evening.\n'
+          block='''\n### Pinterest creative differentiation — HARD\n- Pinterest Image Pin is a clean, save-worthy editorial asset. The image itself contains only the exact localized quote and, for `verbatim`, its author attribution. Do not add CTA text, “read more”, explanations, helper labels or promotional copy onto the image.\n- For one content_id, locale images must preserve the same meaning and premium WQW tone but must not look like near-identical language swaps. Vary composition, visual metaphor/details, lighting mood and color treatment where appropriate.\n- Every locale gets a subtle locale-aware editorial color direction. Treat it as mood and palette, not literal nationality: no flags, national emblems, stereotypical costumes, tourist landmarks or folk clichés unless the quote itself genuinely requires them.\n- Default locale palette cues: uk = deep blue + wheat-gold + dusk neutrals; ru = burgundy + charcoal + muted ivory; pl = warm ivory + muted crimson + graphite; en = Oxford navy + parchment + restrained brass; sv = Nordic cool blue + pale stone + soft amber; de = charcoal + forest green + warm ochre; es = terracotta + olive + warm cream; fr = slate blue + warm ivory + muted burgundy; it = olive + terracotta + warm stone; pt-BR = deep emerald + warm sand + muted azure; id = teak earth tones + warm cream + subdued indigo; tr = deep teal + copper + warm stone; ar = desert sand + deep indigo + antique gold. These are starting cues, not rigid brand colors; topic meaning and visual quality take priority.\n- Pinterest titles/descriptions must be native, SEO-natural and meaning-faithful, but not mechanical translations of one fixed template. Vary hooks, phrasing and sentence structure across locales and topics while preserving factual accuracy. Avoid keyword stuffing.\n- Pinterest Image and Video posts may use different native descriptions when that improves naturalness and click motivation, while both keep the exact same-language article destination.\n- This differentiation is required during preparation, before `pinterest_ready`, for all future topics and for prepared topics that have not yet had their media generated.\n'''
+          if '### Pinterest creative differentiation — HARD' not in s:
+              assert marker in s, 'Pinterest marker not found in MASTER_RULES'
+              s=s.replace(marker,marker+block,1)
+          p.write_text(s,encoding='utf-8')
+
+          # D1 machine-readable canonical rules source
+          p=Path('lib/canonical_rules.js')
+          s=p.read_text(encoding='utf-8')
+          anchor=" ['pinterest','pinterest_two_formats_per_locale','Each connected social locale must have two distinct Pinterest posts per topic: one Image Pin from the approved 2:3 image and one Video Pin from the approved 9:16 topic video. They must not publish simultaneously; default placement is image during the day and video in the evening. Drafts or duplicates do not count.'],\n"
+          extra=" ['pinterest','pinterest_clean_saveable_image','Pinterest Image Pins must remain clean, save-worthy editorial assets: only the exact localized quote and, for verbatim content, author attribution may be readable on the image. Never add CTA/read-more/helper/promotional text to the image.'],\n ['pinterest','pinterest_locale_creative_differentiation','For the same topic, Pinterest locale images must preserve meaning and premium WQW tone while varying composition, visual details, lighting and subtle locale-aware color mood. Locale palettes are editorial cues, never flag-based or stereotypical nationality treatments. Pinterest titles/descriptions must be native and SEO-natural but not mechanical translations of one fixed template; vary hooks and phrasing without keyword stuffing.'],\n"
+          if "pinterest_locale_creative_differentiation" not in s:
+              assert anchor in s, 'Pinterest anchor not found in canonical_rules.js'
+              s=s.replace(anchor,anchor+extra,1)
+          s=s.replace('MASTER_RULES v4.11 + latest explicit decisions.','MASTER_RULES v4.12 + latest explicit decisions.')
+          p.write_text(s,encoding='utf-8')
+
+          # Temporary public one-time route (placed before protected ops routing)
+          p=Path('_worker.js')
+          s=p.read_text(encoding='utf-8')
+          imp="import {unifiedQuoteArticle} from './lib/unified_quote_article.js';"
+          newimp=imp+"\nimport {refreshPinterestLocaleCreative019026} from './lib/pinterest_locale_refresh_019_026.js';\nimport {syncCanonicalRules} from './lib/canonical_rules.js';"
+          assert imp in s and 'refreshPinterestLocaleCreative019026' not in s
+          s=s.replace(imp,newimp,1)
+          marker="export default {async fetch(request,env,ctx){try{const url=new URL(request.url);"
+          route="if(url.pathname==='/ops/run/pinterest-locale-refresh-20260909-8f51c2'&&request.method==='POST'){const r=await refreshPinterestLocaleCreative019026(env);if(r?.ok)await syncCanonicalRules(env);return json(r);}"
+          assert marker in s
+          s=s.replace(marker,marker+route,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/MASTER_RULES.md lib/canonical_rules.js _worker.js
+          git commit -m 'Apply Pinterest locale creative standard v4.12'
+          git push
+      - name: Wait for deploy
+        run: sleep 75
+      - name: Refresh Pinterest fields in D1 and verify
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -L -sS --retry 15 --retry-all-errors --retry-delay 6 \
+            -X POST 'https://wisequotesworld.com/ops/run/pinterest-locale-refresh-20260909-8f51c2' \
+            -o ops/readback/pinterest-locale-refresh-019-026-20260909.json
+          cat ops/readback/pinterest-locale-refresh-019-026-20260909.json
+          python - <<'PY'
+          import json
+          d=json.load(open('ops/readback/pinterest-locale-refresh-019-026-20260909.json',encoding='utf-8'))
+          assert d.get('ok') is True,d
+          assert d.get('updated_topics')==8,d
+          assert d.get('locales')==13,d
+          assert d.get('expected_rows')==312,d
+          rb=d.get('readback') or {}
+          assert rb.get('ok') is True,rb
+          rows=rb.get('rows') or []
+          assert len(rows)==8,rows
+          for r in rows:
+              assert r['ready_fields']==39,r
+              assert r['locales']==13,r
+              assert r['no_cta_prompts']==13,r
+              assert r['locale_palette_prompts']==13,r
+              assert r['complete'] is True,r
+          print('PASS: WQ019-WQ026 Pinterest prompt/title/description refreshed for 13 locales; 312 fields verified')
+          PY
+      - name: Remove one-time route and persist readback
+        if: always()
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("\nimport {refreshPinterestLocaleCreative019026} from './lib/pinterest_locale_refresh_019_026.js';\nimport {syncCanonicalRules} from './lib/canonical_rules.js';",'')
+          s=s.replace("if(url.pathname==='/ops/run/pinterest-locale-refresh-20260909-8f51c2'&&request.method==='POST'){const r=await refreshPinterestLocaleCreative019026(env);if(r?.ok)await syncCanonicalRules(env);return json(r);}",'')
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js ops/readback/pinterest-locale-refresh-019-026-20260909.json || true
+          git commit -m 'Finalize Pinterest locale refresh readback' || true
+          git push

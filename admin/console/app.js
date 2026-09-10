@@ -1,8 +1,8 @@
 const $=id=>document.getElementById(id);
 const ALL_LANGS=['uk','ru','pl','en','sv','de','es','fr','it','pt','id','tr','ar'];
 const SOCIAL_LANGS=['uk','ru','pl','en','sv','de','es','fr'];
-const OUTS=['article_url','pinterest_prompt','facebook','instagram','threads','tiktok','youtube_title','youtube_description','pinterest_title','pinterest_description','website_reflection'];
-const LABELS={article_url:'Localized article URL',pinterest_prompt:'Pinterest image prompt',facebook:'Facebook',instagram:'Instagram',threads:'Threads ×3',tiktok:'TikTok',youtube_title:'YouTube title',youtube_description:'YouTube description',pinterest_title:'Pinterest title',pinterest_description:'Pinterest description',website_reflection:'Website reflection'};
+const OUTS=['article_url','pinterest_prompt','facebook','instagram','threads','tiktok','youtube_title','youtube_description','pinterest_title','pinterest_description','pinterest_video_title','pinterest_video_description','website_reflection'];
+const LABELS={article_url:'Localized article URL',pinterest_prompt:'Pinterest image prompt',facebook:'Facebook',instagram:'Instagram',threads:'Threads ×3',tiktok:'TikTok',youtube_title:'YouTube title',youtube_description:'YouTube description',pinterest_title:'Pinterest title',pinterest_description:'Pinterest image description',pinterest_video_title:'Pinterest video title',pinterest_video_description:'Pinterest video description',website_reflection:'Website reflection'};
 const STATUS_LABEL={idea:'Майбутня',source_check:'Перевірка джерела',quote_ready:'Цитата готова',localized:'Локалізовано',native_language_qa:'Native QA',prompt_ready:'Prompts готові',copy_ready:'Posts готові',website_ready:'Статті готові',pinterest_ready:'Pinterest готовий',media_pending:'Чекає media',media_ready:'Media готові',approved:'Approved',scheduled:'Заплановано',published:'Опубліковано',skipped:'Пропущено'};
 let ITEMS=[],TOPICS=[],CURRENT=null;
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}

@@ -48,6 +48,7 @@ Status: IN PROGRESS — code hardening largely complete; edge rate limits and pr
   - CSP `frame-ancestors 'none'`
 - Newsletter subscribe already has application-level input validation, language allow-list, email length/format validation, and a honeypot field.
 - Added `.github/workflows/security-scan.yml` with CodeQL JavaScript analysis and minimal workflow permissions.
+- CodeQL run 18 for commit `62c0752e6aaa509c779ea3936a2acdcfcd71330e` completed successfully: checkout, initialization, JavaScript analysis, and post-analysis all passed.
 
 ## Remaining P0 — Cloudflare edge controls
 
@@ -71,7 +72,7 @@ Verify after deployment:
 5. Non-browser automation without either a valid Access identity or valid legacy backend credential is rejected.
 6. Rate limiting is active on abuse-sensitive endpoints.
 7. Security headers are visible in real production responses.
-8. CodeQL security scan completes successfully.
+8. CodeQL security scan completes successfully. ✅ Verified 2026-09-10, run 18.
 
 ## P1 after P0 verification
 

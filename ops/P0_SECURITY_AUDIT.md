@@ -1,120 +1,89 @@
 # Wise Quotes World — P0 Security Audit
 
 Updated: 2026-09-10
-Status: IN PROGRESS — code hardening and Cloudflare edge hardening complete; final production readback remains
+Status: CODE/EDGE HARDENING COMPLETE — final browser production readback remains
 
-## Confirmed findings
+## Confirmed security model
 
-1. Cloudflare Access is the primary browser/admin identity layer. Browser users must not be required to paste or store `ADMIN_TOKEN`.
-2. `ADMIN_TOKEN` remains a legacy backend credential for non-browser automation/fallback and as a temporary server-side compatibility bridge for legacy handlers.
-3. `/admin/*`, `/ops/*`, and `/api/admin/*` are protected in Cloudflare Access with an explicit admin policy and MFA.
-4. Some historical handlers in `_worker_legacy.js` still contain their own token checks; they are now behind the canonical top-level gate and receive the legacy credential only server-side after successful Access/admin authentication.
-5. The repository contains many historical one-off GitHub Actions workflows; cleanup is P1 after P0 is stable.
+1. Cloudflare Access is the primary browser/admin identity layer. Browser users never paste or store `ADMIN_TOKEN`.
+2. `ADMIN_TOKEN` may remain only as a legacy non-browser fallback accepted by the canonical `lib/admin_auth.js`; it is no longer injected into browser/admin requests for legacy handlers.
+3. `/admin/*`, `/ops/*`, and `/api/admin/*` are protected by the canonical Worker gate and Cloudflare Access policy/MFA.
+4. Legacy handlers in `_worker_legacy.js` no longer perform their own `ADMIN_TOKEN` comparison. They accept only the server-only internal marker written after the canonical top-level gate succeeds.
+5. The top-level gate first strips any client-supplied `x-wqw-canonical-admin` header, authenticates the request, then writes that marker internally. A client cannot self-assert the legacy bridge.
 
-## Implemented in Cloudflare Access
+## Cloudflare Access / zone edge
 
-- One shared Access application (`Admin Access`) protects both Wise Quotes World and Sweden No Sugar admin surfaces.
-- Wise Quotes World destinations are protected for `admin*`, `ops*`, and `api/admin*`.
-- Authorized admin identity policy is configured.
-- MFA is configured and verified with biometrics / Face ID.
-- App Launcher is configured and protected by its own reusable `Launcher` policy.
-- Reusable admin policy is named `Admin Only`.
+Verified/configured 2026-09-10:
 
-## Implemented at the Cloudflare zone edge
+- Shared Access application `Admin Access` protects the Wise Quotes World admin surfaces.
+- Wise destinations cover `admin*`, `ops*`, and `api/admin*`.
+- Reusable admin policy `Admin Only`; MFA verified with biometric/Face ID flow.
+- App Launcher protected by reusable `Launcher` policy.
+- Universal SSL active, including backup certificate for the apex/wildcard.
+- Always Use HTTPS enabled.
+- Minimum TLS 1.2; TLS 1.3 enabled.
+- Automatic HTTPS Rewrites enabled.
+- Bot Fight Mode enabled.
+- Certificate Transparency Monitoring enabled with active recipient.
+- Newsletter edge rate limit: `POST /api/newsletter/subscribe`, 5 requests / 10 seconds, Block for 10 seconds.
+- Custom WAF rules protect newsletter method surface, suspicious admin/ops methods, and sensitive-file probes.
+- Worker emits HSTS centrally: `max-age=31536000; includeSubDomains`.
+- Cloudflare HSTS UI is intentionally not enabled merely to duplicate the Worker header.
+- Leaked-credentials mitigation was not enabled because the Free-plan rate-limit quota is already used; do not replace the newsletter rate-limit rule just to enable it.
 
-Verified/configured manually on 2026-09-10:
+## Code hardening completed
 
-- Universal SSL is active and a backup certificate has been issued for `wisequotesworld.com` / `*.wisequotesworld.com`.
-- `Always Use HTTPS` is enabled.
-- Minimum TLS version is TLS 1.2.
-- TLS 1.3 is enabled.
-- Automatic HTTPS Rewrites are enabled.
-- Bot Fight Mode is enabled.
-- Certificate Transparency Monitoring is enabled with an active notification recipient.
-- Newsletter subscribe edge rate limiting is active for `POST /api/newsletter/subscribe`: 5 requests / 10 seconds, Block for 10 seconds.
-- Custom WAF rule protects the newsletter endpoint method surface.
-- Custom WAF rule blocks suspicious methods on `/admin*`, `/ops*`, and `/api/admin*` while preserving the methods required by the application.
-- Custom WAF rule blocks sensitive-file probes.
+- Canonical backend auth helper: `lib/admin_auth.js`.
+- Shared `requireAdmin()` gate used by admin topics, newsletter admin, publication API, production console, and site visibility API.
+- Canonical top-level admin/ops gate executes before sensitive module execution.
+- Legacy browser token field/storage removed from Admin Console.
+- Legacy server-side `ADMIN_TOKEN` injection bridge retired.
+- `_worker_legacy.js` now trusts only the canonical server-internal marker after the top-level gate.
+- Public `/api/health` minimized to `{"ok":true}`.
+- Binding/system diagnostics moved to protected `/api/admin/health`.
+- Admin Console connects through the protected health endpoint and same-origin Access session.
+- Central `lib/security_headers.js` adds HSTS, HTML CSP, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, X-Frame-Options, Cross-Origin-Opener-Policy and CSP `frame-ancestors 'none'`.
+- Newsletter application validation includes allow-listed languages, email format/length validation and honeypot protection.
+- CodeQL JavaScript workflow runs with minimal permissions (`contents: read`, `security-events: write`).
+- Production probe workflow exists, but Cloudflare Bot Fight/WAF can deliberately return 403 to datacenter curl; protections must not be weakened to satisfy that synthetic probe.
+- D1 website-publication scheduling was added independently of social scheduling. Scheduler table initialization occurs before public site SQL can reference the schedule table.
+- Completed temporary scheduler/security patch workflows created on 2026-09-10 were removed after successful deployment.
+- Obsolete one-off repair workflows removed in this audit pass include old newsletter/start repair actions and the obsolete ten-language rules updater.
 
-The Worker also emits HSTS centrally (`max-age=31536000; includeSubDomains`). Cloudflare's separate HSTS UI toggle is therefore not required merely to obtain HSTS and should not be enabled blindly until all current/future subdomains are confirmed HTTPS-safe.
+## Deployment evidence
 
-## Implemented in code
+- Website scheduler/navigation/admin UI patch `73ba9bb5a4fa16f8f84de83a49cb6c3a768752d8` deployed successfully to Cloudflare Pages.
+- Runtime hardening patch `193544730b7f0a7ec0bad562f0e4382ebf8a6422` deployed successfully to Cloudflare Pages.
+- `node --check` passed in the one-off hardening workflow for `_worker.js`, `_worker_legacy.js`, Admin Console JavaScript, and scheduler modules before the hardening commit was pushed.
+- Security Scan / CodeQL remains the canonical code-scanning workflow.
 
-- Added `lib/admin_auth.js` as the canonical backend admin authentication helper.
-- `requireAdmin(request, env)` returns a 401 response on failure.
-- Browser requests authenticated by Cloudflare Access are accepted using Access identity headers/assertion.
-- Legacy Bearer / `x-admin-token` transport remains accepted for non-browser automation/fallback.
-- Token comparison is performed on SHA-256 digests and avoids direct plain string comparison in the shared helper.
-- Migrated `lib/admin_topics_api.js` to `requireAdmin()`.
-- Migrated `lib/newsletter_admin.js` to `requireAdmin()`.
-- Migrated `lib/publication_api.js` to `requireAdmin()`.
-- Migrated `lib/production_console_api_v2.js` to `requireAdmin()`.
-- Migrated `lib/site_visibility_api.js` to `requireAdmin()`.
-- Added a canonical top-level admin/ops gate in `_worker.js` before any sensitive module execution.
-- Added a temporary server-side compatibility bridge for legacy handlers: after the canonical gate succeeds, `_worker.js` injects the legacy backend credential internally. The credential is never sent to browser JavaScript or exposed in page storage.
-- Removed browser-side `ADMIN_TOKEN` / pseudo-token handling from `admin/console/app.js`.
-- Removed the legacy token field and token-storage compatibility script from `admin/console/index.html`.
-- Admin Console now uses the Cloudflare Access session with same-origin credentials.
-- Added centralized response hardening in `lib/security_headers.js` and applies it at the Worker response boundary:
-  - Strict-Transport-Security
-  - Content-Security-Policy for HTML
-  - X-Content-Type-Options
-  - Referrer-Policy
-  - Permissions-Policy
-  - X-Frame-Options
-  - Cross-Origin-Opener-Policy
-  - CSP `frame-ancestors 'none'`
-- Newsletter subscribe already has application-level input validation, language allow-list, email length/format validation, and a honeypot field.
-- Added `.github/workflows/security-scan.yml` with CodeQL JavaScript analysis and minimal workflow permissions.
-- CodeQL run 18 for commit `62c0752e6aaa509c779ea3936a2acdcfcd71330e` completed successfully: checkout, initialization, JavaScript analysis, and post-analysis all passed.
-- Added `.github/workflows/p0-production-verification.yml` to probe public HTTPS/security headers and anonymous admin gates from GitHub Actions.
+## Remaining P0 production evidence — manual/browser only
 
-## Production verification status
+These are operational verification items, not unresolved implementation defects:
 
-Verified / strong evidence:
+1. In an authenticated Cloudflare Access Safari/browser session, open `/admin/console/` and confirm the complete Admin Console loads with `● online`, with no token field and no `unauthorized` JSON.
+2. In a private/anonymous window, open the same URL and confirm Cloudflare Access login/denial appears and application content is not exposed.
+3. Confirm a real browser production HTML response carries the expected security headers. Datacenter curl is not accepted as authoritative because Bot Fight/WAF intentionally blocks it.
 
-1. Cloudflare Access authentication + MFA flow works in the browser. ✅
-2. Access rules exist for `/admin/*`, `/ops/*`, `/api/admin/*`. ✅
-3. Edge newsletter rate limit is deployed. ✅
-4. Custom WAF protections are deployed. ✅
-5. CodeQL security scan completes successfully. ✅
-6. Cloudflare Pages deploy for commit `38fef34fb65c06f19faa50cd73ec34d5fa8a0498` completed successfully. ✅
+Do not mark P0 `COMPLETE` until those three production readbacks are captured.
 
-Still requiring deterministic production readback:
+## Remaining repository/security governance
 
-1. Authenticated Cloudflare Access browser session can use every Admin Console function without manually entering or storing `ADMIN_TOKEN`.
-2. Non-browser automation without either a valid Access identity or valid legacy backend credential is rejected by the Worker gate.
-3. Security headers are visible in a real production Worker response.
-4. Anonymous probes to `/admin/*`, `/ops/*`, and `/api/admin/*` return only an Access gate / denial and never application content.
-
-### Automated probe note
-
-The first GitHub Actions production probe on 2026-09-10 received HTTP 403 for the public homepage before it reached the Worker. This is consistent with Cloudflare edge bot/WAF protection blocking a datacenter `curl` client. That demonstrates edge mitigation is active, but it prevents that runner from being used as proof of Worker response headers. The workflow must therefore use an approved browser/Access-aware probe path or a separate readback method for the remaining header checks; do not weaken Bot Fight Mode merely to make the probe pass.
-
-## P1 after P0 verification
-
-- Remove duplicated legacy auth helpers from `_worker_legacy.js` and retire the temporary compatibility bridge.
-- Reduce/remove old one-off GitHub Actions workflows after confirming they are no longer operationally required.
-- Minimize public health/status endpoint metadata.
+- GitHub repository currently has no repository ruleset returned by the GitHub rulesets API. Add protection for `main` (pull request or explicit controlled-bypass policy, prevent deletion/force-push, and require the canonical validation/security checks as appropriate). This requires repository administration capability not exposed by the current connector.
+- Continue retiring historical one-off workflows only after confirming they are no longer operationally required; preserve canonical security/production workflows.
+- If Cloudflare Access JWT cryptographic verification is later moved into application code, configure the exact Access issuer/team domain and application AUD first. Do not implement permissive or guessed JWT verification.
 
 ## Secrets audit checklist
 
-The following must exist only as Cloudflare Worker Secrets and/or GitHub Actions Secrets, never committed in source:
+The following must exist only as Cloudflare Worker/GitHub/connector secrets, never committed in source:
 
 - ADMIN_TOKEN
 - Cloudflare API credentials
 - Brevo API key
-- OpenAI API key
+- OpenAI API key, if ever explicitly enabled
 - Metricool credentials/tokens
 - Telegram credentials
 - GitHub tokens
 - social API credentials
 
-Rotate immediately if any secret is discovered in repository history, logs, artifacts, or workflow output.
-
-## 2026-09-10 follow-up hardening
-
-- Legacy ADMIN_TOKEN injection bridge retired. The top-level canonical admin gate strips any client-supplied internal marker, authenticates the request, then adds a server-only `x-wqw-canonical-admin` marker for legacy handlers.
-- Public `/api/health` metadata minimized to `{"ok":true}`; binding diagnostics moved to protected `/api/admin/health`.
-- D1 website publication scheduling added independently of social scheduling.
-- Remaining P0 evidence is operational: authenticated Admin Console browser readback, anonymous/private-window denial readback, and production security-header readback.
+Rotate any secret immediately if it is discovered in repository history, logs or artifacts.

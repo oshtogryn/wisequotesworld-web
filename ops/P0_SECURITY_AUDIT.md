@@ -1,7 +1,7 @@
 # Wise Quotes World — P0 Security Audit
 
 Updated: 2026-09-10
-Status: IN PROGRESS — code hardening largely complete; edge rate limits and production verification remain
+Status: IN PROGRESS — code hardening and Cloudflare edge hardening complete; final production readback remains
 
 ## Confirmed findings
 
@@ -11,7 +11,7 @@ Status: IN PROGRESS — code hardening largely complete; edge rate limits and pr
 4. Some historical handlers in `_worker_legacy.js` still contain their own token checks; they are now behind the canonical top-level gate and receive the legacy credential only server-side after successful Access/admin authentication.
 5. The repository contains many historical one-off GitHub Actions workflows; cleanup is P1 after P0 is stable.
 
-## Implemented in Cloudflare
+## Implemented in Cloudflare Access
 
 - One shared Access application (`Admin Access`) protects both Wise Quotes World and Sweden No Sugar admin surfaces.
 - Wise Quotes World destinations are protected for `admin*`, `ops*`, and `api/admin*`.
@@ -19,6 +19,24 @@ Status: IN PROGRESS — code hardening largely complete; edge rate limits and pr
 - MFA is configured and verified with biometrics / Face ID.
 - App Launcher is configured and protected by its own reusable `Launcher` policy.
 - Reusable admin policy is named `Admin Only`.
+
+## Implemented at the Cloudflare zone edge
+
+Verified/configured manually on 2026-09-10:
+
+- Universal SSL is active and a backup certificate has been issued for `wisequotesworld.com` / `*.wisequotesworld.com`.
+- `Always Use HTTPS` is enabled.
+- Minimum TLS version is TLS 1.2.
+- TLS 1.3 is enabled.
+- Automatic HTTPS Rewrites are enabled.
+- Bot Fight Mode is enabled.
+- Certificate Transparency Monitoring is enabled with an active notification recipient.
+- Newsletter subscribe edge rate limiting is active for `POST /api/newsletter/subscribe`: 5 requests / 10 seconds, Block for 10 seconds.
+- Custom WAF rule protects the newsletter endpoint method surface.
+- Custom WAF rule blocks suspicious methods on `/admin*`, `/ops*`, and `/api/admin*` while preserving the methods required by the application.
+- Custom WAF rule blocks sensitive-file probes.
+
+The Worker also emits HSTS centrally (`max-age=31536000; includeSubDomains`). Cloudflare's separate HSTS UI toggle is therefore not required merely to obtain HSTS and should not be enabled blindly until all current/future subdomains are confirmed HTTPS-safe.
 
 ## Implemented in code
 
@@ -49,30 +67,29 @@ Status: IN PROGRESS — code hardening largely complete; edge rate limits and pr
 - Newsletter subscribe already has application-level input validation, language allow-list, email length/format validation, and a honeypot field.
 - Added `.github/workflows/security-scan.yml` with CodeQL JavaScript analysis and minimal workflow permissions.
 - CodeQL run 18 for commit `62c0752e6aaa509c779ea3936a2acdcfcd71330e` completed successfully: checkout, initialization, JavaScript analysis, and post-analysis all passed.
+- Added `.github/workflows/p0-production-verification.yml` to probe public HTTPS/security headers and anonymous admin gates from GitHub Actions.
 
-## Remaining P0 — Cloudflare edge controls
+## Production verification status
 
-Configure rate limiting / WAF for:
+Verified / strong evidence:
 
-- `/api/newsletter/subscribe`
-- `/api/admin/*`
-- `/api/admin/media*`
-- `/ops/*`
+1. Cloudflare Access authentication + MFA flow works in the browser. ✅
+2. Access rules exist for `/admin/*`, `/ops/*`, `/api/admin/*`. ✅
+3. Edge newsletter rate limit is deployed. ✅
+4. Custom WAF protections are deployed. ✅
+5. CodeQL security scan completes successfully. ✅
+6. Cloudflare Pages deploy for commit `38fef34fb65c06f19faa50cd73ec34d5fa8a0498` completed successfully. ✅
 
-Edge rate limiting is preferred here rather than a D1-backed application limiter because it blocks abuse before Worker/D1/R2 execution.
+Still requiring deterministic production readback:
 
-## Remaining P0 — production verification
+1. Authenticated Cloudflare Access browser session can use every Admin Console function without manually entering or storing `ADMIN_TOKEN`.
+2. Non-browser automation without either a valid Access identity or valid legacy backend credential is rejected by the Worker gate.
+3. Security headers are visible in a real production Worker response.
+4. Anonymous probes to `/admin/*`, `/ops/*`, and `/api/admin/*` return only an Access gate / denial and never application content.
 
-Verify after deployment:
+### Automated probe note
 
-1. Anonymous request to `/admin/*` is blocked by Cloudflare Access.
-2. Anonymous request to `/ops/*` is blocked by Cloudflare Access.
-3. Anonymous request to `/api/admin/*` is blocked by Cloudflare Access.
-4. Authenticated Cloudflare Access browser session can use the Admin Console without manually entering or storing `ADMIN_TOKEN`.
-5. Non-browser automation without either a valid Access identity or valid legacy backend credential is rejected.
-6. Rate limiting is active on abuse-sensitive endpoints.
-7. Security headers are visible in real production responses.
-8. CodeQL security scan completes successfully. ✅ Verified 2026-09-10, run 18.
+The first GitHub Actions production probe on 2026-09-10 received HTTP 403 for the public homepage before it reached the Worker. This is consistent with Cloudflare edge bot/WAF protection blocking a datacenter `curl` client. That demonstrates edge mitigation is active, but it prevents that runner from being used as proof of Worker response headers. The workflow must therefore use an approved browser/Access-aware probe path or a separate readback method for the remaining header checks; do not weaken Bot Fight Mode merely to make the probe pass.
 
 ## P1 after P0 verification
 

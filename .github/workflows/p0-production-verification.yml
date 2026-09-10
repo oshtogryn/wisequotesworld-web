@@ -1,0 +1,85 @@
+name: P0 Production Security Verification
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/p0-production-verification.yml'
+      - '_worker.js'
+      - 'lib/admin_auth.js'
+      - 'lib/security_headers.js'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p0-production-security-verification
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify public HTTPS and security headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://wisequotesworld.com'
+          headers="$(mktemp)"
+          body="$(mktemp)"
+          code="$(curl -sS --connect-timeout 10 --max-time 30 -D "$headers" -o "$body" -w '%{http_code}' "$BASE/")"
+          echo "Homepage HTTP status: $code"
+          test "$code" = '200'
+
+          require_header() {
+            local name="$1"
+            if ! grep -qiE "^${name}:" "$headers"; then
+              echo "Missing required header: $name"
+              cat "$headers"
+              exit 1
+            fi
+          }
+
+          require_header 'strict-transport-security'
+          require_header 'x-content-type-options'
+          require_header 'referrer-policy'
+          require_header 'permissions-policy'
+          require_header 'x-frame-options'
+          require_header 'cross-origin-opener-policy'
+          require_header 'content-security-policy'
+
+          grep -qiE '^strict-transport-security:.*max-age=' "$headers"
+          grep -qiE '^x-content-type-options:[[:space:]]*nosniff' "$headers"
+          grep -qiE '^x-frame-options:[[:space:]]*DENY' "$headers"
+          grep -qiE '^content-security-policy:.*frame-ancestors' "$headers"
+
+      - name: Verify anonymous admin surfaces are gated
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://wisequotesworld.com'
+          for path in '/admin/' '/ops/' '/api/admin/'; do
+            headers="$(mktemp)"
+            code="$(curl -sS --connect-timeout 10 --max-time 30 -D "$headers" -o /dev/null -w '%{http_code}' "$BASE$path")"
+            location="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]+:[[:space:]]*/,""); sub(/\r$/,""); print; exit}' "$headers")"
+            echo "$path => HTTP $code ${location:+Location: $location}"
+            case "$code" in
+              301|302|303|307|308|401|403) ;;
+              *) echo "FAIL: anonymous request to $path was not gated"; cat "$headers"; exit 1 ;;
+            esac
+          done
+
+      - name: Verify newsletter endpoint rejects GET and remains reachable through edge
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://wisequotesworld.com/api/newsletter/subscribe'
+          code="$(curl -sS --connect-timeout 10 --max-time 30 -o /tmp/newsletter-body -w '%{http_code}' "$url")"
+          echo "Newsletter GET status: $code"
+          cat /tmp/newsletter-body || true
+          case "$code" in
+            400|404|405) ;;
+            *) echo 'FAIL: unexpected GET behavior on newsletter subscribe endpoint'; exit 1 ;;
+          esac

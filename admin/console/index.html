@@ -10,7 +10,6 @@
 <body>
 <header class="top"><div><div class="brand">Wise Quotes World</div><div class="topsub">Editorial & Production</div></div><div id="health" class="offline">● connecting</div></header>
 <main class="wrap">
-  <section class="auth" hidden><input id="token" type="password" value="cloudflare-access"><button id="connectBtn">Підключити</button></section>
   <nav class="nav">
     <button class="on" data-tab="topics">Теми</button><button data-tab="content">Контент</button><button data-tab="media">Media</button><button data-tab="approval">Approval</button><button data-tab="metricool">Планування</button><button data-tab="newsletter">Розсилка</button><button data-tab="dashboard">System</button>
   </nav>
@@ -57,8 +56,7 @@
   <section id="dashboard" class="section"><div class="grid"><div class="kpi"><span>Контент</span><strong id="kContent">—</strong></div><div class="kpi"><span>Media pending</span><strong id="kPending">—</strong></div><div class="kpi"><span>Scheduled</span><strong id="kScheduled">—</strong></div><div class="kpi"><span>Published</span><strong id="kPublished">—</strong></div></div><div class="card"><h2>Система</h2><div id="sys" class="status">Перевіряю Cloudflare Access…</div></div></section>
 </main>
 <div id="confirmModal" class="modal" hidden><div class="modalbox"><h3 id="confirmTitle">Підтвердження</h3><p id="confirmText"></p><div class="actions"><button id="confirmYes">Так, продовжити</button><button id="confirmNo" class="secondary">Ні</button></div></div></div>
-<script>localStorage.setItem('wq_admin_token','cloudflare-access');</script>
-<script src="/admin/console/app.js?v=22"></script>
+<script src="/admin/console/app.js?v=23"></script>
 <script src="/admin/console/newsletter.js?v=1"></script>
 <script src="/admin/console/sort_fix.js?v=1"></script>
 </body></html>

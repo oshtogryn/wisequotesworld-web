@@ -14,18 +14,20 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
-          # Public visibility: a due D1 website schedule is equivalent to the visibility gate.
-          needle="EXISTS(SELECT 1 FROM content_approvals ca WHERE ca.content_item_id=ci.id AND ca.approval_scope='website_visibility' AND ca.status='approved')"
-          due="(EXISTS(SELECT 1 FROM content_approvals ca WHERE ca.content_item_id=ci.id AND ca.approval_scope='website_visibility' AND ca.status='approved') OR EXISTS(SELECT 1 FROM website_publication_schedule ws WHERE ws.content_item_id=ci.id AND ws.project_id='wisequotesworld' AND ws.status='scheduled' AND ws.scheduled_for<=strftime('%Y-%m-%dT%H:%M:%fZ','now')))"
+          # Any existing approved website-visibility EXISTS gains a second condition:
+          # a D1 schedule becomes visible as soon as its UTC due time is reached.
+          pat=re.compile(r"EXISTS\s*\(SELECT 1 FROM content_approvals\s+(\w+)\s+WHERE\s+\1\.content_item_id=ci\.id\s+AND\s+\1\.approval_scope='website_visibility'(?:\s+AND\s+\1\.language_code IS NULL)?\s+AND\s+\1\.status='approved'\)")
           for f in ['lib/start_unified.js','lib/site_v2.js','lib/taxonomy_site.js']:
               p=Path(f); s=p.read_text()
               if 'website_publication_schedule ws' not in s:
-                  if needle not in s: raise SystemExit(f'missing visibility predicate in {f}')
-                  s=s.replace(needle,due)
-                  p.write_text(s)
+                  def repl(m):
+                      return "("+m.group(0)+" OR EXISTS(SELECT 1 FROM website_publication_schedule ws WHERE ws.content_item_id=ci.id AND ws.project_id='wisequotesworld' AND ws.status='scheduled' AND ws.scheduled_for<=strftime('%Y-%m-%dT%H:%M:%fZ','now')))"
+                  s2,n=pat.subn(repl,s)
+                  if n<1: raise SystemExit(f'missing visibility predicate in {f}')
+                  p.write_text(s2)
 
-          # Admin HTML controls.
           p=Path('admin/console/index.html'); s=p.read_text()
           s=s.replace('/admin/console/app.js?v=23','/admin/console/app.js?v=24')
           old='<div class="actions"><button id="sitePublishBtn" class="success">Опублікувати на сайт</button><button id="scheduleBtn">Перевірити готовність до постів</button></div><div id="sitePublishStatus" class="status">Перевіряю видимість статті…</div>'
@@ -35,7 +37,6 @@ jobs:
               s=s.replace(old,new)
           p.write_text(s)
 
-          # Admin JS scheduler.
           p=Path('admin/console/app.js'); s=p.read_text()
           if 'async function scheduleSite()' not in s:
               anchor='async function publishSite(){'
@@ -44,17 +45,16 @@ jobs:
               s=s.replace(anchor,add+anchor)
           old="$('sitePublishBtn').onclick=publishSite;$('scheduleBtn').onclick=checkSchedule;"
           new="$('sitePublishBtn').onclick=publishSite;$('siteScheduleBtn').onclick=scheduleSite;$('siteScheduleCancelBtn').onclick=cancelSiteSchedule;$('scheduleBtn').onclick=checkSchedule;"
-          if 'siteScheduleBtn' in Path('admin/console/index.html').read_text() and "$('siteScheduleBtn').onclick" not in s:
+          if "$('siteScheduleBtn').onclick" not in s:
               if old not in s: raise SystemExit('missing handler block')
               s=s.replace(old,new)
-          # Enhance status without replacing the whole function: append schedule detail after existing fetch.
           marker="const j=await api('/api/admin/site-visibility/'+id),v=!!j.state?.visible;"
           if 'const sc=j.state?.schedule' not in s:
               if marker not in s: raise SystemExit('missing loadSiteVisibility fetch')
               s=s.replace(marker,marker+"const sc=j.state?.schedule;")
-              status_old="box.textContent=v?`${id}: стаття видима на сайті й бере участь у Latest.`:`${id}: стаття індексується за прямим URL, але прихована з навігації та Latest.`;"
-              status_new="box.textContent=v?`${id}: стаття видима на сайті й бере участь у Latest.`:(sc?.status==='scheduled'?`${id}: сайт заплановано на ${new Date(sc.scheduled_for).toLocaleString('uk-UA')} (${sc.timezone||'Europe/Stockholm'}).`:`${id}: стаття індексується за прямим URL, але прихована з навігації та Latest.`);if($('siteScheduleCancelBtn'))$('siteScheduleCancelBtn').hidden=!(sc?.status==='scheduled');"
-              if status_old in s: s=s.replace(status_old,status_new)
+              oldstatus="box.textContent=v?`${id}: стаття видима на сайті й бере участь у Latest.`:`${id}: стаття індексується за прямим URL, але прихована з навігації та Latest.`;"
+              newstatus="box.textContent=v?`${id}: стаття видима на сайті й бере участь у Latest.`:(sc?.status==='scheduled'?`${id}: сайт заплановано на ${new Date(sc.scheduled_for).toLocaleString('uk-UA')} (${sc.timezone||'Europe/Stockholm'}).`:`${id}: стаття індексується за прямим URL, але прихована з навігації та Latest.`);if($('siteScheduleCancelBtn'))$('siteScheduleCancelBtn').hidden=!(sc?.status==='scheduled');"
+              if oldstatus in s:s=s.replace(oldstatus,newstatus)
           p.write_text(s)
           PY
           node --check admin/console/app.js

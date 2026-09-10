@@ -15,7 +15,7 @@
   </nav>
 
   <section id="topics" class="section on">
-    <div class="card heroCard"><div><h1>Production queue</h1><p class="muted">Підготовлено → Media → Approval → Scheduled → Published. Пропущені теми залишаються в історії.</p></div><button id="refreshTopics" class="secondary">Оновити</button></div>
+    <div class="card heroCard"><div><h1>Production queue</h1><p class="muted">Підготовлено → Media → Approval → Scheduled → Published. Scheduled і Published встановлюються тільки після підтвердженого readback.</p></div><button id="refreshTopics" class="secondary">Оновити</button></div>
     <div class="card toolbar"><input id="topicSearch" placeholder="Пошук WQ / автор / тема"><select id="topicFilter"><option value="">Усі статуси</option><option value="media_pending">Чекає media</option><option value="scheduled">Заплановано</option><option value="published">Опубліковано</option><option value="skipped">Пропущено</option><option value="idea">Майбутні</option></select></div>
     <div id="topicList"></div>
   </section>
@@ -38,7 +38,7 @@
 
   <section id="approval" class="section"><div class="card"><h2>Final approval</h2><p class="muted">Approve тільки після source/native/media QA.</p><div id="approvalList"></div></div></section>
 
-  <section id="metricool" class="section"><div class="card"><h2>Планування</h2><p class="muted">Вибери тему та дату. Планування дозволяється лише після readiness gate.</p><label>Тема<select id="scheduleTopic"></select></label><div class="form2"><label>Дата<input id="scheduleDate" type="date"></label><label>Режим<select id="scheduleMode"><option value="best">Найкращий час</option><option value="manual">Власний час</option></select></label></div><label id="manualTimeWrap" hidden>Час<input id="scheduleTime" type="time" value="18:00"></label><div class="actions"><button id="sitePublishBtn" class="success">Опублікувати на сайт</button><button id="scheduleBtn">Перевірити готовність до постів</button></div><div id="sitePublishStatus" class="status">Перевіряю видимість статті…</div><div id="scheduleStatus" class="status">Вибери тему.</div></div></section>
+  <section id="metricool" class="section"><div class="card"><h2>Планування</h2><p class="muted">Вибери тему та дату. Планування дозволяється лише після readiness gate. Статус Scheduled записується тільки після Metricool Planner readback.</p><label>Тема<select id="scheduleTopic"></select></label><div class="form2"><label>Дата<input id="scheduleDate" type="date"></label><label>Режим<select id="scheduleMode"><option value="best">Найкращий час</option><option value="manual">Власний час</option></select></label></div><label id="manualTimeWrap" hidden>Час<input id="scheduleTime" type="time" value="18:00"></label><div class="actions"><button id="sitePublishBtn" class="success">Опублікувати на сайт</button><button id="scheduleBtn">Перевірити готовність до постів</button></div><div id="sitePublishStatus" class="status">Перевіряю видимість статті…</div><div id="scheduleStatus" class="status">Вибери тему.</div></div></section>
 
   <section id="newsletter" class="section">
     <div class="grid"><div class="kpi"><span>Активні</span><strong id="nlActive">—</strong></div><div class="kpi"><span>Всього реальних</span><strong id="nlTotal">—</strong></div><div class="kpi"><span>Неактивні</span><strong id="nlInactive">—</strong></div><div class="kpi"><span>Останній запуск</span><strong id="nlLastRun" style="font-size:15px">—</strong></div></div>
@@ -57,6 +57,7 @@
 </main>
 <div id="confirmModal" class="modal" hidden><div class="modalbox"><h3 id="confirmTitle">Підтвердження</h3><p id="confirmText"></p><div class="actions"><button id="confirmYes">Так, продовжити</button><button id="confirmNo" class="secondary">Ні</button></div></div></div>
 <script src="/admin/console/app.js?v=23"></script>
+<script src="/admin/console/status_guard.js?v=1"></script>
 <script src="/admin/console/newsletter.js?v=1"></script>
 <script src="/admin/console/sort_fix.js?v=1"></script>
 </body></html>

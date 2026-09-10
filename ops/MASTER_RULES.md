@@ -130,6 +130,16 @@ D1 database-first. New approved content should not require manual deploy. 13 web
 
 All 13 localized `/start` pages use one unified presentation: compact contact block with direct e-mail action, not the old multi-field contact form. Newsletter signup is locale-aware: the current `/xx/start` locale determines the subscription language automatically. Subscriber e-mail, locale, consent timestamp/version, status and unsubscribe token are stored in D1. Automated newsletter delivery must not be claimed as active until an outbound e-mail provider is connected; D1 remains the canonical subscriber source. Default newsletter cadence is one localized digest every 14 days. Free-tier planning uses a dynamic maximum of 300 deliveries per day, giving up to 4200 deliveries per 14-day cycle; subscribers are assigned to batches dynamically rather than permanently tied to weekdays. Brevo is the connected outbound transport: sender domain `news.wisequotesworld.com` is authenticated/branded and production credentials are stored only as Cloudflare secrets/variables. D1 remains canonical. Automated scheduled delivery remains disabled until the 14-day batch scheduler is explicitly enabled and verified.
 
+
+### Scheduled website visibility — HARD
+- Prepared quote pages may be technically published/indexable while editorial navigation visibility remains hidden.
+- Admin may publish website visibility immediately or schedule an exact future activation time.
+- Website schedules are stored canonically in D1 `website_publication_schedule`.
+- Scheduling is allowed only when all 13 quote pages are already prepared with `status='published'`.
+- At and after `scheduled_for`, public Latest/archive/category/author queries treat the topic as visible even before the schedule row is housekeeping-marked `released`.
+- Website scheduling never schedules social posts and never sets social `scheduled` or `published`.
+- Cancelling a website schedule leaves direct article URLs/indexability unchanged and keeps editorial navigation hidden.
+
 ## 13. Media
 R2 canonical binaries; D1 metadata. Upload once/reuse. User generates video/Pinterest manually and uploads via Admin.
 

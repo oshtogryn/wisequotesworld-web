@@ -111,3 +111,10 @@ The following must exist only as Cloudflare Worker Secrets and/or GitHub Actions
 - social API credentials
 
 Rotate immediately if any secret is discovered in repository history, logs, artifacts, or workflow output.
+
+## 2026-09-10 follow-up hardening
+
+- Legacy ADMIN_TOKEN injection bridge retired. The top-level canonical admin gate strips any client-supplied internal marker, authenticates the request, then adds a server-only `x-wqw-canonical-admin` marker for legacy handlers.
+- Public `/api/health` metadata minimized to `{"ok":true}`; binding diagnostics moved to protected `/api/admin/health`.
+- D1 website publication scheduling added independently of social scheduling.
+- Remaining P0 evidence is operational: authenticated Admin Console browser readback, anonymous/private-window denial readback, and production security-header readback.

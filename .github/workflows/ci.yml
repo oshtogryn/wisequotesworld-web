@@ -57,10 +57,17 @@ jobs:
         run: |
           set -euo pipefail
           test -s lib/admin_auth.js
+          test -s lib/cloudflare_access_jwt.js
           test -s lib/security_headers.js
           test -s ops/MASTER_RULES.md
           test -s ops/P0_SECURITY_AUDIT.md
           grep -q 'requireAdmin' lib/admin_auth.js
+          grep -q 'verifyCloudflareAccessJwt' lib/admin_auth.js
+          grep -q 'RSASSA-PKCS1-v1_5' lib/cloudflare_access_jwt.js
+          if grep -q 'emailFromAccessJwt' lib/admin_auth.js; then
+            echo 'Unsigned Access JWT payload parsing must not return.' >&2
+            exit 1
+          fi
           grep -q 'withSecurityHeaders' _worker.js
 
       - name: Delivery configuration invariants
@@ -84,6 +91,17 @@ jobs:
             throw new Error('Metricool target capacity must be 13 WQW + 2 Sweden No Sugar = 15');
           }
           NODE
+
+      - name: Newsletter architecture invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s workers/newsletter_worker.js
+          test -s lib/brevo_webhook.js
+          grep -q "request_lifecycle_scheduler_disabled" lib/newsletter_admin.js
+          grep -q "NEWSLETTER_QUEUE" workers/newsletter_worker.js
+          grep -q "newsletter_suppressions" workers/newsletter_worker.js
+          grep -q "BREVO_WEBHOOK_TOKEN" lib/brevo_webhook.js
 
       - name: Migration safety markers
         shell: bash

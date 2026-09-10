@@ -1,7 +1,7 @@
 # Wise Quotes World — P0 Security Audit
 
 Updated: 2026-09-10
-Status: CODE/EDGE HARDENING COMPLETE — final browser production readback remains
+Status: CODE/EDGE HARDENING COMPLETE — final anonymous/header production readback remains
 
 ## Confirmed security model
 
@@ -46,14 +46,17 @@ Verified/configured 2026-09-10:
 - Newsletter application validation includes allow-listed languages, email format/length validation and honeypot protection.
 - CodeQL JavaScript workflow runs with minimal permissions (`contents: read`, `security-events: write`).
 - Production probe workflow exists, but Cloudflare Bot Fight/WAF can deliberately return 403 to datacenter curl; protections must not be weakened to satisfy that synthetic probe.
-- D1 website-publication scheduling was added independently of social scheduling. Scheduler table initialization occurs before public site SQL can reference the schedule table.
-- Completed temporary scheduler/security patch workflows created on 2026-09-10 were removed after successful deployment.
+- D1 website-publication scheduling was added independently of social scheduling.
+- D1 scheduler schema creation now uses one prepared statement per DDL command instead of multi-statement `DB.exec()`, fixing the production `SQLITE_ERROR: incomplete input` observed from the Admin Console.
+- Completed temporary scheduler/security patch workflows created on 2026-09-10 were removed after deployment.
 - Obsolete one-off repair workflows removed in this audit pass include old newsletter/start repair actions and the obsolete ten-language rules updater.
 
-## Deployment evidence
+## Deployment / production evidence
 
 - Website scheduler/navigation/admin UI patch `73ba9bb5a4fa16f8f84de83a49cb6c3a768752d8` deployed successfully to Cloudflare Pages.
 - Runtime hardening patch `193544730b7f0a7ec0bad562f0e4382ebf8a6422` deployed successfully to Cloudflare Pages.
+- Authenticated production Safari readback captured 2026-09-10: `/admin/console/` loads the complete **Wise Quotes World — Editorial & Production** interface and shows `● online` without any browser token field or `unauthorized` response. ✅
+- A production Admin Console readback exposed `D1_EXEC_ERROR ... CREATE TABLE ... incomplete input`; root cause was the scheduler schema initialization method and the code was corrected in commit `965cb1c0c6657cfad4e56fb9f3a5ec9e634cc379`.
 - `node --check` passed in the one-off hardening workflow for `_worker.js`, `_worker_legacy.js`, Admin Console JavaScript, and scheduler modules before the hardening commit was pushed.
 - Security Scan / CodeQL remains the canonical code-scanning workflow.
 
@@ -61,11 +64,11 @@ Verified/configured 2026-09-10:
 
 These are operational verification items, not unresolved implementation defects:
 
-1. In an authenticated Cloudflare Access Safari/browser session, open `/admin/console/` and confirm the complete Admin Console loads with `● online`, with no token field and no `unauthorized` JSON.
-2. In a private/anonymous window, open the same URL and confirm Cloudflare Access login/denial appears and application content is not exposed.
-3. Confirm a real browser production HTML response carries the expected security headers. Datacenter curl is not accepted as authoritative because Bot Fight/WAF intentionally blocks it.
+1. In a private/anonymous window, open `/admin/console/` and confirm Cloudflare Access login/denial appears and application content is not exposed.
+2. Confirm a real browser production HTML response carries the expected security headers. Datacenter curl is not accepted as authoritative because Bot Fight/WAF intentionally blocks it.
+3. After deployment of commit `965cb1c0c6657cfad4e56fb9f3a5ec9e634cc379`, confirm the Admin → Planning panel loads website visibility state without a D1 schema error and can create/read back a future website schedule for a 13/13-ready topic.
 
-Do not mark P0 `COMPLETE` until those three production readbacks are captured.
+Do not mark P0 `COMPLETE` until those production readbacks are captured.
 
 ## Remaining repository/security governance
 

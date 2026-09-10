@@ -1,0 +1,92 @@
+name: Apply corrected WQ022-WQ031 buffer once 2026-09-10
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-buffer-v2-public-once-20260910.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Expose fixed one-time migration route
+        run: |
+          set -euo pipefail
+          node --check lib/prepared_buffer_022_031.js
+          node --check lib/prepared_buffer_022_031_v2.js
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text(encoding='utf-8')
+          anchor="import {prepareBuffer022031} from './lib/prepared_buffer_022_031.js';"
+          imp="import {prepareBuffer022031V2} from './lib/prepared_buffer_022_031_v2.js';"
+          if imp not in s:
+              assert anchor in s
+              s=s.replace(anchor,anchor+'\n'+imp,1)
+          marker="async function handleRequest(request,env,ctx){try{const url=new URL(request.url);"
+          route="if(url.pathname==='/__once/prep-buffer-022-031-c4f9e71a'&&request.method==='GET')return json(await prepareBuffer022031V2(env));"
+          if route not in s:
+              assert marker in s
+              s=s.replace(marker,marker+route,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          node --check _worker.js
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git commit -m 'Expose fixed one-time WQ022-WQ031 D1 migration'
+          git push
+      - name: Wait for Pages deployment
+        run: sleep 90
+      - name: Apply to D1 and capture deterministic readback
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -sS -L --fail-with-body --retry 15 --retry-all-errors --retry-delay 5 \
+            'https://wisequotesworld-web.pages.dev/__once/prep-buffer-022-031-c4f9e71a' \
+            -o ops/readback/prepared-buffer-022-031-v2-20260910.json
+          cat ops/readback/prepared-buffer-022-031-v2-20260910.json
+          python - <<'PY'
+          import json
+          p='ops/readback/prepared-buffer-022-031-v2-20260910.json'
+          d=json.load(open(p,encoding='utf-8'))
+          assert d.get('ok') is True,d
+          rb=d.get('readback') or {}
+          assert rb.get('ok') is True,rb
+          rows=rb.get('rows') or []
+          assert len(rows)==10,rows
+          for r in rows:
+              assert r.get('published_pages')==13,r
+              assert r.get('native_qa',0)>=13,r
+              assert r.get('video_prompts')==8,r
+              assert r.get('pinterest_prompts')==8,r
+              assert r.get('outputs',0)>=88,r
+              assert r.get('ready_for_user_media') is True,r
+          print('PASS: ten-topic D1 buffer verified')
+          PY
+      - name: Remove one-time routes and persist readback
+        if: always()
+        run: |
+          set -euo pipefail
+          git pull --rebase || true
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("\nimport {prepareBuffer022031V2} from './lib/prepared_buffer_022_031_v2.js';",'')
+          s=s.replace("if(url.pathname==='/__once/prep-buffer-022-031-c4f9e71a'&&request.method==='GET')return json(await prepareBuffer022031V2(env));",'')
+          # Also remove the failed earlier protected migration route/import once this migration is complete.
+          s=s.replace("\nimport {prepareBuffer022031} from './lib/prepared_buffer_022_031.js';",'')
+          s=s.replace("if(url.pathname==='/internal/wq-buffer-022-031-6f8d4c2a'&&request.method==='POST'){const denied=await requireAdmin(request,env);if(denied)return denied;return json(await prepareBuffer022031(env));}",'')
+          p.write_text(s,encoding='utf-8')
+          PY
+          rm -f .github/workflows/apply-buffer-v2-public-once-20260910.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Finalize WQ022-WQ031 D1 buffer readback and remove migration routes' || true
+          git push || true

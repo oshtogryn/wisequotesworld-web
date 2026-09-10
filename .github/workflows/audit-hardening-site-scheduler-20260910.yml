@@ -1,0 +1,235 @@
+name: Audit hardening + website publication scheduler
+
+on:
+  push:
+    paths:
+      - '.github/workflows/audit-hardening-site-scheduler-20260910.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch runtime, admin and audit docs
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          schedule_js = r'''const PROJECT='wisequotesworld';
+const DEFAULT_TIMEZONE='Europe/Stockholm';
+
+function nowIso(){return new Date().toISOString()}
+function parseIso(v){const d=new Date(String(v||''));return Number.isFinite(d.getTime())?d:null}
+
+export async function ensureWebsiteSchedule(env){
+  if(!env?.DB)throw new Error('DB unavailable');
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS website_publication_schedule(
+    content_item_id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    scheduled_for TEXT NOT NULL,
+    timezone TEXT NOT NULL DEFAULT 'Europe/Stockholm',
+    status TEXT NOT NULL DEFAULT 'scheduled' CHECK(status IN ('scheduled','released','cancelled')),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    released_at TEXT,
+    last_error TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_website_publication_schedule_due
+    ON website_publication_schedule(project_id,status,scheduled_for);`);
+}
+
+export async function getWebsiteSchedule(env,id){
+  await ensureWebsiteSchedule(env);
+  return await env.DB.prepare(`SELECT content_item_id,scheduled_for,timezone,status,created_at,updated_at,released_at,last_error FROM website_publication_schedule WHERE project_id=? AND content_item_id=?`).bind(PROJECT,id).first();
+}
+
+export async function scheduleWebsitePublication(env,id,scheduledFor,timezone=DEFAULT_TIMEZONE){
+  await ensureWebsiteSchedule(env);
+  const d=parseIso(scheduledFor);if(!d)throw new Error('invalid scheduled_for');
+  if(d.getTime()<=Date.now()+15000)throw new Error('scheduled_for must be in the future');
+  const ts=nowIso();
+  await env.DB.prepare(`INSERT INTO website_publication_schedule(content_item_id,project_id,scheduled_for,timezone,status,created_at,updated_at,released_at,last_error)
+    VALUES(?,?,?,?, 'scheduled',?,?,NULL,NULL)
+    ON CONFLICT(content_item_id) DO UPDATE SET scheduled_for=excluded.scheduled_for,timezone=excluded.timezone,status='scheduled',updated_at=excluded.updated_at,released_at=NULL,last_error=NULL`).bind(id,PROJECT,d.toISOString(),String(timezone||DEFAULT_TIMEZONE),ts,ts).run();
+  return getWebsiteSchedule(env,id);
+}
+
+export async function cancelWebsitePublication(env,id){
+  await ensureWebsiteSchedule(env);const ts=nowIso();
+  await env.DB.prepare(`UPDATE website_publication_schedule SET status='cancelled',updated_at=?,last_error=NULL WHERE project_id=? AND content_item_id=? AND status='scheduled'`).bind(ts,PROJECT,id).run();
+  return getWebsiteSchedule(env,id);
+}
+
+export async function markWebsiteScheduleReleased(env,id,ts=nowIso()){
+  await ensureWebsiteSchedule(env);
+  await env.DB.prepare(`UPDATE website_publication_schedule SET status='released',updated_at=?,released_at=?,last_error=NULL WHERE project_id=? AND content_item_id=?`).bind(ts,ts,PROJECT,id).run();
+}
+
+async function approveVisibility(env,id,ts,note){
+  const row=await env.DB.prepare(`SELECT id FROM content_approvals WHERE content_item_id=? AND approval_scope='website_visibility' AND language_code IS NULL ORDER BY id DESC LIMIT 1`).bind(id).first();
+  if(row)await env.DB.prepare(`UPDATE content_approvals SET status='approved',approved_by='scheduler',notes=?,updated_at=? WHERE id=?`).bind(note,ts,row.id).run();
+  else await env.DB.prepare(`INSERT INTO content_approvals(project_id,content_item_id,approval_scope,language_code,status,approved_by,notes,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)`).bind(PROJECT,id,'website_visibility',null,'approved','scheduler',note,ts,ts).run();
+}
+
+export async function releaseDueWebsitePublications(env,limit=20){
+  if(!env?.DB)return{released:[],blocked:[]};
+  await ensureWebsiteSchedule(env);const ts=nowIso();
+  const rows=(await env.DB.prepare(`SELECT content_item_id,scheduled_for,timezone FROM website_publication_schedule WHERE project_id=? AND status='scheduled' AND scheduled_for<=? ORDER BY scheduled_for LIMIT ?`).bind(PROJECT,ts,Math.max(1,Math.min(100,Number(limit)||20))).all()).results||[];
+  const released=[],blocked=[];
+  for(const row of rows){
+    const id=row.content_item_id;
+    const pages=await env.DB.prepare(`SELECT COUNT(*) n FROM quote_pages WHERE project_id=? AND content_item_id=? AND status='published'`).bind(PROJECT,id).first();
+    if(Number(pages?.n||0)<13){
+      const err=`website package incomplete: ${Number(pages?.n||0)}/13 published pages`;
+      await env.DB.prepare(`UPDATE website_publication_schedule SET last_error=?,updated_at=? WHERE project_id=? AND content_item_id=?`).bind(err,ts,PROJECT,id).run();
+      blocked.push({id,error:err});continue;
+    }
+    await approveVisibility(env,id,ts,`Editorial website visibility automatically released at scheduled time ${row.scheduled_for} (${row.timezone||DEFAULT_TIMEZONE}).`);
+    await markWebsiteScheduleReleased(env,id,ts);released.push(id);
+  }
+  return{released,blocked,checked:rows.length,at:ts};
+}
+'''
+          Path('lib/website_schedule.js').write_text(schedule_js, encoding='utf-8')
+
+          visibility_js = r'''import {requireAdmin} from './admin_auth.js';
+import {cancelWebsitePublication,ensureWebsiteSchedule,getWebsiteSchedule,markWebsiteScheduleReleased,releaseDueWebsitePublications,scheduleWebsitePublication} from './website_schedule.js';
+
+const PROJECT='wisequotesworld';
+function json(data,status=200){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}
+async function body(req){try{return await req.json()}catch{return null}}
+async function state(env,id){
+ await ensureWebsiteSchedule(env);
+ const item=await env.DB.prepare(`SELECT id,sequence_no,status,canonical_title FROM content_items WHERE project_id=? AND id=?`).bind(PROJECT,id).first();
+ if(!item)return null;
+ const gate=await env.DB.prepare(`SELECT status,updated_at,notes FROM content_approvals WHERE content_item_id=? AND approval_scope='website_visibility' AND language_code IS NULL ORDER BY id DESC LIMIT 1`).bind(id).first();
+ const legacy=Number(item.sequence_no||String(id).replace(/\D/g,''))<=15;
+ const pages=await env.DB.prepare(`SELECT COUNT(*) n FROM quote_pages WHERE project_id=? AND content_item_id=? AND status='published'`).bind(PROJECT,id).first();
+ const schedule=await getWebsiteSchedule(env,id);
+ return{...item,visible:legacy||gate?.status==='approved',legacy_visible:legacy,website_visibility:gate||{status:'hidden',updated_at:null},published_pages:Number(pages?.n||0),schedule:schedule||null};
+}
+async function publish(env,id){
+ const s=await state(env,id);if(!s)return json({ok:false,error:'topic not found'},404);
+ if(s.published_pages<13)return json({ok:false,error:`website package incomplete: ${s.published_pages}/13 published pages`},409);
+ if(s.visible&&!s.legacy_visible)return json({ok:true,id,visible:true,already_visible:true,website_visibility:s.website_visibility,schedule:s.schedule});
+ const ts=new Date().toISOString(),note='Editorial website visibility approved from Admin. Direct article URLs may exist/index before this gate; navigation/latest becomes visible only after this action.';
+ const row=await env.DB.prepare(`SELECT id FROM content_approvals WHERE content_item_id=? AND approval_scope='website_visibility' AND language_code IS NULL ORDER BY id DESC LIMIT 1`).bind(id).first();
+ if(row)await env.DB.prepare(`UPDATE content_approvals SET status='approved',approved_by='admin',notes=?,updated_at=? WHERE id=?`).bind(note,ts,row.id).run();
+ else await env.DB.prepare(`INSERT INTO content_approvals(project_id,content_item_id,approval_scope,language_code,status,approved_by,notes,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)`).bind(PROJECT,id,'website_visibility',null,'approved','admin',note,ts,ts).run();
+ if(s.schedule)await markWebsiteScheduleReleased(env,id,ts);
+ return json({ok:true,id,visible:true,published_at:ts,state:await state(env,id)});
+}
+async function hide(env,id){
+ const s=await state(env,id);if(!s)return json({ok:false,error:'topic not found'},404);if(s.legacy_visible)return json({ok:false,error:'legacy WQ001-WQ015 visibility is locked'},409);
+ const ts=new Date().toISOString(),note='Editorial website visibility hidden from Admin.';
+ const row=await env.DB.prepare(`SELECT id FROM content_approvals WHERE content_item_id=? AND approval_scope='website_visibility' AND language_code IS NULL ORDER BY id DESC LIMIT 1`).bind(id).first();
+ if(row)await env.DB.prepare(`UPDATE content_approvals SET status='rejected',approved_by='admin',notes=?,updated_at=? WHERE id=?`).bind(note,ts,row.id).run();
+ else await env.DB.prepare(`INSERT INTO content_approvals(project_id,content_item_id,approval_scope,language_code,status,approved_by,notes,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)`).bind(PROJECT,id,'website_visibility',null,'rejected','admin',note,ts,ts).run();
+ await cancelWebsitePublication(env,id);
+ return json({ok:true,id,visible:false,state:await state(env,id)});
+}
+async function schedule(env,id,request){
+ const s=await state(env,id);if(!s)return json({ok:false,error:'topic not found'},404);
+ if(s.legacy_visible||s.visible)return json({ok:false,error:'topic is already visible on website'},409);
+ if(s.published_pages<13)return json({ok:false,error:`website package incomplete: ${s.published_pages}/13 published pages`},409);
+ const b=await body(request);if(!b?.scheduled_for)return json({ok:false,error:'scheduled_for required'},400);
+ try{const row=await scheduleWebsitePublication(env,id,b.scheduled_for,b.timezone||'Europe/Stockholm');return json({ok:true,id,scheduled:true,schedule:row,state:await state(env,id)})}catch(e){return json({ok:false,error:String(e.message||e)},400)}
+}
+export async function siteVisibilityApi(request,env){
+ const url=new URL(request.url),m=url.pathname.match(/^\/api\/admin\/site-visibility\/([A-Za-z0-9_-]+)(?:\/(publish|hide|schedule|cancel-schedule))?$/);if(!m)return null;
+ const denied=await requireAdmin(request,env);if(denied)return denied;if(!env?.DB)return json({ok:false,error:'DB unavailable'},503);
+ await releaseDueWebsitePublications(env,20);
+ const id=m[1],action=m[2];if(request.method==='GET'&&!action){const s=await state(env,id);return s?json({ok:true,state:s}):json({ok:false,error:'topic not found'},404)}
+ if(request.method==='POST'&&action==='publish')return publish(env,id);
+ if(request.method==='POST'&&action==='hide')return hide(env,id);
+ if(request.method==='POST'&&action==='schedule')return schedule(env,id,request);
+ if(request.method==='POST'&&action==='cancel-schedule'){await cancelWebsitePublication(env,id);return json({ok:true,id,state:await state(env,id)})}
+ return json({ok:false,error:'method not allowed'},405);
+}
+'''
+          Path('lib/site_visibility_api.js').write_text(visibility_js, encoding='utf-8')
+
+          # Patch top-level Worker: scheduled website releases, protected admin health,
+          # and remove legacy ADMIN_TOKEN injection in favor of an internal gate marker.
+          p=Path('_worker.js'); s=p.read_text(encoding='utf-8')
+          old="import {siteVisibilityApi} from './lib/site_visibility_api.js';"
+          new=old+"\nimport {releaseDueWebsitePublications} from './lib/website_schedule.js';"
+          if "website_schedule.js" not in s:
+              assert old in s
+              s=s.replace(old,new,1)
+          old_gate="if(isAdminPath(url.pathname)){const denied=await requireAdmin(request,env);if(denied)return denied;if(env.ADMIN_TOKEN){const headers=new Headers(request.headers);headers.set('authorization',`Bearer ${env.ADMIN_TOKEN}`);request=new Request(request,{headers})}}"
+          new_gate="if(isAdminPath(url.pathname)){const cleanHeaders=new Headers(request.headers);cleanHeaders.delete('x-wqw-canonical-admin');request=new Request(request,{headers:cleanHeaders});const denied=await requireAdmin(request,env);if(denied)return denied;const headers=new Headers(request.headers);headers.set('x-wqw-canonical-admin','1');request=new Request(request,{headers})}if(url.pathname==='/api/admin/health'&&request.method==='GET')return json({ok:true,project:'wisequotesworld',db:!!env.DB,r2:!!env.MEDIA,ai:!!env.AI,access:true});if(request.method==='GET'&&!isAdminPath(url.pathname)){try{const wr=await releaseDueWebsitePublications(env,20);if(wr.released?.length)scheduleIndexNow(ctx,submitRecentPublished(env,25))}catch{}}"
+          if old_gate in s:
+              s=s.replace(old_gate,new_gate,1)
+          elif "x-wqw-canonical-admin" not in s:
+              raise SystemExit('worker admin gate pattern not found')
+          p.write_text(s,encoding='utf-8')
+
+          # Legacy worker no longer receives ADMIN_TOKEN from the browser/session bridge.
+          # It only accepts the internal marker that the canonical top-level gate writes.
+          p=Path('_worker_legacy.js'); s=p.read_text(encoding='utf-8')
+          old="function authorized(request,env){return !!env.ADMIN_TOKEN&&(request.headers.get('authorization')||'')===`Bearer ${env.ADMIN_TOKEN}`}\nfunction requireAdmin(request,env){return authorized(request,env)?null:json({ok:false,error:'unauthorized'},401)}"
+          new="function canonicalAdminPassed(request){return request.headers.get('x-wqw-canonical-admin')==='1'}\nfunction requireAdmin(request,env){return canonicalAdminPassed(request)?null:json({ok:false,error:'unauthorized'},401)}"
+          if old in s:s=s.replace(old,new,1)
+          old_health="if(url.pathname==='/api/health')return json({ok:true,project:PROJECT_ID,languages:LANGS,db:!!env.DB,r2:!!env.MEDIA,ai:!!env.AI,admin_secret:!!env.ADMIN_TOKEN,pinterest_model:PIN_MODEL});"
+          if old_health in s:s=s.replace(old_health,"if(url.pathname==='/api/health')return json({ok:true});",1)
+          p.write_text(s,encoding='utf-8')
+
+          # Admin UI: add website date/time scheduler beside immediate publication.
+          p=Path('admin/console/index.html'); s=p.read_text(encoding='utf-8')
+          s=s.replace('/admin/console/app.js?v=23','/admin/console/app.js?v=24')
+          old='<div class="actions"><button id="sitePublishBtn" class="success">Опублікувати на сайт</button><button id="scheduleBtn">Перевірити готовність до постів</button></div><div id="sitePublishStatus" class="status">Перевіряю видимість статті…</div>'
+          new='<div class="form2"><label>Дата публікації статті<input id="siteScheduleDate" type="date"></label><label>Час публікації статті<input id="siteScheduleTime" type="time" value="09:00"></label></div><div class="actions"><button id="sitePublishBtn" class="success">Опублікувати на сайт зараз</button><button id="siteScheduleBtn">Запланувати сайт</button><button id="siteScheduleCancelBtn" class="secondary" hidden>Скасувати план</button><button id="scheduleBtn">Перевірити готовність до постів</button></div><div id="sitePublishStatus" class="status">Перевіряю видимість статті…</div>'
+          if old in s:s=s.replace(old,new,1)
+          else: raise SystemExit('admin index scheduling block not found')
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('admin/console/app.js'); s=p.read_text(encoding='utf-8')
+          s=s.replace("const h=await fetch('/api/health',{credentials:'same-origin'}).then(r=>r.json());","const h=await api('/api/admin/health');")
+          old="async function loadSiteVisibility(){const id=$('scheduleTopic')?.value,box=$('sitePublishStatus'),btn=$('sitePublishBtn');if(!id||!box)return;try{const j=await api('/api/admin/site-visibility/'+id),v=!!j.state?.visible;box.className='status '+(v?'ok':'warn');box.textContent=v?`${id}: стаття видима на сайті й бере участь у Latest.`:`${id}: стаття індексується за прямим URL, але прихована з навігації та Latest.`;if(btn){btn.disabled=v;btn.textContent=v?'На сайті ✓':'Опублікувати на сайт'}}catch(e){box.className='status bad';box.textContent=e.message}}"
+          new="async function loadSiteVisibility(){const id=$('scheduleTopic')?.value,box=$('sitePublishStatus'),btn=$('sitePublishBtn'),sbtn=$('siteScheduleBtn'),cbtn=$('siteScheduleCancelBtn');if(!id||!box)return;try{const j=await api('/api/admin/site-visibility/'+id),st=j.state||{},v=!!st.visible,sc=st.schedule||null;box.className='status '+(v?'ok':(sc?.status==='scheduled'?'ok':'warn'));if(v)box.textContent=`${id}: стаття видима на сайті й бере участь у Latest.`;else if(sc?.status==='scheduled')box.textContent=`${id}: сайт заплановано на ${new Date(sc.scheduled_for).toLocaleString('uk-UA')} (${sc.timezone||'Europe/Stockholm'}). До цього часу стаття прихована з навігації та Latest.`;else box.textContent=`${id}: стаття індексується за прямим URL, але прихована з навігації та Latest.`;if(btn){btn.disabled=v;btn.textContent=v?'На сайті ✓':'Опублікувати на сайт зараз'}if(sbtn)sbtn.disabled=v;if(cbtn)cbtn.hidden=!(sc?.status==='scheduled')}catch(e){box.className='status bad';box.textContent=e.message}}"
+          assert old in s
+          s=s.replace(old,new,1)
+          anchor="async function publishSite(){"
+          insert="""async function scheduleSite(){const id=$('scheduleTopic')?.value,d=$('siteScheduleDate')?.value,t=$('siteScheduleTime')?.value||'09:00';if(!id||!d)return flash('Вибери дату публікації сайту');const local=new Date(`${d}T${t}:00`);if(!Number.isFinite(local.getTime()))return flash('Некоректна дата/час');const timezone=Intl.DateTimeFormat().resolvedOptions().timeZone||'Europe/Stockholm';const ok=await modalConfirm('Запланувати публікацію на сайт?',`${id}: стане видимою ${local.toLocaleString('uk-UA')} (${timezone}). Social posts цією дією НЕ плануються.`);if(!ok)return;const btn=$('siteScheduleBtn');setBusy(btn,true,'Планую…');try{await api('/api/admin/site-visibility/'+id+'/schedule',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({scheduled_for:local.toISOString(),timezone})});setBusy(btn,false);markDone(btn,'Заплановано ✓');flash(`${id}: сайт заплановано`);await loadSiteVisibility()}catch(e){setBusy(btn,false);$('sitePublishStatus').className='status bad';$('sitePublishStatus').textContent=e.message}}\nasync function cancelSiteSchedule(){const id=$('scheduleTopic')?.value;if(!id)return;if(!await modalConfirm('Скасувати план сайту?',`${id}: запланована видимість буде скасована. Стаття лишиться прихованою з навігації.`))return;try{await api('/api/admin/site-visibility/'+id+'/cancel-schedule',{method:'POST'});flash(`${id}: план сайту скасовано`);await loadSiteVisibility()}catch(e){$('sitePublishStatus').className='status bad';$('sitePublishStatus').textContent=e.message}}\n"""
+          if "async function scheduleSite()" not in s:
+              assert anchor in s
+              s=s.replace(anchor,insert+anchor,1)
+          old_handlers="$'sitePublishBtn'"  # sentinel only
+          handler="$('sitePublishBtn').onclick=publishSite;$('scheduleBtn').onclick=checkSchedule;"
+          repl="$('sitePublishBtn').onclick=publishSite;$('siteScheduleBtn').onclick=scheduleSite;$('siteScheduleCancelBtn').onclick=cancelSiteSchedule;$('scheduleBtn').onclick=checkSchedule;"
+          assert handler in s
+          s=s.replace(handler,repl,1)
+          p.write_text(s,encoding='utf-8')
+
+          # Document canonical behavior.
+          p=Path('ops/MASTER_RULES.md'); s=p.read_text(encoding='utf-8')
+          marker='## 13. Media'
+          addition='''### Scheduled website visibility — HARD\n- Prepared quote pages may be technically published/indexable while editorial navigation visibility remains hidden.\n- Admin may either publish website visibility immediately or schedule an exact future activation time.\n- Scheduled website visibility is stored in D1 `website_publication_schedule`; D1 remains canonical.\n- A schedule is allowed only when all 13 quote pages are already published/prepared.\n- At/after the due instant, the first production request atomically releases the `website_visibility` approval before rendering, so Latest/archive/category/author navigation sees the topic immediately on that request.\n- Website scheduling never schedules social posts and never sets social `scheduled`/`published`.\n- Cancelling a website schedule leaves the direct article URLs/indexability unchanged and keeps editorial navigation hidden.\n\n'''
+          if '### Scheduled website visibility — HARD' not in s:
+              assert marker in s
+              s=s.replace(marker,addition+marker,1)
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('ops/P0_SECURITY_AUDIT.md'); s=p.read_text(encoding='utf-8')
+          s=s.replace('Status: IN PROGRESS — code hardening and Cloudflare edge hardening complete; final production readback remains','Status: IN PROGRESS — edge/code hardening complete; final authenticated-browser readback remains')
+          if 'Legacy ADMIN_TOKEN injection bridge retired' not in s:
+              s += '''\n## 2026-09-10 follow-up hardening\n\n- Legacy ADMIN_TOKEN injection bridge retired. The top-level canonical admin gate strips any client-supplied internal marker, authenticates the request, then sets a server-only `x-wqw-canonical-admin` marker for legacy handlers.\n- Public `/api/health` metadata minimized to `{ok:true}`; binding/security details moved to protected `/api/admin/health`.\n- Website publication scheduling added in D1 without coupling website visibility to social scheduling.\n- Remaining P0 evidence is operational, not code: one authenticated browser pass through Admin Console plus an anonymous/private-window denial check.\n'''
+          p.write_text(s,encoding='utf-8')
+          PY
+
+          node --check _worker.js
+          node --check _worker_legacy.js
+          node --check lib/website_schedule.js
+          node --check lib/site_visibility_api.js
+          node --check admin/console/app.js
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js _worker_legacy.js lib/website_schedule.js lib/site_visibility_api.js admin/console/index.html admin/console/app.js ops/MASTER_RULES.md ops/P0_SECURITY_AUDIT.md
+          git commit -m 'Add scheduled website visibility and harden admin runtime'
+          git push

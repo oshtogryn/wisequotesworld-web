@@ -8,9 +8,9 @@
   <link rel="stylesheet" href="/admin/console/style.css?v=22">
 </head>
 <body>
-<header class="top"><div><div class="brand">Wise Quotes World</div><div class="topsub">Editorial & Production</div></div><div id="health" class="offline">● offline</div></header>
+<header class="top"><div><div class="brand">Wise Quotes World</div><div class="topsub">Editorial & Production</div></div><div id="health" class="offline">● connecting</div></header>
 <main class="wrap">
-  <section class="auth"><input id="token" type="password" placeholder="ADMIN_TOKEN"><button id="connectBtn">Підключити</button></section>
+  <section class="auth" hidden><input id="token" type="password" value="cloudflare-access"><button id="connectBtn">Підключити</button></section>
   <nav class="nav">
     <button class="on" data-tab="topics">Теми</button><button data-tab="content">Контент</button><button data-tab="media">Media</button><button data-tab="approval">Approval</button><button data-tab="metricool">Планування</button><button data-tab="newsletter">Розсилка</button><button data-tab="dashboard">System</button>
   </nav>
@@ -48,15 +48,16 @@
       <div class="form2"><label>Періодичність, днів<input id="nlCadence" type="number" min="1" max="90" value="14"></label><label>Добовий ліміт Brevo<input id="nlDailyCap" type="number" min="1" max="300" value="300"></label></div>
       <div class="form2"><label>Година запуску UTC<input id="nlHour" type="number" min="0" max="23" value="8"></label><label>Листів за один execution<input id="nlExecCap" type="number" min="1" max="100" value="40"></label></div>
       <div class="actions"><button id="nlSave" class="success">Зберегти налаштування</button><button id="nlSendNow">Запустити зараз</button></div>
-      <div id="newsletterStatus" class="status">Введи ADMIN_TOKEN і відкрий цей розділ.</div><p class="muted">Мови: <span id="nlLangs">—</span></p>
+      <div id="newsletterStatus" class="status">Перевіряю доступ через Cloudflare Access…</div><p class="muted">Мови: <span id="nlLangs">—</span></p>
     </div>
     <div class="card"><h2>Останні активні підписники</h2><div id="nlRecent"></div></div>
     <div class="card"><h2>Історія відправок</h2><div id="nlDeliveries"></div></div>
   </section>
 
-  <section id="dashboard" class="section"><div class="grid"><div class="kpi"><span>Контент</span><strong id="kContent">—</strong></div><div class="kpi"><span>Media pending</span><strong id="kPending">—</strong></div><div class="kpi"><span>Scheduled</span><strong id="kScheduled">—</strong></div><div class="kpi"><span>Published</span><strong id="kPublished">—</strong></div></div><div class="card"><h2>Система</h2><div id="sys" class="status">Введи ADMIN_TOKEN.</div></div></section>
+  <section id="dashboard" class="section"><div class="grid"><div class="kpi"><span>Контент</span><strong id="kContent">—</strong></div><div class="kpi"><span>Media pending</span><strong id="kPending">—</strong></div><div class="kpi"><span>Scheduled</span><strong id="kScheduled">—</strong></div><div class="kpi"><span>Published</span><strong id="kPublished">—</strong></div></div><div class="card"><h2>Система</h2><div id="sys" class="status">Перевіряю Cloudflare Access…</div></div></section>
 </main>
 <div id="confirmModal" class="modal" hidden><div class="modalbox"><h3 id="confirmTitle">Підтвердження</h3><p id="confirmText"></p><div class="actions"><button id="confirmYes">Так, продовжити</button><button id="confirmNo" class="secondary">Ні</button></div></div></div>
+<script>localStorage.setItem('wq_admin_token','cloudflare-access');</script>
 <script src="/admin/console/app.js?v=22"></script>
 <script src="/admin/console/newsletter.js?v=1"></script>
 <script src="/admin/console/sort_fix.js?v=1"></script>

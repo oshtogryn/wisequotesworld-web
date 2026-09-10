@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches:
+      - 'audit-hardening-*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' files < <(find . -type f -name '*.js' -not -path './.git/*' -print0)
+          printf 'Checking %s JavaScript files\n' "${#files[@]}"
+          for file in "${files[@]}"; do
+            node --check "$file"
+          done
+
+      - name: Repository secret hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          forbidden=0
+          while IFS= read -r -d '' file; do
+            case "$file" in
+              */.git/*) continue ;;
+            esac
+            base="$(basename "$file")"
+            if [[ "$base" == '.env' || "$base" == '.dev.vars' || "$base" == 'id_rsa' || "$base" == 'id_ed25519' || "$base" == *.pem || "$base" == *.p12 || "$base" == *.pfx ]]; then
+              echo "Forbidden secret-like file tracked: $file"
+              forbidden=1
+            fi
+          done < <(find . -type f -print0)
+          if git grep -n -E -- '-----BEGIN (RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----' -- ':!*.md' ':!*.txt'; then
+            echo 'Private key material detected in repository.'
+            forbidden=1
+          fi
+          exit "$forbidden"
+
+      - name: Canonical security files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s lib/admin_auth.js
+          test -s lib/cloudflare_access_jwt.js
+          test -s lib/security_headers.js
+          test -s ops/MASTER_RULES.md
+          test -s ops/P0_SECURITY_AUDIT.md
+          grep -q 'requireAdmin' lib/admin_auth.js
+          grep -q 'verifyCloudflareAccessJwt' lib/admin_auth.js
+          grep -q 'RSASSA-PKCS1-v1_5' lib/cloudflare_access_jwt.js
+          if grep -q 'emailFromAccessJwt' lib/admin_auth.js; then
+            echo 'Unsigned Access JWT payload parsing must not return.' >&2
+            exit 1
+          fi
+          grep -q 'withSecurityHeaders' _worker.js
+
+      - name: Delivery configuration invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import {
+            WEBSITE_LOCALES,
+            currentMetricoolLocales,
+            currentManualSocialLocales,
+            TARGET_WQW_METRICOOL_BRANDS,
+            TARGET_SWEDEN_NO_SUGAR_METRICOOL_BRANDS,
+            TARGET_TOTAL_METRICOOL_BRANDS
+          } from './lib/project_config.js';
+          if (WEBSITE_LOCALES.length !== 13) throw new Error(`Expected 13 website locales, got ${WEBSITE_LOCALES.length}`);
+          if (currentMetricoolLocales().length !== 8) throw new Error(`Temporary Metricool locale count drifted: ${currentMetricoolLocales().length}`);
+          const manual=currentManualSocialLocales().sort().join(',');
+          if (manual !== 'it,pt') throw new Error(`Temporary manual locales must be it,pt; got ${manual}`);
+          if (TARGET_WQW_METRICOOL_BRANDS !== 13 || TARGET_SWEDEN_NO_SUGAR_METRICOOL_BRANDS !== 2 || TARGET_TOTAL_METRICOOL_BRANDS !== 15) {
+            throw new Error('Metricool target capacity must be 13 WQW + 2 Sweden No Sugar = 15');
+          }
+          NODE
+
+      - name: Newsletter architecture invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s workers/newsletter_worker.js
+          test -s lib/brevo_webhook.js
+          grep -q "request_lifecycle_scheduler_disabled" lib/newsletter_admin.js
+          grep -q "NEWSLETTER_QUEUE" workers/newsletter_worker.js
+          grep -q "newsletter_suppressions" workers/newsletter_worker.js
+          grep -q "BREVO_WEBHOOK_TOKEN" lib/brevo_webhook.js
+
+      - name: Migration safety markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in db/migration11_platform_hardening.sql db/migration12_delivery_configuration.sql; do
+            if [[ -f "$file" ]]; then
+              grep -q 'validate on staging D1 before production' "$file"
+            fi
+          done
+          if [[ -f db/migration12_delivery_configuration.sql ]]; then
+            grep -q 'all active website languages are required' db/migration12_delivery_configuration.sql
+            grep -q 'delivery_configuration_driven' db/migration12_delivery_configuration.sql
+          fi

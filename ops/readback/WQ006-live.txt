@@ -1,10 +1,10 @@
-PASS 200 bytes=11550 https://wisequotesworld.com/uk/quotes/my-doroslishayemo-batkivskyi-dim/
-PASS 200 bytes=11625 https://wisequotesworld.com/ru/quotes/my-vzrosleem-roditelskiy-dom/
-PASS 200 bytes=9894 https://wisequotesworld.com/pl/quotes/dorastamy-rodzinny-dom-rodzice/
-PASS 200 bytes=10139 https://wisequotesworld.com/en/quotes/we-grow-up-leave-home-parents/
-PASS 200 bytes=10035 https://wisequotesworld.com/sv/quotes/vi-vaxer-upp-flyttar-hemifran-foraldrar/
-PASS 200 bytes=10129 https://wisequotesworld.com/de/quotes/wir-werden-erwachsen-von-zu-hause-ausziehen-eltern/
-PASS 200 bytes=10110 https://wisequotesworld.com/es/quotes/crecemos-hogar-familiar-padres/
-PASS 200 bytes=10397 https://wisequotesworld.com/fr/quotes/on-grandit-foyer-familial-parents/
-checked_at=2026-09-10T04:46:26Z
-overall=PASS
+FAIL code=403 bytes=5453 https://wisequotesworld.com/uk/quotes/my-doroslishayemo-batkivskyi-dim/
+FAIL code=403 bytes=5420 https://wisequotesworld.com/ru/quotes/my-vzrosleem-roditelskiy-dom/
+FAIL code=403 bytes=5447 https://wisequotesworld.com/pl/quotes/dorastamy-rodzinny-dom-rodzice/
+FAIL code=403 bytes=5444 https://wisequotesworld.com/en/quotes/we-grow-up-leave-home-parents/
+FAIL code=403 bytes=5474 https://wisequotesworld.com/sv/quotes/vi-vaxer-upp-flyttar-hemifran-foraldrar/
+FAIL code=403 bytes=5529 https://wisequotesworld.com/de/quotes/wir-werden-erwachsen-von-zu-hause-ausziehen-eltern/
+FAIL code=403 bytes=5447 https://wisequotesworld.com/es/quotes/crecemos-hogar-familiar-padres/
+FAIL code=403 bytes=5456 https://wisequotesworld.com/fr/quotes/on-grandit-foyer-familial-parents/
+checked_at=2026-09-10T12:02:27Z
+overall=FAIL

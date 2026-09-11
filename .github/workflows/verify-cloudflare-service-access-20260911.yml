@@ -1,0 +1,32 @@
+name: Verify Cloudflare service access
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-cloudflare-service-access-20260911.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Verify WQW service-token access safely
+        env:
+          ACCESS_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          ACCESS_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          test -n "$ACCESS_ID"
+          test -n "$ACCESS_SECRET"
+          python - <<'PY'
+          import os
+          i=os.environ['ACCESS_ID']; s=os.environ['ACCESS_SECRET']
+          print('ID_LEN',len(i),'ID_ENDS_ACCESS',i.endswith('.access'))
+          print('SECRET_LEN',len(s),'SECRET_STARTS_CFAST',s.startswith('cfast_'))
+          PY
+          curl -sS -D /tmp/h -o /dev/null \
+            -H "CF-Access-Client-Id: $ACCESS_ID" \
+            -H "CF-Access-Client-Secret: $ACCESS_SECRET" \
+            'https://wisequotesworld.com/admin/' || true
+          awk 'BEGIN{IGNORECASE=1} /^HTTP\// || /^location:/ || /^server:/ || /^cf-ray:/ || /^cf-access/ {print}' /tmp/h

@@ -1,0 +1,70 @@
+name: Pinpoint Cloudflare challenge layer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/diagnose-cloudflare-layer-20260911.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+      CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe paths and user agents
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPORT='ops/cloudflare-layer-diagnostic-20260911.md'
+          echo '# Cloudflare layer diagnostic — 2026-09-11' > "$REPORT"
+          echo >> "$REPORT"
+          probe() {
+            local label="$1" url="$2" ua="$3" use_token="$4"
+            local h b code
+            h="$(mktemp)"; b="$(mktemp)"
+            args=(-sS --connect-timeout 10 --max-time 30 --http1.1 -A "$ua" -D "$h" -o "$b" -w '%{http_code}')
+            if [ "$use_token" = yes ]; then
+              args+=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
+            fi
+            code="$(curl "${args[@]}" "$url" || true)"
+            mitigated="$(awk 'BEGIN{IGNORECASE=1} /^cf-mitigated:/{gsub(/\r/,"");print $2}' "$h" | head -1)"
+            loc="$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]+:[[:space:]]*/,"");gsub(/\r/,"");print;exit}' "$h")"
+            title="$(grep -o '<title>[^<]*' "$b" | head -1 | sed 's/<title>//' || true)"
+            {
+              echo "## $label"
+              echo "- URL: \`$url\`"
+              echo "- token: \`$use_token\`"
+              echo "- HTTP: \`$code\`"
+              echo "- cf-mitigated: \`${mitigated:-none}\`"
+              echo "- title: \`${title:-none}\`"
+              if [ -n "$loc" ]; then echo "- location-host: \`$(printf '%s' "$loc" | sed -E 's#https?://([^/]+)/.*#\1#')\`"; fi
+              echo
+            } >> "$REPORT"
+          }
+          chrome='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'
+          github='GitHub-Actions-Cloudflare-Diagnostic/1.0'
+          curlua='curl/8.5.0'
+          probe 'Homepage GitHub UA anonymous' 'https://wisequotesworld.com/' "$github" no
+          probe 'Homepage curl UA anonymous' 'https://wisequotesworld.com/' "$curlua" no
+          probe 'Homepage Chrome UA anonymous' 'https://wisequotesworld.com/' "$chrome" no
+          probe 'Admin GitHub UA with token' 'https://wisequotesworld.com/admin/' "$github" yes
+          probe 'Admin curl UA with token' 'https://wisequotesworld.com/admin/' "$curlua" yes
+          probe 'Admin Chrome UA with token' 'https://wisequotesworld.com/admin/' "$chrome" yes
+          probe 'Admin Chrome UA anonymous' 'https://wisequotesworld.com/admin/' "$chrome" no
+          probe 'Public start GitHub UA anonymous' 'https://wisequotesworld.com/en/start/' "$github" no
+      - name: Commit report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/cloudflare-layer-diagnostic-20260911.md
+          git commit -m 'record Cloudflare layer diagnostic' || exit 0
+          git push

@@ -1,0 +1,93 @@
+name: Apply WQ021 status and WQ022 prompt correction
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-wq021-wq022-correction-20260911.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Expose deterministic one-time correction route
+        run: |
+          set -euo pipefail
+          node --check lib/wq021_030_prompt_status_fix_20260911.js
+          python - <<'PY'
+          from pathlib import Path
+          w=Path('_worker.js')
+          s=w.read_text(encoding='utf-8')
+          imp="import {adminTopicsApi} from './lib/admin_topics_api.js';"
+          add=imp+"\nimport {applyWQ021030Fix} from './lib/wq021_030_prompt_status_fix_20260911.js';"
+          if 'applyWQ021030Fix' not in s:
+              assert imp in s
+              s=s.replace(imp,add,1)
+          marker="export default {async fetch(request,env,ctx){try{const url=new URL(request.url);"
+          route=marker+"if(url.pathname==='/ops/run/wq021-wq022-correction-20260911-9c5e31'&&request.method==='POST')return json(await applyWQ021030Fix(env));"
+          if '/ops/run/wq021-wq022-correction-20260911-9c5e31' not in s:
+              assert marker in s
+              s=s.replace(marker,route,1)
+          w.write_text(s,encoding='utf-8')
+          PY
+          node --check _worker.js
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git commit -m 'Expose deterministic WQ021 WQ022 correction route'
+          git push
+      - name: Wait for deployment
+        run: sleep 90
+      - name: Apply correction and verify D1 readback
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -sS -L --fail-with-body --retry 12 --retry-all-errors --retry-delay 6 \
+            -X POST 'https://wisequotesworld-web.pages.dev/ops/run/wq021-wq022-correction-20260911-9c5e31' \
+            -H 'Content-Type: application/json' \
+            -o ops/readback/wq021-030-prompt-status-fix-20260911.json
+          cat ops/readback/wq021-030-prompt-status-fix-20260911.json
+          python - <<'PY'
+          import json
+          d=json.load(open('ops/readback/wq021-030-prompt-status-fix-20260911.json',encoding='utf-8'))
+          assert d.get('ok') is True,d
+          assert (d.get('published') or {}).get('after',{}).get('status')=='published',d
+          ps=(d.get('verification') or {}).get('wq022_prompt_safety') or {}
+          assert ps.get('ok') is True and ps.get('count')==8,ps
+          rows=(d.get('verification') or {}).get('rows') or []
+          assert len(rows)==9,rows
+          for r in rows:
+              assert r.get('published_pages')==13,r
+              assert r.get('native_qa',0)>=13,r
+              assert r.get('video_prompts')==8,r
+              assert r.get('pinterest_prompts')==8,r
+              assert r.get('outputs',0)>=88,r
+              assert r.get('ready_for_user_media') is True,r
+          print('PASS WQ021/WQ022-WQ030')
+          PY
+      - name: Remove one-time route and persist readback
+        if: always()
+        run: |
+          set -euo pipefail
+          git pull --rebase || true
+          python - <<'PY'
+          from pathlib import Path
+          w=Path('_worker.js')
+          s=w.read_text(encoding='utf-8')
+          s=s.replace("\nimport {applyWQ021030Fix} from './lib/wq021_030_prompt_status_fix_20260911.js';",'')
+          marker="export default {async fetch(request,env,ctx){try{const url=new URL(request.url);"
+          route=marker+"if(url.pathname==='/ops/run/wq021-wq022-correction-20260911-9c5e31'&&request.method==='POST')return json(await applyWQ021030Fix(env));"
+          s=s.replace(route,marker)
+          w.write_text(s,encoding='utf-8')
+          PY
+          rm -f .github/workflows/apply-wq021-wq022-correction-20260911.yml
+          rm -f lib/wq021_030_prompt_status_fix_20260911.js
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A _worker.js .github/workflows/apply-wq021-wq022-correction-20260911.yml lib/wq021_030_prompt_status_fix_20260911.js ops/readback/wq021-030-prompt-status-fix-20260911.json || true
+          git commit -m 'Record WQ021-WQ030 correction readback and remove one-time route' || true
+          git push || true

@@ -1,0 +1,1 @@
+{"ok":false,"error":"Too many API requests by single Worker invocation. To configure this limit, refer to https://developers.cloudflare.com/workers/wrangler/configuration/#limits"}

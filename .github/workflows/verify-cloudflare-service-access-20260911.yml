@@ -1,0 +1,27 @@
+name: Verify Cloudflare service access
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-cloudflare-service-access-20260911.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Verify protected routes
+        env:
+          ACCESS_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          ACCESS_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          test -n "$ACCESS_ID"
+          test -n "$ACCESS_SECRET"
+          for url in 'https://wisequotesworld.com/admin/' 'https://wisequotesworld.com/api/admin/health'; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' -H "CF-Access-Client-Id: $ACCESS_ID" -H "CF-Access-Client-Secret: $ACCESS_SECRET" "$url")
+            echo "$url HTTP=$code"
+            test "$code" != "302"
+            test "$code" != "403"
+          done

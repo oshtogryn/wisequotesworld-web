@@ -25,8 +25,17 @@ jobs:
           print('ID_LEN',len(i),'ID_ENDS_ACCESS',i.endswith('.access'))
           print('SECRET_LEN',len(s),'SECRET_STARTS_CFAST',s.startswith('cfast_'))
           PY
-          curl -sS -D /tmp/h -o /dev/null \
-            -H "CF-Access-Client-Id: $ACCESS_ID" \
-            -H "CF-Access-Client-Secret: $ACCESS_SECRET" \
-            'https://wisequotesworld.com/admin/' || true
-          awk 'BEGIN{IGNORECASE=1} /^HTTP\// || /^location:/ || /^server:/ || /^cf-ray:/ || /^cf-access/ {print}' /tmp/h
+          for url in \
+            'https://wisequotesworld.com/admin/' \
+            'https://wisequotesworld.com/admin/index.html' \
+            'https://wisequotesworld.com/api/admin/health' \
+            'https://wisequotesworld.com/ops/'; do
+            echo "=== $url ==="
+            curl -sS -D /tmp/h -o /tmp/b \
+              -H "CF-Access-Client-Id: $ACCESS_ID" \
+              -H "CF-Access-Client-Secret: $ACCESS_SECRET" \
+              "$url" || true
+            awk 'BEGIN{IGNORECASE=1} /^HTTP\// || /^location:/ || /^server:/ || /^content-type:/ || /^cf-ray:/ || /^cf-access/ {print}' /tmp/h
+            echo 'BODY:'
+            head -c 300 /tmp/b | tr '\n' ' '; echo
+          done

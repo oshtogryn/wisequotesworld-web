@@ -27,11 +27,11 @@ jobs:
           if 'applyWQ021030Fix' not in s:
               assert imp in s
               s=s.replace(imp,add,1)
-          marker="export default {async fetch(request,env,ctx){try{const url=new URL(request.url);"
-          route=marker+"if(url.pathname==='/ops/run/wq021-wq022-correction-20260911-9c5e31'&&request.method==='POST')return json(await applyWQ021030Fix(env));"
-          if '/ops/run/wq021-wq022-correction-20260911-9c5e31' not in s:
-              assert marker in s
-              s=s.replace(marker,route,1)
+          anchor="const newsletterResponse=await newsletterApi(request,env);if(newsletterResponse)return newsletterResponse;"
+          route="if(url.pathname==='/ops/run/wq021-wq022-correction-20260911-9c5e31'&&request.method==='POST')return json(await applyWQ021030Fix(env));"
+          if route not in s:
+              assert anchor in s
+              s=s.replace(anchor,anchor+route,1)
           w.write_text(s,encoding='utf-8')
           PY
           node --check _worker.js
@@ -79,15 +79,16 @@ jobs:
           w=Path('_worker.js')
           s=w.read_text(encoding='utf-8')
           s=s.replace("\nimport {applyWQ021030Fix} from './lib/wq021_030_prompt_status_fix_20260911.js';",'')
-          marker="export default {async fetch(request,env,ctx){try{const url=new URL(request.url);"
-          route=marker+"if(url.pathname==='/ops/run/wq021-wq022-correction-20260911-9c5e31'&&request.method==='POST')return json(await applyWQ021030Fix(env));"
-          s=s.replace(route,marker)
+          anchor="const newsletterResponse=await newsletterApi(request,env);if(newsletterResponse)return newsletterResponse;"
+          route="if(url.pathname==='/ops/run/wq021-wq022-correction-20260911-9c5e31'&&request.method==='POST')return json(await applyWQ021030Fix(env));"
+          s=s.replace(anchor+route,anchor)
           w.write_text(s,encoding='utf-8')
           PY
           rm -f .github/workflows/apply-wq021-wq022-correction-20260911.yml
           rm -f lib/wq021_030_prompt_status_fix_20260911.js
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A _worker.js .github/workflows/apply-wq021-wq022-correction-20260911.yml lib/wq021_030_prompt_status_fix_20260911.js ops/readback/wq021-030-prompt-status-fix-20260911.json || true
+          git add -A _worker.js .github/workflows/apply-wq021-wq022-correction-20260911.yml lib/wq021_030_prompt_status_fix_20260911.js || true
+          if [ -f ops/readback/wq021-030-prompt-status-fix-20260911.json ]; then git add ops/readback/wq021-030-prompt-status-fix-20260911.json; fi
           git commit -m 'Record WQ021-WQ030 correction readback and remove one-time route' || true
           git push || true

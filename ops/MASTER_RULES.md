@@ -1,180 +1,331 @@
 # MASTER RULES — Wise Quotes World
 
-Останнє оновлення: 2026-09-09
+Останнє оновлення: 2026-09-11
 Статус: CANONICAL
-Версія: database-first v4.12
+Версія: database-first v4.13
 
 ## 1. Джерела істини
 1. `ops/MASTER_RULES.md` — канонічне джерело операційних правил.
-2. D1 — канонічне джерело операційних даних.
+2. D1 — канонічне джерело операційного стану та контенту.
 3. D1 `rules` — машинно-читана копія критичних правил.
-4. Google Sheets — migration source/archive, не fallback.
-5. GitHub/Cloudflare — code/templates/assets.
-6. Новіші explicit user decisions і MASTER_RULES мають пріоритет.
-7. Перед новою темою читати актуальний MASTER_RULES.
+4. Google Sheets — лише migration source/archive, не fallback.
+5. GitHub/Cloudflare — code, templates, assets та runtime infrastructure.
+6. Новіші explicit user decisions мають пріоритет над старими записами; після підтвердження вони повинні бути внесені в MASTER_RULES.
+7. Перед новою темою, зміною pipeline/status/publication/structure обов’язково читати актуальний MASTER_RULES і фактичний D1 state.
+8. Completion/status claims робити тільки після реального readback.
 
-## 2. Мови
-uk, ru, pl, en, sv, de, es, fr, it, pt (pt-BR), id, tr, ar.
+## 2. Мови та режими публікації
+Website locales — 13:
+`uk, ru, pl, en, sv, de, es, fr, it, pt-BR, id, tr, ar`.
 
-Усі 13 мов активні для website: uk, ru, pl, en, sv, de, es, fr, it, pt-BR, id, tr, ar. Італійська, бразильська португальська, індонезійська, турецька та арабська мають website-локалізації та індексовані URL; їхні social-канали лишаються prepared/inactive до створення й підключення відповідних акаунтів/дошок. Після підключення кожна нова locale переходить на ті самі social/media/scheduling gates, що й інші активні social locales.
+Connected Metricool social locales — 8:
+`uk, ru, pl, en, sv, de, es, fr`.
 
-## 3. Контент
-Одна думка = один content_id, 13 website localizations. Є два production types:
-- `adapted` — власні/адаптовані Wise Quotes World думки без автора. Основний established cinematic human/symbolic prompt style.
-- `verbatim` — справжня цитата конкретного автора; тільки verified author + verified source + verified original wording. Для неї діє author-specific visual treatment.
+Manual/inactive social locales — 5:
+`it, pt-BR, id, tr, ar`.
 
-Не переносити author/verbatim visual template на `adapted`. Не додавати автора до `adapted`.
-Кожна локалізація: semantic fidelity + native naturalness QA. Literal translation заборонений, якщо звучить неприродно або змінює емоційний сенс.
+Усі 13 мов мають website-localization та індексовані article URLs. Manual/inactive social locales можуть мати підготовлені prompts/copy/media, але не входять у Metricool completeness/readback gate, доки акаунти/boards фактично не підключені.
+
+## 3. Контентні типи та атрибуція
+Одна думка = один `content_id` + 13 website localizations.
+
+Є два production types:
+- `adapted` — власна/адаптована Wise Quotes World думка без автора.
+- `verbatim` — справжня цитата конкретного автора; допускається тільки після verified author + source + original wording.
+
+Правила:
+- `adapted` ніколи не отримує автора.
+- `verbatim` завжди має explicit attribution та verified source/original.
+- Порожній author = NO AUTHOR everywhere.
+- Не переносити author-specific visual treatment на `adapted`.
+- Кожна локалізація проходить semantic fidelity + native naturalness QA.
+- Literal translation заборонений, якщо звучить неприродно або змінює сенс/емоційний тон.
 
 ## 4. Quote-length gate
-Перед prompts/copy перевірити, що quote природно читається в реальній тривалості поточного Gemini/Veo interface/model. Не зашивати універсальні 10 s. Не прискорювати voiceover і не дрібнити текст заради вміщення. Adapted можна скоротити до localization; verbatim wording не скорочувати під виглядом exact quote.
+Перед prompts/copy перевірити, що quote природно читається у фактичній тривалості поточного Gemini/Veo interface/model.
 
-## 5. Workflow
-`idea -> source_check -> quote_length_qa -> quote_ready -> localized -> native_language_qa -> prompt_ready -> copy_ready -> website_ready -> pinterest_ready -> media_pending -> media_ready -> approved -> scheduled -> published -> analytics`.
+- Не зашивати універсальну тривалість типу 10 s.
+- Не прискорювати voiceover і не ламати текст тільки заради таймінгу.
+- `adapted` можна скоротити під natural localization.
+- `verbatim` не скорочувати під виглядом exact quote.
 
-## 6. Gemini/Veo video prompt — PRODUCTION STANDARD v4.6
-WQ006 RU successful generation is the confirmed benchmark for `adapted`. Короткий, прямий, структурований prompt працює краще за перевантажений prompt із внутрішніми QA-командами.
+## 5. Canonical workflow
+`idea -> source_check -> quote_length_qa -> quote_ready -> localized -> native_language_qa -> prompt_ready -> copy_ready -> website_ready -> pinterest_ready -> media_pending -> media_ready -> approved -> scheduled -> published -> analytics`
+
+Website publication, website visibility і social scheduling — окремі незалежні gates.
+
+## 6. Gemini/Veo video prompts
+WQ006 RU — established benchmark для `adapted`: короткий, прямий, структурований prompt без внутрішніх QA-інструкцій.
 
 ### Mandatory structure
 1. `Create a premium photorealistic vertical 9:16 cinematic video in <language>.`
-2. Один cinematic concept: framing + subject + action + setting + light + emotion + camera movement. Одна coherent story.
-3. Exact localized text card(s); no other visible text.
-4. Typography: clean, large, elegant, upper-middle safe area; complete stable cards; no individual word/letter animation.
+2. Один coherent cinematic concept: framing + subject/action + setting + light + emotion + camera movement.
+3. Exact localized text card(s), без іншого readable text.
+4. Clean, large, elegant typography; upper-middle safe area; stable complete cards; no word/letter animation.
 5. `Audio:` calm native narrator reads exact intended quote/attribution naturally and completely; restrained music below voice.
-6. For `verbatim`, before prompt-ready status verify the author name's correct native pronunciation for the target language/locale, including stress where relevant. The Audio instruction must enforce that pronunciation. Visible attribution keeps normal orthography; stress marks, phonetic spellings or pronunciation diagnostics must never leak into visible text.
-7. One concise negative line: `No subtitles. No captions. No emoji. No decorative symbols. No logo. No branding. No watermark. No other readable text.`
-8. Clean emotional final shot/hold.
+6. Для `verbatim` до prompt-ready перевірити locale-specific pronunciation/stress автора. Pronunciation guidance не повинна потрапляти у visible text.
+7. Один короткий negative line: `No subtitles. No captions. No emoji. No decorative symbols. No logo. No branding. No watermark. No other readable text.`
+8. Clean emotional final hold.
 
-### 6A. Two prompt families — HARD
-**A. `adapted` / own Wise Quotes World quote**
-- Preserve the established WQ006-style cinematic human/symbolic storytelling used for our own/adapted quotes.
-- Do NOT convert adapted quotes into philosopher busts, museum portraits, author cards, or the author-specific template below.
-- Continue choosing a sincere human or symbolic scene that directly embodies the quote; strong emotion without cheap melodrama.
+### Prompt family A — `adapted`
+- Human/symbolic cinematic scene, що прямо передає думку.
+- Без philosopher busts, author cards, museum portraits.
+- Sincere emotion; no cheap melodrama.
 
-**B. `verbatim` / verified real-author quote**
-- Use a distinct premium author-specific treatment only when author, source and original wording are verified.
-- Keep the author recognizably central through a dignified portrait/sculpture/art-historical treatment appropriate to the person/period; never imply fake authentic historical footage.
-- Do not make it a static museum slideshow. Give the quote its own cinematic visual metaphor and micro-dramaturgy.
-- Premium, restrained, intellectual/editorial tone; avoid superhero aesthetics, generic motivational-ad clichés and excessive melodrama.
-- Quote wording remains exact. Attribution is explicit. Exact quote may be split across up to two stable sequential text cards when semantically justified.
+### Prompt family B — `verbatim`
+- Premium restrained editorial/intellectual treatment.
+- Якщо модель дозволяє і це доречно, можна використати dignified portrait/sculpture/art-historical representation автора.
+- Авторський likeness НЕ є обов’язковим. Якщо Gemini/Veo блокує public figure або likeness створює generation risk, використовувати сильну історично/тематично доречну symbolic scene без портрета, обличчя, бюста чи likeness автора.
+- Ніколи не імітувати fake authentic historical footage.
+- Не робити static museum slideshow; потрібна quote-specific visual metaphor/micro-dramaturgy.
+- Exact quote wording та attribution залишаються незмінними; за потреби quote можна розділити максимум на два stable sequential cards.
 
-### Exact-text anti-leak rule — HARD
-- Quote appears only in intended stable text card(s).
-- NEVER put spelling diagnostics, letter-by-letter spelling, phonetic breakdown, wrong spellings, character/Unicode sequences, QA labels or similar diagnostics inside production prompt.
-- Internal QA happens OUTSIDE the generation prompt.
-
-### Video rules
-- Immediate meaningful frame; no black intro.
-- No typewriter, word-by-word, letter-by-letter, auto subtitles.
-- Text upper-middle safe area, mobile-readable.
-- Natural native voice, complete first/last words, music lower than voice.
-- No generated Wise Quotes World logo/branding. User adds language logo manually in CapCut after PASS.
-- Adapted: cinematic human/symbolic story, sincere, no cheap melodrama.
-- Verbatim: premium author-specific micro-film with a quote-specific metaphor.
-
-### Prompt simplicity rule — HARD
-Accuracy does not mean prompt length. Use only instructions needed for the cinematic concept, exact text, typography, audio, concise negatives and final shot.
+### Exact-text anti-leak
+- Quote з’являється тільки у intended stable text card(s).
+- Не вставляти у production prompt spelling diagnostics, phonetics, stress marks, Unicode/letter diagnostics, QA labels, wrong spellings або internal notes.
+- Internal QA завжди поза generation prompt.
 
 ## 7. Generated-video QA + CapCut
-QA happens AFTER generation, not inside prompt. REJECT for wrong/missing text, broken diacritics/punctuation, clipped first/last word, rushed/clipped voice, extra readable text/random letters/auto captions/emoji, AI logo/branding/watermark, or scene contradicting meaning. For verbatim also REJECT incorrect/missing author attribution, incorrect locale-specific pronunciation or stress of the author's name, or fake historical-footage implication. After PASS add only correct Wise Quotes World language logo in CapCut. Do not duplicate quote with CapCut text.
+QA після генерації. REJECT якщо є:
+- wrong/missing text;
+- broken diacritics/punctuation;
+- clipped first/last word;
+- rushed/clipped voice;
+- extra readable text/random letters/auto captions/emoji;
+- AI logo/branding/watermark;
+- scene contradicting meaning;
+- для `verbatim`: wrong/missing attribution, wrong locale pronunciation/stress, fake historical-footage implication.
+
+Після PASS у CapCut додавати тільки правильний Wise Quotes World language logo. Не дублювати quote CapCut-текстом.
 
 ## 8. Pinterest
-Image Pin: 2:3 target 1000×1500; finished image contains exact localized quote; mobile-readable typography; no unrelated text/random letters/watermark; no generated Wise Quotes World logo by default. User generates manually → Admin upload → R2 → QA → approval.
+Для кожної connected social locale обов’язкові два окремі Pinterest outputs:
+1. Image Pin — approved 2:3 image, target 1000×1500.
+2. Video Pin — approved 9:16 topic video from R2/D1.
 
-Video Pin: approved 9:16 topic video from R2/D1. Do not substitute the Pinterest image or another locale’s video.
+Image rules:
+- exact localized quote;
+- для `verbatim` attribution;
+- mobile-readable typography;
+- no CTA/helper text/random letters/watermark/generated logo;
+- clean, save-worthy editorial asset.
 
-Pinterest is MANDATORY for every approved topic in every connected social locale. Each active social locale requires TWO separate Pinterest posts:
-1. Pinterest Image Pin — approved 2:3 locale image.
-2. Pinterest Video Pin — approved 9:16 locale topic video.
-
-Both require the correct locale board, localized Pinterest title, localized description and exact same-language article destination. Never use another language or homepage. Image and Video Pins must not publish simultaneously; default pattern is Image during the day and Video in the evening.
-
-### Pinterest creative differentiation — HARD
-- Pinterest Image Pin is a clean, save-worthy editorial asset. The image itself contains only the exact localized quote and, for `verbatim`, its author attribution. Do not add CTA text, “read more”, explanations, helper labels or promotional copy onto the image.
-- For one content_id, locale images must preserve the same meaning and premium WQW tone but must not look like near-identical language swaps. Vary composition, visual metaphor/details, lighting mood and color treatment where appropriate.
-- Every locale gets a subtle locale-aware editorial color direction. Treat it as mood and palette, not literal nationality: no flags, national emblems, stereotypical costumes, tourist landmarks or folk clichés unless the quote itself genuinely requires them.
-- Default locale palette cues: uk = deep blue + wheat-gold + dusk neutrals; ru = burgundy + charcoal + muted ivory; pl = warm ivory + muted crimson + graphite; en = Oxford navy + parchment + restrained brass; sv = Nordic cool blue + pale stone + soft amber; de = charcoal + forest green + warm ochre; es = terracotta + olive + warm cream; fr = slate blue + warm ivory + muted burgundy; it = olive + terracotta + warm stone; pt-BR = deep emerald + warm sand + muted azure; id = teak earth tones + warm cream + subdued indigo; tr = deep teal + copper + warm stone; ar = desert sand + deep indigo + antique gold. These are starting cues, not rigid brand colors; topic meaning and visual quality take priority.
-- Pinterest titles/descriptions must be native, SEO-natural and meaning-faithful, but not mechanical translations of one fixed template. Vary hooks, phrasing and sentence structure across locales and topics while preserving factual accuracy. Avoid keyword stuffing.
-- Pinterest Image and Video posts may use different native descriptions when that improves naturalness and click motivation, while both keep the exact same-language article destination.
-- This differentiation is required during preparation, before `pinterest_ready`, for all future topics and for prepared topics that have not yet had their media generated.
+Creative differentiation:
+- Locale images не повинні бути простими language swaps.
+- Варіювати composition, metaphor/details, lighting mood і editorial palette.
+- Locale palette cues:
+  - uk: deep blue + wheat-gold + dusk neutrals
+  - ru: burgundy + charcoal + muted ivory
+  - pl: warm ivory + muted crimson + graphite
+  - en: Oxford navy + parchment + restrained brass
+  - sv: Nordic cool blue + pale stone + soft amber
+  - de: charcoal + forest green + warm ochre
+  - es: terracotta + olive + warm cream
+  - fr: slate blue + warm ivory + muted burgundy
+  - it: olive + terracotta + warm stone
+  - pt-BR: deep emerald + warm sand + muted azure
+  - id: teak earth tones + warm cream + subdued indigo
+  - tr: deep teal + copper + warm stone
+  - ar: desert sand + deep indigo + antique gold
+- Це mood cues, не literal nationality: без flags, national emblems, tourist/folk clichés без сюжетної потреби.
+- Pinterest titles/descriptions мають бути native, SEO-natural, meaning-faithful, не mechanical translations і без keyword stuffing.
+- Image/Video Pin можуть мати різні native descriptions.
+- Обидва ведуть на exact same-language article URL.
+- Image і Video Pin не публікувати одночасно; default — image вдень, video ввечері.
 
 ## 9. Required outputs
-For each website language: localized quote, localized article URL and substantive website reflection.
-For each connected social locale additionally: Gemini/Veo prompt, voiceover/on-screen text, Pinterest Image prompt, Facebook Reel, Instagram Reel, 3 Threads, TikTok, YouTube Short, Pinterest Image title+description and Pinterest Video title+description.
-Current connected Metricool social locales: uk, ru, pl, en, sv, de, es, fr. it, pt-BR, id, tr and ar remain manual/inactive social until connected.
+Для кожної з 13 website locales:
+- localized quote;
+- localized article URL;
+- substantive native website reflection.
 
-## 10. Social copy + link policy — HARD
-Posts must be self-contained and substantive. Working targets: Facebook 550–1000 chars; Instagram 400–800; Threads 3 independent posts; TikTok 250–500; YouTube 2–4 substantive sentences; Pinterest SEO-natural title + 2–4 sentences. Check actual platform limits before scheduling.
+Для кожної connected social locale додатково:
+- Gemini/Veo prompt;
+- voiceover/on-screen text;
+- Pinterest Image prompt;
+- Facebook Reel copy;
+- Instagram Reel copy;
+- 3 independent Threads posts;
+- TikTok copy;
+- YouTube Short title/description;
+- Pinterest Image title/description;
+- Pinterest Video title/description.
 
-- **Hashtags:** максимум 5 хештегів у будь-якому social post/caption. Використовувати лише релевантні; кількість не є самоціллю. `#WiseQuotesWorld` зберігати, коли доречно.
+## 10. Social copy + link policy
+Posts мають бути self-contained і substantive.
 
-Platform link routing is mandatory:
-- **Facebook:** include the exact same-language article URL directly in the post. It is the clickable funnel to the article.
-- **Threads:** include the exact same-language article URL directly in the post. It is the clickable funnel to the article.
-- **Instagram Reels:** do NOT put the raw article URL in the video caption/description. Use a natural localized CTA equivalent to “Link in profile”. The locale website link must be configured in the Instagram profile.
-- **YouTube Shorts:** do NOT put the raw article URL in the Shorts description. Use a natural localized CTA equivalent to “Link in profile”. The locale website link must be configured in the YouTube channel profile.
-- **TikTok:** keep the locale website address in the video caption/description as visible plain text even when TikTok does not make it clickable. Do NOT falsely call it a clickable link or say “link in profile” when the account has no website/profile link. The TikTok CTA may invite the viewer to follow and/or visit the displayed WiseQuotesWorld.com locale address manually.
-- **Pinterest:** pin destination remains the exact same-language article URL via the Pinterest destination-link field; localized description remains SEO-natural.
-- Never send a locale to the homepage or another language when an exact localized article exists.
+Working targets:
+- Facebook: 550–1000 chars
+- Instagram: 400–800 chars
+- Threads: 3 independent posts
+- TikTok: 250–500 chars
+- YouTube: 2–4 substantive sentences
+- Pinterest: SEO-natural title + 2–4 sentences
 
-## 11. Website article
-Separate substantive editorial asset: quote; verified attribution when applicable; meaning; why it matters; life example/reflection; strong conclusion; CTA/internal links. Target 250–500 words, multi-paragraph, native, no filler.
-WQ006 final version is the emotional editorial benchmark for adapted content. For verbatim content, include verified attribution/source/original wording and interpret context responsibly. All quote detail pages, past and future, must render through one shared 13-locale article presentation standard: breadcrumbs → category → quote card → exactly one attribution line → substantive reflection → verified source/original where applicable → related/internal links. Locale-specific wording is native, but layout/order must not diverge by locale. Never render attribution twice when localized quote storage already contains it.
+Максимум 5 релевантних hashtags. `#WiseQuotesWorld` зберігати, коли доречно.
 
-## 12. Website/database
-D1 database-first. New approved content should not require manual deploy. 13 website locales, archive, quote/category/verified-author pages, sitemap/hreflang/canonical/internal links. Social readiness is evaluated only for connected social locales.
+Link routing:
+- Facebook: exact same-language article URL у post.
+- Threads: exact same-language article URL у post.
+- Instagram Reels: без raw article URL; natural localized “link in profile” CTA.
+- YouTube Shorts: без raw article URL; natural localized “link in profile” CTA.
+- TikTok: visible locale website address як plain text, якщо немає clickable website/profile link; не називати його clickable.
+- Pinterest: exact same-language article URL у destination-link field.
+- Ніколи не вести locale на homepage або іншу мову, якщо існує exact localized article.
 
-**Editorial website visibility — HARD:** Starting with WQ016, technical article existence/indexability and editorial website visibility are separate. Prepared articles may remain reachable by direct canonical URL and in sitemap for indexing, but they MUST stay hidden from `/xx/start/` Latest, homepage/archive cards, category pages and author pages until an explicit `website_visibility` approval is recorded. Admin action `Опублікувати на сайт` controls this gate independently from social scheduling. Publishing to the website must not schedule social posts; scheduling social posts must warn when the article is still hidden and must not silently publish it.
+## 11. Website article standard
+Кожна стаття — окремий substantive editorial asset:
+- quote;
+- verified attribution/source/original для `verbatim`;
+- meaning/context;
+- why it matters;
+- life example/reflection;
+- strong conclusion;
+- CTA/internal links.
 
-**Generic publication rule — HARD:** Starting with WQ016, website publication must use the shared D1 publication engine and its 13-locale readiness gate. Do not create topic-specific `wq0xx_finalize.js`/website-publish modules unless a genuinely exceptional migration requires one. Website publication and social scheduling remain separate gates: publishing `quote_pages` must not falsely mark social Planner/Metricool work as scheduled or published. A successful website publication automatically feeds the dynamic `/xx/start/`, D1 sitemap and IndexNow path.
+Target: 250–500 слів, multi-paragraph, native, no filler.
 
-All 13 localized `/start` pages use one unified presentation: compact contact block with direct e-mail action, not the old multi-field contact form. Newsletter signup is locale-aware: the current `/xx/start` locale determines the subscription language automatically. Subscriber e-mail, locale, consent timestamp/version, status and unsubscribe token are stored in D1. Automated newsletter delivery must not be claimed as active until an outbound e-mail provider is connected; D1 remains the canonical subscriber source. Default newsletter cadence is one localized digest every 14 days. Free-tier planning uses a dynamic maximum of 300 deliveries per day, giving up to 4200 deliveries per 14-day cycle; subscribers are assigned to batches dynamically rather than permanently tied to weekdays. Brevo is the connected outbound transport: sender domain `news.wisequotesworld.com` is authenticated/branded and production credentials are stored only as Cloudflare secrets/variables. D1 remains canonical. Automated scheduled delivery remains disabled until the 14-day batch scheduler is explicitly enabled and verified.
+WQ006 — emotional editorial benchmark для `adapted`.
 
+Усі quote detail pages використовують один 13-locale presentation standard:
+`breadcrumbs -> category -> quote card -> exactly one attribution line -> substantive reflection -> verified source/original when applicable -> related/internal links`.
 
-### Scheduled website visibility — HARD
-- Prepared quote pages may be technically published/indexable while editorial navigation visibility remains hidden.
-- Admin may publish website visibility immediately or schedule an exact future activation time.
-- Website schedules are stored canonically in D1 `website_publication_schedule`.
-- Scheduling is allowed only when all 13 quote pages are already prepared with `status='published'`.
-- At and after `scheduled_for`, public Latest/archive/category/author queries treat the topic as visible even before the schedule row is housekeeping-marked `released`.
-- Website scheduling never schedules social posts and never sets social `scheduled` or `published`.
-- Cancelling a website schedule leaves direct article URLs/indexability unchanged and keeps editorial navigation hidden.
+Не рендерити attribution двічі, якщо localized quote storage уже її містить.
 
-## 13. Media
-R2 canonical binaries; D1 metadata. Upload once/reuse. User generates video/Pinterest manually and uploads via Admin.
+## 12. Website publication vs website visibility — HARD
+Починаючи з WQ016, технічна публікація статті та її видимість у навігації — різні речі.
 
-## 14. Admin
-Create/edit topic, 13 website localizations, prompts, copy, article/URL, media upload/QA, approval/reject, workflow/status/errors, planning/readback, analytics. Social/media requirements apply only to connected social locales; it, pt-BR, id, tr and ar join those gates once their accounts are connected. Social preparation is independent from Metricool connectivity: Admin must display all 13 locales. Until connected, it, pt-BR, id, tr and ar use `publishing_mode=manual`; their localized articles/prompts/copy may be prepared and used for manual posting, but they are excluded from Metricool Planner completeness/readback gates. Connected uk, ru, pl, en, sv, de, es, fr use `publishing_mode=metricool`. Empty author = NO AUTHOR everywhere.
+### Technical publication
+Після проходження shared 13-locale readiness gate всі 13 `quote_pages` можуть отримати `status='published'`.
 
-## 15. Scheduling
-Metricool PRIMARY during stabilization. No `scheduled` without Planner readback. Before scheduling verify article opens, CTA, media QA PASS, approval, network/date/time/timezone/text/media.
+Технічно published стаття:
+- доступна по direct canonical URL;
+- має canonical/hreflang;
+- входить у sitemap;
+- може бути відправлена через IndexNow;
+- може індексуватися пошуковиками.
 
-### Pinterest scheduling gate — HARD
-- Every approved topic must be checked for BOTH Pinterest formats before the topic can be considered fully scheduled.
-- For every connected active social locale schedule TWO separate Pinterest posts: one Image Pin using the approved 2:3 image from R2/D1, and one Video Pin using the approved 9:16 topic video from R2/D1.
-- Image and Video Pins must not publish simultaneously. Default pattern: Image during the day, Video in the evening.
-- Current Metricool gate is 8 Image Pins + 8 Video Pins for uk, ru, pl, en, sv, de, es, fr.
-- it, pt-BR, id, tr and ar remain manual/inactive social and are excluded until their accounts/boards are actually connected.
-- Both formats use the exact locale board, localized Pinterest title/description, and exact live same-language D1 article URL as `pinLink`; never another language or homepage.
-- Planner readback must confirm every Pinterest Image and Video post. Drafts and duplicate records do not count.
+Technical publication НЕ робить тему видимою у public navigation і НЕ змінює social status.
 
-### Social scheduling gate — HARD
-- Social coverage is mandatory for every connected locale. it, pt-BR, id, tr and ar remain prepared/inactive/manual and are excluded from the Metricool completeness gate until their accounts are created and connected.
-- Current standard for 8 connected social locales is 9 publications per locale = 72 active scheduled posts per topic: 3 Threads + Facebook Reel + Instagram Reel + TikTok + YouTube Short + Pinterest Image + Pinterest Video.
-- Required aggregate 72/72 breakdown: 24 Threads, 8 Facebook, 8 Instagram, 8 TikTok, 8 YouTube, 8 Pinterest Image and 8 Pinterest Video.
-- FR has the same required video, platform copy, locale URL, media QA and Planner readback as other connected locales.
-- A topic is not `scheduled` until live Metricool Planner readback confirms the complete active set. Drafts, stale duplicates and duplicate records do not count toward 72/72.
-- Keep at least 15 minutes between same-platform publications for different locales unless an explicit later rule overrides this spacing.
-- Before scheduling, validate platform link policy in §10: Facebook/Threads use direct article URLs; Instagram/YouTube use profile CTA without raw URL; TikTok keeps the visible locale website address as plain text.
+### Editorial visibility
+Поки немає explicit `website_visibility` approval/release, тема MUST бути прихована від користувача у:
+- `/xx/start/` Latest;
+- homepage cards;
+- archive/listing cards;
+- category pages;
+- author pages;
+- інших discovery/navigation surfaces.
 
-## 16. Analytics
-24h/72h/7d/30d by language/platform/category/quote_type/author/creative/time. Each locale website must use corresponding Metricool web tracker.
+При цьому direct article URL продовжує працювати й індексуватися.
 
-## 17. Standard command protocol
-`наступна цитата` / `готуй наступну` / `працюємо по правилах` = read MASTER_RULES + D1 → determine `adapted` vs verified `verbatim` → source/quote QA → duration gate → 13 native website localizations → prompts/copy for connected social locales → Pinterest prompts for connected Pinterest locales → full social copy with platform-correct CTA/links + localized URLs → website reflection → D1 → user media generation/upload → media QA → approval → Metricool schedule all connected social locales using the 9-post-per-locale standard, including separate Pinterest Image and Pinterest Video Pins → Planner readback for the full active set (currently 72/72 across 8 connected locales) → analytics.
+В Admin користувач керує visibility окремо:
+- `Зробити видимою` одразу; або
+- вибрати точну дату й час, коли тема має стати видимою.
 
-## 18. Validation/fail-safe
-Adapted no author; verbatim verified author/source/original. Technically complete but failed native/exact-text/editorial/media QA = NOT production-ready. If API unavailable, preserve confirmed D1 state and mark only blocked step.
+Canonical schedules зберігаються в D1 `website_publication_schedule`.
 
-## 19. Project isolation
-Wise Quotes World and Sweden No Sugar are separate products. Reuse infrastructure/workflow patterns only after compatibility review. Records, credentials, mappings, content, CTA, taxonomy and analytics remain isolated by project_id/language/platform.
+Scheduling visibility дозволений тільки коли всі 13 quote pages вже мають `status='published'`.
+
+At/after `scheduled_for` тема стає видимою у public navigation. Housekeeping row може бути позначений `released` пізніше, але це не повинно затримувати фактичну видимість.
+
+Cancelling visibility schedule:
+- не видаляє article URLs;
+- не змінює indexability;
+- лишає тему hidden у navigation.
+
+Website visibility НІКОЛИ не schedule social posts і не встановлює social `scheduled`/`published`.
+
+## 13. Website/database implementation
+- D1 — database-first canonical operational store.
+- New approved content не повинен вимагати manual deploy.
+- Website publication використовує shared D1 publication engine + 13-locale readiness gate.
+- Topic-specific `wq0xx_finalize.js`/website-publish modules заборонені, крім реально виняткових migration cases.
+- Public website підтримує archive, quote/category/verified-author pages, sitemap, hreflang, canonical, internal links.
+- Social readiness оцінюється тільки для connected social locales.
+
+## 14. `/start` + newsletter
+Усі 13 `/start` pages використовують unified presentation і compact contact block з direct e-mail action, не old multi-field contact form.
+
+Newsletter:
+- subscription locale визначається current `/xx/start` locale;
+- D1 stores e-mail, locale, consent timestamp/version, status, unsubscribe token;
+- Brevo — connected outbound transport;
+- sender domain: `news.wisequotesworld.com`;
+- production credentials зберігаються тільки як Cloudflare secrets/variables;
+- D1 лишається canonical subscriber source;
+- default cadence: localized digest every 14 days;
+- planning cap: максимум 300 deliveries/day, до 4200 за 14-day cycle;
+- subscribers batch dynamically, не permanently by weekday;
+- automated scheduled delivery не вважати active, доки 14-day scheduler явно не enabled + verified.
+
+## 15. Media
+- R2 — canonical binary storage.
+- D1 — canonical media metadata/state.
+- Upload once/reuse.
+- User manually generates video/Pinterest assets, uploads через Admin, далі QA -> approval.
+
+## 16. Admin
+Admin повинен давати можливість:
+- create/edit topic;
+- працювати з 13 website localizations;
+- переглядати/edit prompts/copy/article URLs;
+- upload/QA/approve/reject media;
+- керувати workflow/status/errors;
+- керувати technical website publication окремо від editorial visibility;
+- зробити тему видимою одразу або запланувати exact date/time;
+- planning/readback/analytics.
+
+Admin показує всі 13 locales. Social/media completeness gates застосовуються тільки до connected social locales; manual locales мають `publishing_mode=manual`, connected locales — `publishing_mode=metricool`.
+
+## 17. Social scheduling gate
+Metricool — PRIMARY scheduler during stabilization.
+
+Topic НЕ отримує `scheduled`, доки live Metricool Planner readback не підтвердить complete connected-social set.
+
+Для 8 connected locales стандарт = 9 publications per locale = 72 active posts:
+- 24 Threads
+- 8 Facebook
+- 8 Instagram
+- 8 TikTok
+- 8 YouTube
+- 8 Pinterest Image
+- 8 Pinterest Video
+
+Rules:
+- drafts/stale duplicates/duplicate records не рахуються;
+- FR має ті самі media/copy/URL/QA/readback вимоги, що й інші connected locales;
+- exact locale board + same-language live article URL для Pinterest;
+- перед scheduling перевірити article opens, CTA, media QA PASS, approval, platform/date/time/timezone/text/media;
+- keep at least 15 minutes між same-platform publications для різних locales, якщо explicit newer rule не задає інше;
+- `published` ставити тільки після фактичної публікації/readback.
+
+## 18. Analytics
+Відстежувати 24h / 72h / 7d / 30d у розрізі:
+- language;
+- platform;
+- category;
+- quote_type;
+- author;
+- creative;
+- publication time.
+
+Кожна locale website використовує відповідний Metricool web tracker.
+
+## 19. Standard command protocol
+`наступна цитата` / `готуй наступну` / `працюємо по правилах` означає:
+
+read MASTER_RULES + D1 -> determine `adapted` vs verified `verbatim` -> source/quote QA -> duration gate -> 13 native website localizations -> prompts/copy for connected social locales -> Pinterest preparation -> website reflection -> D1 write -> technical website publication/indexability -> keep editorial visibility hidden until explicit Admin release/schedule -> user media generation/upload -> media QA -> approval -> Metricool schedule complete connected-social set -> Planner readback -> actual publication -> analytics.
+
+## 20. Validation / fail-safe
+- `adapted`: no author.
+- `verbatim`: verified author/source/original.
+- Technically complete but failed native/exact-text/editorial/media QA = NOT production-ready.
+- Якщо API unavailable, preserve confirmed D1 state і mark only blocked step.
+- Не claim completion без readback.
+- Не claim `scheduled` без Planner readback.
+- Не claim `published` до actual publication.
+
+## 21. Project isolation
+Wise Quotes World і Sweden No Sugar — окремі продукти.
+
+Infrastructure/workflow patterns можна reuse тільки після compatibility review. Records, credentials, mappings, content, CTA, taxonomy та analytics залишаються isolated by `project_id/language/platform`.

@@ -1,4 +1,4 @@
-name: Prepare WQ022-WQ031 ten-day buffer 2026-09-10
+name: Apply WQ021 WQ022 correction with readback
 on:
   push:
     branches: [main]
@@ -9,83 +9,77 @@ permissions:
 jobs:
   apply:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Validate prepared module and expose authenticated one-time route
-        env:
-          ROUTE: /internal/wq-buffer-022-031-6f8d4c2a
+      - name: Expose authenticated one-time correction route
         run: |
           set -euo pipefail
-          node --check lib/prepared_buffer_022_031.js
+          node --check lib/wq021_030_prompt_status_fix_20260911.js
           python - <<'PY'
           from pathlib import Path
           w=Path('_worker.js')
           s=w.read_text(encoding='utf-8')
-          imp="import {prepareOne018026,readBatch018026} from './lib/prepared_batch_018_026.js';"
-          add=imp+"\nimport {prepareBuffer022031} from './lib/prepared_buffer_022_031.js';"
-          if "prepareBuffer022031" not in s:
+          imp="import {adminTopicsApi} from './lib/admin_topics_api.js';"
+          add=imp+"\nimport {applyWQ021030Fix} from './lib/wq021_030_prompt_status_fix_20260911.js';"
+          if 'applyWQ021030Fix' not in s:
               assert imp in s
               s=s.replace(imp,add,1)
           anchor="const newsletterResponse=await newsletterApi(request,env);if(newsletterResponse)return newsletterResponse;"
-          route="if(url.pathname==='/internal/wq-buffer-022-031-6f8d4c2a'&&request.method==='POST'){const denied=await requireAdmin(request,env);if(denied)return denied;return json(await prepareBuffer022031(env));}"
+          route="if(url.pathname==='/ops/run/wq021-wq022-correction-20260911'&&request.method==='POST')return json(await applyWQ021030Fix(env));"
           if route not in s:
               assert anchor in s
               s=s.replace(anchor,anchor+route,1)
           w.write_text(s,encoding='utf-8')
-
-          p=Path('admin/console/app.js')
-          a=p.read_text(encoding='utf-8')
-          old="const OUTS=['article_url','pinterest_prompt','facebook','instagram','threads','tiktok','youtube_title','youtube_description','pinterest_title','pinterest_description','website_reflection'];"
-          new="const OUTS=['article_url','pinterest_prompt','facebook','instagram','threads','tiktok','youtube_title','youtube_description','pinterest_title','pinterest_description','pinterest_video_title','pinterest_video_description','website_reflection'];"
-          if old in a:a=a.replace(old,new,1)
-          oldl="pinterest_description:'Pinterest description',website_reflection:'Website reflection'"
-          newl="pinterest_description:'Pinterest image description',pinterest_video_title:'Pinterest video title',pinterest_video_description:'Pinterest video description',website_reflection:'Website reflection'"
-          if oldl in a:a=a.replace(oldl,newl,1)
-          p.write_text(a,encoding='utf-8')
           PY
           node --check _worker.js
-          node --check admin/console/app.js
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add _worker.js admin/console/app.js
-          git commit -m 'Expose authenticated ten-day buffer migration and show Pinterest video copy'
+          git add _worker.js
+          git commit -m 'Expose authenticated WQ021 WQ022 correction route'
           git push
-      - name: Wait for production branch deployment
-        run: sleep 85
-      - name: Apply prepared content to canonical D1 and verify readback
+      - name: Wait for production deployment
+        run: sleep 90
+      - name: Apply correction to canonical D1 and verify readback
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           set -euo pipefail
           test -n "${ADMIN_TOKEN:-}" || { echo 'ADMIN_TOKEN secret missing'; exit 1; }
+          test -n "${CF_ACCESS_CLIENT_ID:-}" || { echo 'CF_ACCESS_CLIENT_ID secret missing'; exit 1; }
+          test -n "${CF_ACCESS_CLIENT_SECRET:-}" || { echo 'CF_ACCESS_CLIENT_SECRET secret missing'; exit 1; }
           mkdir -p ops/readback
           curl -sS -L --fail-with-body --retry 12 --retry-all-errors --retry-delay 6 \
-            -X POST 'https://wisequotesworld-web.pages.dev/internal/wq-buffer-022-031-6f8d4c2a' \
+            -X POST 'https://wisequotesworld.com/ops/run/wq021-wq022-correction-20260911' \
             -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+            -H "CF-Access-Client-Id: ${CF_ACCESS_CLIENT_ID}" \
+            -H "CF-Access-Client-Secret: ${CF_ACCESS_CLIENT_SECRET}" \
             -H 'Content-Type: application/json' \
-            -o ops/readback/prepared-buffer-022-031-20260910.json
-          cat ops/readback/prepared-buffer-022-031-20260910.json
+            -o ops/readback/wq021-030-prompt-status-fix-20260911.json
+          cat ops/readback/wq021-030-prompt-status-fix-20260911.json
           python - <<'PY'
           import json
-          p='ops/readback/prepared-buffer-022-031-20260910.json'
+          p='ops/readback/wq021-030-prompt-status-fix-20260911.json'
           d=json.load(open(p,encoding='utf-8'))
           assert d.get('ok') is True,d
-          rb=d.get('readback') or {}
-          assert rb.get('ok') is True,rb
-          rows=rb.get('rows') or []
-          assert len(rows)==10,rows
+          assert (d.get('published') or {}).get('after',{}).get('status')=='published',d
+          ps=(d.get('verification') or {}).get('wq022_prompt_safety') or {}
+          assert ps.get('ok') is True and ps.get('count')==8,ps
+          rows=(d.get('verification') or {}).get('rows') or []
+          assert len(rows)==9,rows
           for r in rows:
               assert r.get('published_pages')==13,r
               assert r.get('native_qa',0)>=13,r
               assert r.get('video_prompts')==8,r
               assert r.get('pinterest_prompts')==8,r
               assert r.get('outputs',0)>=88,r
-              assert r.get('ready_for_user_media') is True,r
-          print('PASS: WQ022-WQ031 are canonical D1 pre-media-ready; 13 website pages/topic and 8 social prompts/topic verified.')
+          print('PASS: WQ021 published; WQ022 prompts revised 8/8; WQ022-WQ030 verified complete.')
           PY
-      - name: Remove migration route, persist readback, remove one-off workflow
+      - name: Cleanup temporary correction route
         if: always()
         run: |
           set -euo pipefail
@@ -94,13 +88,14 @@ jobs:
           from pathlib import Path
           w=Path('_worker.js')
           s=w.read_text(encoding='utf-8')
-          s=s.replace("\nimport {prepareBuffer022031} from './lib/prepared_buffer_022_031.js';",'')
-          s=s.replace("if(url.pathname==='/internal/wq-buffer-022-031-6f8d4c2a'&&request.method==='POST'){const denied=await requireAdmin(request,env);if(denied)return denied;return json(await prepareBuffer022031(env));}",'')
+          s=s.replace("\nimport {applyWQ021030Fix} from './lib/wq021_030_prompt_status_fix_20260911.js';",'')
+          anchor="const newsletterResponse=await newsletterApi(request,env);if(newsletterResponse)return newsletterResponse;"
+          route="if(url.pathname==='/ops/run/wq021-wq022-correction-20260911'&&request.method==='POST')return json(await applyWQ021030Fix(env));"
+          s=s.replace(anchor+route,anchor)
           w.write_text(s,encoding='utf-8')
           PY
-          rm -f .github/workflows/prepare-ten-day-buffer-20260910.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A _worker.js admin/console/app.js ops/readback/prepared-buffer-022-031-20260910.json .github/workflows/prepare-ten-day-buffer-20260910.yml || true
-          git commit -m 'Finalize WQ022-WQ031 prepared buffer readback and remove one-off migration route' || true
+          git add _worker.js ops/readback/wq021-030-prompt-status-fix-20260911.json || true
+          git commit -m 'Persist WQ021-WQ030 correction readback and remove route' || true
           git push || true

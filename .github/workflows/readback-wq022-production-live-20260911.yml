@@ -1,0 +1,41 @@
+name: Readback WQ022 production live 2026-09-11
+on:
+  push:
+    paths:
+      - '.github/workflows/readback-wq022-production-live-20260911.yml'
+permissions:
+  contents: write
+jobs:
+  readback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch authenticated WQ022 production readback
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -fsSL --retry 10 --retry-all-errors --retry-delay 3 \
+            -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+            'https://wisequotesworld.com/api/admin/production/WQ022' \
+            -o /tmp/production.json
+          curl -fsSL --retry 10 --retry-all-errors --retry-delay 3 \
+            -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+            'https://wisequotesworld.com/api/admin/site-visibility/WQ022' \
+            -o /tmp/visibility.json
+          python - <<'PY'
+          import json
+          prod=json.load(open('/tmp/production.json',encoding='utf-8'))
+          vis=json.load(open('/tmp/visibility.json',encoding='utf-8'))
+          out={'production':prod,'visibility':vis}
+          open('ops/readback/wq022-production-live-20260911.json','w',encoding='utf-8').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print(json.dumps(out,ensure_ascii=False))
+          PY
+      - name: Commit readback
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readback/wq022-production-live-20260911.json
+          git commit -m 'Record WQ022 production readback' || true
+          git push

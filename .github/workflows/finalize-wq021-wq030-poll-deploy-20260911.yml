@@ -1,0 +1,102 @@
+name: Finalize WQ021 WQ022 after confirmed deploy
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/finalize-wq021-wq030-poll-deploy-20260911.yml'
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Expose one-time route before all other handlers
+        run: |
+          set -euo pipefail
+          node --check lib/wq021_030_final_fix_20260911.js
+          python - <<'PY'
+          from pathlib import Path
+          w=Path('_worker.js'); s=w.read_text(encoding='utf-8')
+          imp="import {adminTopicsApi} from './lib/admin_topics_api.js';"
+          add=imp+"\nimport {applyWQ021030FinalFix} from './lib/wq021_030_final_fix_20260911.js';"
+          if 'applyWQ021030FinalFix' not in s:
+              assert imp in s
+              s=s.replace(imp,add,1)
+          anchor="async function handleRequest(request,env,ctx){try{const url=new URL(request.url);"
+          route="if(url.pathname==='/__wq021030_final_41d8b76e'){if(request.method==='GET')return json({ok:true,marker:'wq021030-final-41d8b76e'});if(request.method==='POST')return json(await applyWQ021030FinalFix(env));return json({ok:false,error:'method not allowed'},405);}"
+          if route not in s:
+              assert anchor in s
+              s=s.replace(anchor,anchor+route,1)
+          w.write_text(s,encoding='utf-8')
+          PY
+          node --check _worker.js
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          git commit -m 'Expose deploy-polled WQ021 WQ022 finalizer'
+          git push
+      - name: Wait until the exact deployed worker marker is live
+        run: |
+          set -euo pipefail
+          URL='https://wisequotesworld-web.pages.dev/__wq021030_final_41d8b76e'
+          ok=0
+          for i in $(seq 1 72); do
+            body="$(curl -sS --max-time 15 "$URL" || true)"
+            echo "probe $i: ${body:0:160}"
+            if printf '%s' "$body" | grep -q 'wq021030-final-41d8b76e'; then ok=1; break; fi
+            sleep 10
+          done
+          test "$ok" = 1 || { echo 'Exact worker marker did not deploy in time'; exit 1; }
+      - name: Apply canonical D1 correction and assert readback
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          curl -sS --fail-with-body --max-time 60 \
+            -X POST 'https://wisequotesworld-web.pages.dev/__wq021030_final_41d8b76e' \
+            -H 'Content-Type: application/json' \
+            -o ops/readback/wq021-030-final-20260911.json
+          cat ops/readback/wq021-030-final-20260911.json
+          python - <<'PY'
+          import json
+          d=json.load(open('ops/readback/wq021-030-final-20260911.json',encoding='utf-8'))
+          assert d.get('ok') is True,d
+          assert (d.get('wq021') or {}).get('after',{}).get('status')=='published',d
+          p=(d.get('verification') or {}).get('wq022_prompts') or {}
+          assert p.get('ok') is True and p.get('count')==8,p
+          rows=(d.get('verification') or {}).get('rows') or []
+          assert len(rows)==9,rows
+          for r in rows:
+              assert r.get('published_pages')==13,r
+              assert r.get('native_qa',0)>=13,r
+              assert r.get('video_prompts')==8,r
+              assert r.get('pinterest_prompts')==8,r
+              assert r.get('outputs',0)>=88,r
+              assert r.get('ready_for_user_media') is True,r
+          print('PASS: WQ021 published, WQ022 Gemini-safe 8/8, WQ022-WQ030 complete')
+          PY
+      - name: Remove route and helper and persist readback
+        if: always()
+        run: |
+          set -euo pipefail
+          git pull --rebase || true
+          python - <<'PY'
+          from pathlib import Path
+          w=Path('_worker.js'); s=w.read_text(encoding='utf-8')
+          s=s.replace("\nimport {applyWQ021030FinalFix} from './lib/wq021_030_final_fix_20260911.js';",'')
+          anchor="async function handleRequest(request,env,ctx){try{const url=new URL(request.url);"
+          route="if(url.pathname==='/__wq021030_final_41d8b76e'){if(request.method==='GET')return json({ok:true,marker:'wq021030-final-41d8b76e'});if(request.method==='POST')return json(await applyWQ021030FinalFix(env));return json({ok:false,error:'method not allowed'},405);}"
+          s=s.replace(anchor+route,anchor)
+          w.write_text(s,encoding='utf-8')
+          PY
+          rm -f lib/wq021_030_final_fix_20260911.js
+          rm -f .github/workflows/finalize-wq021-wq030-poll-deploy-20260911.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A _worker.js lib/wq021_030_final_fix_20260911.js .github/workflows/finalize-wq021-wq030-poll-deploy-20260911.yml || true
+          if [ -f ops/readback/wq021-030-final-20260911.json ]; then git add ops/readback/wq021-030-final-20260911.json; fi
+          git commit -m 'Persist WQ021-WQ030 final readback and remove deploy-polled finalizer' || true
+          git push || true

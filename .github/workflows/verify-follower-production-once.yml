@@ -9,13 +9,19 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - uses: actions/checkout@v4
       - name: Verify production follower counters
         shell: bash
+        env:
+          ACCESS_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          ACCESS_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           set -euo pipefail
-          fetch(){ curl -L -f -sS --connect-timeout 10 --max-time 30 --retry 12 --retry-all-errors --retry-delay 5 -H 'Cache-Control: no-cache' "$1"; }
+          test -n "$ACCESS_ID"
+          test -n "$ACCESS_SECRET"
+          fetch(){ curl -L -f -sS --connect-timeout 10 --max-time 30 --retry 12 --retry-all-errors --retry-delay 5 -H 'Cache-Control: no-cache' -H "CF-Access-Client-Id: $ACCESS_ID" -H "CF-Access-Client-Secret: $ACCESS_SECRET" "$1"; }
           stamp=$(date +%s)
 
           python - <<'PY' > /tmp/expected.tsv
@@ -25,7 +31,6 @@ jobs:
           m=re.search(r"const FOLLOWERS=(\{[^\n]+\});",s)
           if not m: raise SystemExit('FOLLOWERS not found')
           raw=m.group(1)
-          # Convert simple JS object syntax to Python dict safely.
           py=re.sub(r'([,{])([a-z]+):',r"\1'\2':",raw)
           d=ast.literal_eval(py)
           for lang,v in d.items():

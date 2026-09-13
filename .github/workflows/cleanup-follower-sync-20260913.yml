@@ -1,0 +1,35 @@
+name: Cleanup follower sync 2026-09-13
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cleanup-follower-sync-20260913.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore untouched content and self-remove
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('lib/start_unified.js')
+          s=p.read_text()
+          old="change:'Changer la langue'"
+          new="change:'Changer de langue'"
+          if old not in s:
+              raise SystemExit('unexpected French change token not found')
+          p.write_text(s.replace(old,new,1)+('' if s.endswith('\n') else '\n'))
+          Path('.github/workflows/cleanup-follower-sync-20260913.yml').unlink()
+      - name: Commit cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A lib/start_unified.js .github/workflows/cleanup-follower-sync-20260913.yml
+          git commit -m 'Keep follower refresh limited to counters'
+          git push

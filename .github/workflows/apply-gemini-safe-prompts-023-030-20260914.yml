@@ -1,0 +1,136 @@
+name: Apply Gemini-safe prompts WQ023-WQ030 10 locales
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-gemini-safe-prompts-023-030-20260914.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install one-time stepped migration and readback
+        run: |
+          set -euo pipefail
+          git pull --rebase origin main
+          python - <<'PY'
+          from pathlib import Path
+
+          mod=Path('lib/gemini_safe_prompts_023_030_10langs_20260914.js')
+          s=mod.read_text(encoding='utf-8')
+          marker='export async function ensureGeminiSafePrompts023030Step(env)'
+          if marker not in s:
+              s += r'''
+
+export async function ensureGeminiSafePrompts023030Step(env){
+  if(!env?.DB)return {ok:false,error:'DB unavailable'};
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS system_migrations(id TEXT PRIMARY KEY,applied_at TEXT NOT NULL,notes TEXT);`);
+  for(let n=23;n<=30;n++){
+    const id=`WQ${String(n).padStart(3,'0')}`;
+    const migrationId=`gemini-safe-prompts-${id}-10langs-20260914`;
+    const done=await env.DB.prepare(`SELECT id FROM system_migrations WHERE id=?`).bind(migrationId).first();
+    if(done)continue;
+    const changed=[];
+    const ts=new Date().toISOString();
+    for(const lang of LOCALES){
+      const row=await latestVersion(env,id,lang);
+      if(!row?.id||!String(row.adapted_text||'').trim())throw new Error(`${id}/${lang}: localized quote missing`);
+      const prompt=buildPrompt(id,lang,String(row.adapted_text).trim());
+      await env.DB.prepare(`UPDATE content_versions SET ai_prompt=?,updated_at=? WHERE id=?`).bind(prompt,ts,row.id).run();
+      changed.push({language:lang,version:row.version,chars:prompt.length});
+    }
+    await env.DB.prepare(`INSERT INTO system_migrations(id,applied_at,notes) VALUES(?,?,?)`).bind(migrationId,ts,`Applied Gemini-safe anonymous-bust prompts to ${id} for 10 locales`).run();
+    return {ok:true,applied:id,changed:changed.length};
+  }
+  return {ok:true,done:true};
+}
+'''
+          mod.write_text(s,encoding='utf-8')
+
+          p=Path('_worker.js')
+          w=p.read_text(encoding='utf-8')
+          imp="import {ensureGeminiSafePrompts023030Step,readGeminiSafePrompts023030} from './lib/gemini_safe_prompts_023_030_10langs_20260914.js';\n"
+          anchor="import {publicationApi} from './lib/publication_api.js';\n"
+          if imp not in w:
+              assert anchor in w
+              w=w.replace(anchor,anchor+imp,1)
+          old="async function handleRequest(request,env,ctx){try{const url=new URL(request.url);if(env.DB){try{await ensureWebsiteSchedule(env)}catch{}}"
+          new="async function handleRequest(request,env,ctx){try{const url=new URL(request.url);if(env.DB){try{await ensureGeminiSafePrompts023030Step(env)}catch{}}if(url.pathname==='/__gemini_prompts_023_030_readback_9f4d2a'&&request.method==='GET'){if(request.headers.get('x-wqw-once')!=='gp-20260914-10langs')return json({ok:false,error:'forbidden'},403);return json(await readGeminiSafePrompts023030(env));}if(env.DB){try{await ensureWebsiteSchedule(env)}catch{}}"
+          if new not in w:
+              assert old in w
+              w=w.replace(old,new,1)
+          p.write_text(w,encoding='utf-8')
+          PY
+          node --check _worker.js
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js lib/gemini_safe_prompts_023_030_10langs_20260914.js
+          git commit -m 'Install stepped Gemini-safe prompt migration WQ023-WQ030'
+          git push origin main
+      - name: Wait for deploy, apply eight topics, and verify 80 of 80
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          URL='https://wisequotesworld-web.pages.dev/__gemini_prompts_023_030_readback_9f4d2a'
+          ready=0
+          for i in $(seq 1 90); do
+            code=$(curl -sS --max-time 20 -o /tmp/probe -w '%{http_code}' "$URL" -H 'x-wqw-once: wrong' || true)
+            if [ "$code" = '403' ]; then ready=1; break; fi
+            sleep 5
+          done
+          [ "$ready" = '1' ]
+          ok=0
+          for i in $(seq 1 20); do
+            curl -sS --fail-with-body --max-time 60 "$URL" -H 'x-wqw-once: gp-20260914-10langs' -o /tmp/readback.json
+            if python - <<'PY'
+          import json,sys
+          d=json.load(open('/tmp/readback.json',encoding='utf-8'))
+          sys.exit(0 if d.get('ok') is True and d.get('count')==80 and d.get('expected')==80 else 1)
+          PY
+            then
+              cp /tmp/readback.json ops/readback/gemini-safe-prompts-wq023-wq030-10langs-20260914.json
+              ok=1
+              break
+            fi
+            sleep 2
+          done
+          [ "$ok" = '1' ]
+          python - <<'PY'
+          import json
+          p='ops/readback/gemini-safe-prompts-wq023-wq030-10langs-20260914.json'
+          d=json.load(open(p,encoding='utf-8'))
+          assert d['ok'] is True,d
+          assert d['count']==80 and d['expected']==80,d
+          assert d['topics']==8,d
+          assert set(d['languages'])=={'uk','ru','pl','en','sv','de','es','fr','it','pt'},d
+          assert all(x['has_prompt'] and x['anonymous_bust'] and x['no_likeness'] and x['exact_text'] and x['topic_scene'] for x in d['checks']),d
+          print('D1 readback OK: WQ023-WQ030, 10 locales, 80/80 Gemini-safe prompts')
+          PY
+      - name: Remove one-time migration wiring and persist readback
+        if: always()
+        run: |
+          set -euo pipefail
+          git pull --rebase origin main || true
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          w=p.read_text(encoding='utf-8')
+          imp="import {ensureGeminiSafePrompts023030Step,readGeminiSafePrompts023030} from './lib/gemini_safe_prompts_023_030_10langs_20260914.js';\n"
+          w=w.replace(imp,'')
+          new="async function handleRequest(request,env,ctx){try{const url=new URL(request.url);if(env.DB){try{await ensureGeminiSafePrompts023030Step(env)}catch{}}if(url.pathname==='/__gemini_prompts_023_030_readback_9f4d2a'&&request.method==='GET'){if(request.headers.get('x-wqw-once')!=='gp-20260914-10langs')return json({ok:false,error:'forbidden'},403);return json(await readGeminiSafePrompts023030(env));}if(env.DB){try{await ensureWebsiteSchedule(env)}catch{}}"
+          old="async function handleRequest(request,env,ctx){try{const url=new URL(request.url);if(env.DB){try{await ensureWebsiteSchedule(env)}catch{}}"
+          w=w.replace(new,old,1)
+          p.write_text(w,encoding='utf-8')
+          PY
+          rm -f .github/workflows/apply-gemini-safe-prompts-023-030-20260914.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Persist Gemini-safe prompt readback and clean one-time migration' || true
+          git pull --rebase origin main || true
+          git push origin main || true

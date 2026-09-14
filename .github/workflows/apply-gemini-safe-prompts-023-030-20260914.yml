@@ -20,38 +20,36 @@ jobs:
           git pull --rebase origin main
           python - <<'PY'
           from pathlib import Path
-
           mod=Path('lib/gemini_safe_prompts_023_030_10langs_20260914.js')
           s=mod.read_text(encoding='utf-8')
           marker='export async function ensureGeminiSafePrompts023030Step(env)'
           if marker not in s:
-              s += r'''
-
-export async function ensureGeminiSafePrompts023030Step(env){
-  if(!env?.DB)return {ok:false,error:'DB unavailable'};
-  await env.DB.exec(`CREATE TABLE IF NOT EXISTS system_migrations(id TEXT PRIMARY KEY,applied_at TEXT NOT NULL,notes TEXT);`);
-  for(let n=23;n<=30;n++){
-    const id=`WQ${String(n).padStart(3,'0')}`;
-    const migrationId=`gemini-safe-prompts-${id}-10langs-20260914`;
-    const done=await env.DB.prepare(`SELECT id FROM system_migrations WHERE id=?`).bind(migrationId).first();
-    if(done)continue;
-    const changed=[];
-    const ts=new Date().toISOString();
-    for(const lang of LOCALES){
-      const row=await latestVersion(env,id,lang);
-      if(!row?.id||!String(row.adapted_text||'').trim())throw new Error(`${id}/${lang}: localized quote missing`);
-      const prompt=buildPrompt(id,lang,String(row.adapted_text).trim());
-      await env.DB.prepare(`UPDATE content_versions SET ai_prompt=?,updated_at=? WHERE id=?`).bind(prompt,ts,row.id).run();
-      changed.push({language:lang,version:row.version,chars:prompt.length});
-    }
-    await env.DB.prepare(`INSERT INTO system_migrations(id,applied_at,notes) VALUES(?,?,?)`).bind(migrationId,ts,`Applied Gemini-safe anonymous-bust prompts to ${id} for 10 locales`).run();
-    return {ok:true,applied:id,changed:changed.length};
-  }
-  return {ok:true,done:true};
-}
-'''
+              addition = """
+          export async function ensureGeminiSafePrompts023030Step(env){
+            if(!env?.DB)return {ok:false,error:'DB unavailable'};
+            await env.DB.exec(`CREATE TABLE IF NOT EXISTS system_migrations(id TEXT PRIMARY KEY,applied_at TEXT NOT NULL,notes TEXT);`);
+            for(let n=23;n<=30;n++){
+              const id=`WQ${String(n).padStart(3,'0')}`;
+              const migrationId=`gemini-safe-prompts-${id}-10langs-20260914`;
+              const done=await env.DB.prepare(`SELECT id FROM system_migrations WHERE id=?`).bind(migrationId).first();
+              if(done)continue;
+              const changed=[];
+              const ts=new Date().toISOString();
+              for(const lang of LOCALES){
+                const row=await latestVersion(env,id,lang);
+                if(!row?.id||!String(row.adapted_text||'').trim())throw new Error(`${id}/${lang}: localized quote missing`);
+                const prompt=buildPrompt(id,lang,String(row.adapted_text).trim());
+                await env.DB.prepare(`UPDATE content_versions SET ai_prompt=? WHERE id=?`).bind(prompt,row.id).run();
+                changed.push({language:lang,version:row.version,chars:prompt.length});
+              }
+              await env.DB.prepare(`INSERT INTO system_migrations(id,applied_at,notes) VALUES(?,?,?)`).bind(migrationId,ts,`Applied Gemini-safe anonymous-bust prompts to ${id} for 10 locales`).run();
+              return {ok:true,applied:id,changed:changed.length};
+            }
+            return {ok:true,done:true};
+          }
+          """
+              s += '\n' + '\n'.join(line[10:] if line.startswith('          ') else line for line in addition.splitlines()) + '\n'
           mod.write_text(s,encoding='utf-8')
-
           p=Path('_worker.js')
           w=p.read_text(encoding='utf-8')
           imp="import {ensureGeminiSafePrompts023030Step,readGeminiSafePrompts023030} from './lib/gemini_safe_prompts_023_030_10langs_20260914.js';\n"
@@ -87,16 +85,12 @@ export async function ensureGeminiSafePrompts023030Step(env){
           ok=0
           for i in $(seq 1 20); do
             curl -sS --fail-with-body --max-time 60 "$URL" -H 'x-wqw-once: gp-20260914-10langs' -o /tmp/readback.json
-            if python - <<'PY'
+            python - <<'PY' && { cp /tmp/readback.json ops/readback/gemini-safe-prompts-wq023-wq030-10langs-20260914.json; echo 1 >/tmp/ok; } || true
           import json,sys
           d=json.load(open('/tmp/readback.json',encoding='utf-8'))
           sys.exit(0 if d.get('ok') is True and d.get('count')==80 and d.get('expected')==80 else 1)
           PY
-            then
-              cp /tmp/readback.json ops/readback/gemini-safe-prompts-wq023-wq030-10langs-20260914.json
-              ok=1
-              break
-            fi
+            if [ -f /tmp/ok ]; then ok=1; break; fi
             sleep 2
           done
           [ "$ok" = '1' ]

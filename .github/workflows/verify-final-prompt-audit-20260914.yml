@@ -1,0 +1,62 @@
+name: Verify final prompt audit 2026-09-14
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-final-prompt-audit-20260914.yml'
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Wait for Cloudflare Pages deploy
+        run: sleep 90
+      - name: Trigger migration and verify public readback
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readback
+          ok=0
+          for i in $(seq 1 30); do
+            curl -L -sS --max-time 30 https://wisequotesworld.com/ >/tmp/home.html || true
+            curl -L -sS --max-time 30 https://wisequotesworld.com/prompt-audit-readback-20260914.json -o /tmp/readback.json || true
+            python - <<'PY' && { cp /tmp/readback.json ops/readback/final-prompts-wq023-wq030-10langs-20260914.json; touch /tmp/ok; } || true
+          import json,sys
+          try:d=json.load(open('/tmp/readback.json',encoding='utf-8'))
+          except Exception:sys.exit(1)
+          good=d.get('ok') is True and d.get('count')==80 and d.get('video_prompts')==80 and d.get('pinterest_prompts')==80
+          sys.exit(0 if good else 1)
+          PY
+            if [ -f /tmp/ok ]; then ok=1; break; fi
+            sleep 10
+          done
+          [ "$ok" = '1' ]
+          python - <<'PY'
+          import json
+          p='ops/readback/final-prompts-wq023-wq030-10langs-20260914.json'
+          d=json.load(open(p,encoding='utf-8'))
+          assert d['ok'] is True
+          assert d['count']==80
+          assert d['video_prompts']==80
+          assert d['pinterest_prompts']==80
+          assert len(d['checks'])==80
+          assert all(x['video_ok'] and x['pinterest_ok'] for x in d['checks'])
+          print('Verified 80/80 video prompts and 80/80 Pinterest prompts')
+          PY
+      - name: Remove temporary migration wiring and readback endpoint
+        if: always()
+        run: |
+          set -euo pipefail
+          git pull --rebase origin main || true
+          git checkout a6820f07629eab3945c1f70ed42348e4f9339d21 -- lib/website_schedule.js lib/publication_api.js
+          rm -f .github/workflows/verify-final-prompt-audit-20260914.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Persist final prompt audit readback and clean temporary wiring' || true
+          git pull --rebase origin main || true
+          git push origin main || true

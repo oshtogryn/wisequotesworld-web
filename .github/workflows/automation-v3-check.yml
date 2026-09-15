@@ -5,24 +5,37 @@ on:
     branches: [main, automation-v3]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check Worker JavaScript syntax
+      - name: Check runtime JavaScript syntax
         run: |
+          set -euo pipefail
           node --check _worker.js
           node --check _worker_legacy.js
+          node --check lib/admin_auth.js
+          node --check lib/security_headers.js
           node --check lib/publication_core.js
           node --check lib/production_console_api.js
           node --check lib/site_v2.js
           node --check lib/sitemap_runtime.js
+          node --check lib/indexnow_runtime.js
           node --check lib/canonical_rules.js
+          node --check lib/website_schedule.js
+          node --check lib/site_visibility_api.js
+          node --check lib/newsletter_admin.js
+          node --check lib/newsletter_digest_visible.js
           node --check admin/console/app.js
       - name: Run D1 migration and guardrail smoke tests
         run: python3 tests/db_smoke.py

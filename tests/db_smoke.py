@@ -27,16 +27,28 @@ for path in [
     'db/migration8_ai_generation.sql',
     'db/migration9_runtime_hardening.sql',
     'db/migration10_database_guardrails.sql',
+    'db/migration11_runtime_lifecycle.sql',
 ]:
     run(path)
 
-# Schema/rules expected after v10.
+# Schema/rules expected after current migrations.
 assert DB.execute("SELECT 1 FROM languages WHERE code='fr'").fetchone()
 assert DB.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='ai_generation_jobs'").fetchone()
 assert DB.execute("SELECT 1 FROM sqlite_master WHERE type='trigger' AND name='trg_publications_require_approval_insert'").fetchone()
 assert DB.execute("SELECT status FROM rules WHERE rule_key='fr_social_disabled_until_connected'").fetchone()[0] == 'superseded'
 assert DB.execute("SELECT 1 FROM rules WHERE rule_key='fr_website_enabled' AND status='approved'").fetchone()
 assert DB.execute("SELECT 1 FROM rules WHERE rule_key='fr_pinterest_enabled' AND status='approved'").fetchone()
+
+# Runtime lifecycle migration must be deployable in the same chain as the canonical schema.
+for table in ['website_publication_schedule', 'newsletter_settings', 'newsletter_deliveries']:
+    assert DB.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone(), table
+for index in ['idx_website_publication_schedule_due', 'idx_newsletter_deliveries_lookup']:
+    assert DB.execute("SELECT 1 FROM sqlite_master WHERE type='index' AND name=?", (index,)).fetchone(), index
+settings = DB.execute("SELECT enabled,cadence_days,daily_cap,run_hour_utc,execution_cap FROM newsletter_settings WHERE project_id='wisequotesworld'").fetchone()
+assert settings == (1, 14, 300, 8, 40), settings
+# Migration 11 is explicitly idempotent and must be safe to re-apply.
+run('db/migration11_runtime_lifecycle.sql')
+assert DB.execute("SELECT COUNT(*) FROM newsletter_settings WHERE project_id='wisequotesworld'").fetchone()[0] == 1
 
 # Adapted quote attribution is scrubbed by D1 even if a caller attempts to store it.
 DB.execute("""

@@ -1,0 +1,52 @@
+name: Apply migration12 once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-migration12-once-20260915.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+      CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+    steps:
+      - name: Wait for production deployment
+        run: sleep 70
+      - name: Apply and read back query indexes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${CF_ACCESS_CLIENT_ID:-}"
+          test -n "${CF_ACCESS_CLIENT_SECRET:-}"
+          body="$(mktemp)"
+          code="$(curl -sS --retry 2 --retry-all-errors --connect-timeout 10 --max-time 45 \
+            -o "$body" -w '%{http_code}' -X POST \
+            'https://wisequotesworld.com/api/admin/newsletter/query-indexes' \
+            -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+            -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+            -H 'Accept: application/json' \
+            -H 'Content-Type: application/json')"
+          echo "migration12 apply => HTTP $code"
+          cat "$body"; echo
+          test "$code" = '200'
+          python3 - "$body" <<'PY'
+          import json,sys
+          data=json.load(open(sys.argv[1],encoding='utf-8'))
+          expected={
+            'idx_quote_pages_project_locale_status',
+            'idx_content_approvals_visibility',
+            'idx_newsletter_deliveries_daily',
+          }
+          assert data.get('ok') is True, data
+          assert set(data.get('present') or []) == expected, data
+          print('migration12 readback: OK')
+          PY

@@ -13,13 +13,13 @@ The following items have real production readback, not only code inspection:
 - Anonymous `/admin/` is intercepted by Cloudflare Access (302 on the custom domain).
 - Cloudflare Access service-token flow reaches `/api/admin/health` successfully.
 - Direct privileged requests to `wisequotesworld-web.pages.dev` return 401 at the application layer for `/admin/`, `/api/admin/health`, and `/ops/`; therefore the Pages hostname does not bypass the backend admin guard.
-- D1 runtime lifecycle migration 11 was applied manually in production and read back: `website_publication_schedule`, `newsletter_settings`, and `newsletter_deliveries` exist.
+- D1 runtime lifecycle migration 11 is present in production: `website_publication_schedule`, `newsletter_settings`, and `newsletter_deliveries` exist.
+- D1 query-index migration 12 is applied and independently read back in production.
 - Locale homepages `sv`, `es`, `it`, `pt`, `id`, `tr`, and `ar` all return HTTP 200 with locale-specific visible copy.
 - Retired public prompt-audit endpoint returns 410.
 - Sitemap returns 200, valid `<urlset>`, and `x-default` hreflang.
-- Latest verified expanded production smoke: run `34943720152`, success.
+- Production smoke run `34944416981`: success, including all locale checks, Access/service auth, runtime security config, migration12 indexes, newsletter health, pages.dev guard, visibility release endpoint, retired diagnostic endpoint and sitemap.
 - Production-check including D1/index/visibility regression tests is green.
-- Latest verified CodeQL scan before this refresh: run `34936767750`, success.
 
 ## D1 / request-lifecycle stabilization
 
@@ -32,19 +32,17 @@ Completed:
 - Public discovery visibility now uses the same semantic rule across all renderer groups: legacy WQ001–WQ015 OR explicit `website_visibility` approval OR a due `website_publication_schedule` row.
 - Direct technically published article URLs remain available/indexable independently from editorial discovery visibility.
 - Visibility semantics are regression-tested by `tests/visibility_schedule_smoke.py`.
+- Migration 12 is applied in production and contains:
+  - `idx_quote_pages_project_locale_status`
+  - `idx_content_approvals_visibility`
+  - `idx_newsletter_deliveries_daily`
+- Migration 12 is idempotent and CI-tested by `tests/query_index_smoke.py`.
+- One-time migration mutation route and one-time migration workflow were removed after successful production readback.
 - Baseline before the full post-fix 24h window: `327.48k rows read`, `0 rows written` (Cloudflare D1 dashboard, 2026-09-15 morning Europe/Stockholm).
 
 Acceptance gate still open:
 
 - Compare a full post-fix 24h D1 window before declaring P0 D1 optimization closed.
-
-Prepared but **not yet applied to production D1**:
-
-- `db/migration12_query_indexes.sql`
-  - `idx_quote_pages_project_locale_status`
-  - `idx_content_approvals_visibility`
-  - `idx_newsletter_deliveries_daily`
-- Migration 12 is idempotent and CI-tested by `tests/query_index_smoke.py`.
 
 ## Newsletter / scheduler
 
@@ -80,7 +78,7 @@ Completed/verified:
 - HSTS, `nosniff`, referrer policy, restrictive Permissions-Policy, `X-Frame-Options: DENY`, COOP, and CSP.
 - CodeQL runs on main and is green.
 - Bot Fight Mode was disabled because it incorrectly challenged legitimate GitHub automation before Access.
-- A protected runtime-config readback was added; it exposes only presence booleans, never secret values.
+- Protected runtime-config readback exposes only presence booleans, never secret values.
 
 Live production configuration readback on 2026-09-15:
 
@@ -97,8 +95,7 @@ Manual hardening still required as one consolidated Cloudflare session:
 2. Configure exact `CF_ACCESS_AUD`.
 3. Configure explicit `ADMIN_EMAILS`.
 4. Configure explicit `CF_ACCESS_TEAM_DOMAIN`.
-5. Apply migration 12 in D1 Console.
-6. Re-read production configuration; only then remove/fail-close the code fallbacks and make audience validation mandatory.
+5. Re-read production configuration; only then remove/fail-close the code fallbacks and make audience validation mandatory.
 
 Do not recreate the existing shared Cloudflare service token.
 
@@ -129,18 +126,21 @@ Remaining design/UX work:
 Completed:
 
 - Obsolete WQ013 video probe no longer runs on every push; it is manual-only.
+- Removed superseded Cloudflare diagnostic workflows after production smoke fully covered their probes.
+- Removed completed one-off workflows for WQ019 full-quote patch, WQ020 native-copy fix, and both WQ019–WQ026 manual-social apply paths after inspection confirmed they were self/date-scoped mutation workflows.
+- Removed completed migration12 one-time workflow after successful production readback.
 - `production-check` syntax-checks current runtime/security/renderer modules and executes D1 migration/index/visibility smoke tests.
-- `Production smoke` checks production public routes, multiple locale renderers, Access, service auth, pages.dev guard, sitemap/hreflang, retired diagnostics, visibility release endpoint, protected newsletter health, and protected runtime configuration readback.
-- ChatGPT daily WQW health summary is scheduled for approximately 08:00 Europe/Stockholm.
+- `Production smoke` checks production public routes, multiple locale renderers, Access, service auth, pages.dev guard, sitemap/hreflang, retired diagnostics, visibility release endpoint, protected newsletter health, protected runtime configuration readback and migration12 index readback.
+- `ops/WORKFLOW_INVENTORY_2026-09-15.md` records the remaining workflow cleanup candidates and conservative deletion criteria.
 
 Remaining:
 
-- Inventory older one-off WQ-specific workflows and remove/archive only after dependency review. Do not bulk-delete blindly.
+- Continue inspection/removal of older one-off WQ-specific workflows only after trigger/dependency review. Do not bulk-delete blindly.
 
 ## Current priority order
 
 1. Verify a real scheduled `Runtime scheduler` run.
-2. Complete the one-session Cloudflare manual hardening + migration12 application.
+2. Complete the one-session Cloudflare manual hardening for preview restrictions + explicit Access/admin variables.
 3. Capture the full 24h D1 post-fix readback and compare against the `327.48k` baseline.
 4. Accessibility hardening and formal visual QA.
 5. Renderer/legacy workflow consolidation.

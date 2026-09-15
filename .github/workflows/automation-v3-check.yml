@@ -39,3 +39,5 @@ jobs:
           node --check admin/console/app.js
       - name: Run D1 migration and guardrail smoke tests
         run: python3 tests/db_smoke.py
+      - name: Verify query index migration
+        run: python3 tests/query_index_smoke.py

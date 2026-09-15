@@ -29,6 +29,10 @@ jobs:
           node --check lib/publication_core.js
           node --check lib/production_console_api.js
           node --check lib/site_v2.js
+          node --check lib/new_locales_site.js
+          node --check lib/locale13_site.js
+          node --check lib/unified_quote_article.js
+          node --check lib/start_unified.js
           node --check lib/sitemap_runtime.js
           node --check lib/indexnow_runtime.js
           node --check lib/canonical_rules.js
@@ -41,3 +45,5 @@ jobs:
         run: python3 tests/db_smoke.py
       - name: Verify query index migration
         run: python3 tests/query_index_smoke.py
+      - name: Verify website visibility schedule semantics
+        run: python3 tests/visibility_schedule_smoke.py

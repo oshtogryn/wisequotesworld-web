@@ -14,11 +14,12 @@ The following items have real production readback, not only code inspection:
 - Cloudflare Access service-token flow reaches `/api/admin/health` successfully.
 - Direct privileged requests to `wisequotesworld-web.pages.dev` return 401 at the application layer for `/admin/`, `/api/admin/health`, and `/ops/`; therefore the Pages hostname does not bypass the backend admin guard.
 - D1 runtime lifecycle migration 11 was applied manually in production and read back: `website_publication_schedule`, `newsletter_settings`, and `newsletter_deliveries` exist.
-- Public Swedish and Spanish homepage microcopy is localized in production (`Varje dag.`, `Vetenskap`, `Cada día.`, `Ciencia`).
+- Locale homepages `sv`, `es`, `it`, `pt`, `id`, `tr`, and `ar` all return HTTP 200 with locale-specific visible copy.
 - Retired public prompt-audit endpoint returns 410.
-- Sitemap returns 200 and valid `<urlset>` output.
-- Latest verified production smoke at the time of this audit: GitHub Actions run `34936767775`, success.
-- Latest verified CodeQL Security Scan at the time of this audit: run `34936767750`, success.
+- Sitemap returns 200, valid `<urlset>`, and `x-default` hreflang.
+- Latest verified expanded production smoke: run `34943720152`, success.
+- Production-check including D1/index/visibility regression tests is green.
+- Latest verified CodeQL scan before this refresh: run `34936767750`, success.
 
 ## D1 / request-lifecycle stabilization
 
@@ -28,7 +29,10 @@ Completed:
 - Removed newsletter scheduler execution from ordinary public GET requests.
 - Runtime schema lives in explicit migration 11.
 - IndexNow bulk submission is disabled; sitemap reads no longer cause real bulk submissions.
-- Baseline captured before the full post-fix 24h window: `327.48k rows read`, `0 rows written` (Cloudflare D1 dashboard, 2026-09-15 morning Europe/Stockholm).
+- Public discovery visibility now uses the same semantic rule across all renderer groups: legacy WQ001–WQ015 OR explicit `website_visibility` approval OR a due `website_publication_schedule` row.
+- Direct technically published article URLs remain available/indexable independently from editorial discovery visibility.
+- Visibility semantics are regression-tested by `tests/visibility_schedule_smoke.py`.
+- Baseline before the full post-fix 24h window: `327.48k rows read`, `0 rows written` (Cloudflare D1 dashboard, 2026-09-15 morning Europe/Stockholm).
 
 Acceptance gate still open:
 
@@ -58,7 +62,7 @@ Runtime improvements completed:
 - Digest selection excludes editorially hidden articles.
 - Failed delivery rows can be reserved again and retried safely.
 - Stale `reserved` rows older than 2 hours are recovered to `failed`.
-- Hourly batches enforce the aggregate 300/day cap using actual `sent` rows rather than relying on `last_run_at` as a one-run-per-day switch.
+- Hourly batches enforce the aggregate 300/day cap using actual `sent` rows.
 - GitHub Runtime scheduler is configured at `17 * * * *` and uses production Cloudflare Access service credentials.
 
 Verification gate still open:
@@ -71,18 +75,30 @@ Completed/verified:
 
 - Cloudflare Access on admin/ops surfaces.
 - Backend JWT signature verification through Cloudflare JWKS.
-- Service-token automation supported without weakening anonymous access.
+- Service-token automation works without weakening anonymous access.
 - Application-layer protection remains effective on the `pages.dev` hostname.
 - HSTS, `nosniff`, referrer policy, restrictive Permissions-Policy, `X-Frame-Options: DENY`, COOP, and CSP.
-- CodeQL runs on main and is currently green.
+- CodeQL runs on main and is green.
 - Bot Fight Mode was disabled because it incorrectly challenged legitimate GitHub automation before Access.
+- A protected runtime-config readback was added; it exposes only presence booleans, never secret values.
+
+Live production configuration readback on 2026-09-15:
+
+- `CF_ACCESS_AUD` / `ACCESS_AUD`: **not configured**.
+- `ADMIN_EMAILS` / `ADMIN_EMAIL`: **not configured**.
+- `CF_ACCESS_TEAM_DOMAIN` / `ACCESS_TEAM_DOMAIN`: **not configured**.
+- `ADMIN_TOKEN`: configured.
+
+Therefore the current code still necessarily relies on the existing hard-coded human-admin and Access-issuer fallbacks. These fallbacks must not be removed until the Cloudflare variables are present and read back successfully.
 
 Manual hardening still required as one consolidated Cloudflare session:
 
 1. Restrict Pages preview deployments.
-2. Add/confirm `CF_ACCESS_AUD`, then make Access audience validation mandatory in code.
-3. Add/confirm `ADMIN_EMAILS`, then remove the hard-coded human-admin fallback from code.
-4. Apply migration 12 in D1 Console.
+2. Configure exact `CF_ACCESS_AUD`.
+3. Configure explicit `ADMIN_EMAILS`.
+4. Configure explicit `CF_ACCESS_TEAM_DOMAIN`.
+5. Apply migration 12 in D1 Console.
+6. Re-read production configuration; only then remove/fail-close the code fallbacks and make audience validation mandatory.
 
 Do not recreate the existing shared Cloudflare service token.
 
@@ -90,46 +106,43 @@ Do not recreate the existing shared Cloudflare service token.
 
 Completed:
 
-- Localized homepage microcopy/category labels for the primary rendered locale group instead of English fallbacks.
+- Localized homepage microcopy/category labels across the currently active renderer groups.
 - Added visible keyboard focus treatment and >=44px interactive targets where relevant.
 - Added `prefers-reduced-motion` handling.
-- Hardened multilingual responsive typography with `overflow-wrap` / hyphenation and fluid mobile hero sizing.
+- Hardened multilingual responsive typography with overflow wrapping/hyphenation and fluid mobile hero sizing.
 - Added RTL positioning adjustments for the shared stylesheet.
+- Added production smoke coverage for `sv`, `es`, `it`, `pt`, `id`, `tr`, and `ar` home renderers.
 
 Remaining design/UX work:
 
-- Complete a 13-locale component unification so `it`, `pt`, `id`, `tr`, and `ar` do not depend on parallel legacy locale renderers.
-- Run a formal WCAG/contrast pass and browser/device visual QA.
+- Complete 13-locale component unification so `it`, `pt`, `id`, `tr`, and `ar` no longer depend on parallel renderer modules.
+- Run a formal WCAG/contrast and browser/device visual QA pass.
 - Add/verify skip-to-content and complete ARIA state handling for toggle menus.
-- Consolidate homepage/archive/category/author rendering into one shared locale renderer to prevent translation and visibility-rule drift.
+- Consolidate homepage/archive/category/author rendering into one shared locale renderer to eliminate future translation/visibility drift.
 
-## Important consistency issue still open
+## Visibility consistency issue
 
-The primary `site_v2` discovery queries treat a due `website_publication_schedule` row as immediately visible at/after `scheduled_for`, as required by MASTER_RULES.
-
-The parallel `new_locales_site` / `locale13_site` discovery paths for the remaining locales still depend primarily on the housekeeping `website_visibility` approval. This can create a short visibility delay until the scheduler marks the row released. The architecture should be consolidated or those queries updated so all 13 locales obey the exact same due-schedule condition.
-
-This is not a direct-article/indexability issue; it is a public discovery timing consistency issue.
+**Fixed.** `site_v2`, `new_locales_site`, and `locale13_site` now treat a due `website_publication_schedule` row as immediately discovery-visible at/after `scheduled_for`, as required by MASTER_RULES. Direct article/indexability behavior remains independent. CI contains an explicit regression test for this contract.
 
 ## Workflow cleanup
 
 Completed:
 
 - Obsolete WQ013 video probe no longer runs on every push; it is manual-only.
-- `production-check` now syntax-checks current runtime/security/scheduler modules and executes D1 migration smoke tests.
-- `Production smoke` checks production public routes, Access, service auth, pages.dev guard, localized microcopy, sitemap, retired diagnostics, visibility release endpoint, and protected newsletter health.
+- `production-check` syntax-checks current runtime/security/renderer modules and executes D1 migration/index/visibility smoke tests.
+- `Production smoke` checks production public routes, multiple locale renderers, Access, service auth, pages.dev guard, sitemap/hreflang, retired diagnostics, visibility release endpoint, protected newsletter health, and protected runtime configuration readback.
 - ChatGPT daily WQW health summary is scheduled for approximately 08:00 Europe/Stockholm.
 
 Remaining:
 
-- Inventory older one-off WQ-specific workflows and move/remove only after dependency review. Do not bulk-delete blindly.
+- Inventory older one-off WQ-specific workflows and remove/archive only after dependency review. Do not bulk-delete blindly.
 
 ## Current priority order
 
-1. Wait for/verify a real scheduled `Runtime scheduler` run.
+1. Verify a real scheduled `Runtime scheduler` run.
 2. Complete the one-session Cloudflare manual hardening + migration12 application.
-3. Capture the full 24h D1 post-fix readback and compare against 327.48k baseline.
-4. Fix 13-locale discovery visibility parity.
-5. Continue legacy route/workflow consolidation.
+3. Capture the full 24h D1 post-fix readback and compare against the `327.48k` baseline.
+4. Accessibility hardening and formal visual QA.
+5. Renderer/legacy workflow consolidation.
 6. Staging + backup/restore drill.
-7. SEO structured-data consolidation, accessibility audit, performance budget and monitoring trends.
+7. SEO structured-data consolidation, performance budget and monitoring trends.

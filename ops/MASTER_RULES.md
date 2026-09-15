@@ -1,8 +1,8 @@
 # MASTER RULES — Wise Quotes World
 
-Останнє оновлення: 2026-09-11
+Останнє оновлення: 2026-09-15
 Статус: CANONICAL
-Версія: database-first v4.13
+Версія: database-first v4.14
 
 ## 1. Джерела істини
 1. `ops/MASTER_RULES.md` — канонічне джерело операційних правил.
@@ -13,6 +13,7 @@
 6. Новіші explicit user decisions мають пріоритет над старими записами; після підтвердження вони повинні бути внесені в MASTER_RULES.
 7. Перед новою темою, зміною pipeline/status/publication/structure обов’язково читати актуальний MASTER_RULES і фактичний D1 state.
 8. Completion/status claims робити тільки після реального readback.
+9. GitHub commit сам по собі НЕ означає completion. Cloudflare/D1/infrastructure зміни вважаються завершеними тільки після production/API readback.
 
 ## 2. Мови та режими публікації
 Website locales — 13:
@@ -329,3 +330,97 @@ read MASTER_RULES + D1 -> determine `adapted` vs verified `verbatim` -> source/q
 Wise Quotes World і Sweden No Sugar — окремі продукти.
 
 Infrastructure/workflow patterns можна reuse тільки після compatibility review. Records, credentials, mappings, content, CTA, taxonomy та analytics залишаються isolated by `project_id/language/platform`.
+
+## 22. Cloudflare access credentials — NON-SECRET INVENTORY
+Є два різні класи Cloudflare credentials. Їх не можна плутати або взаємозамінювати.
+
+### A. Cloudflare Management API
+Secret name: `CF_API_TOKEN`.
+
+Storage:
+- GitHub Actions secret у Wise Quotes World repository/environment, коли налаштований.
+- Значення token ніколи не зберігати у repository, MASTER_RULES, logs, issues або chat.
+
+Purpose:
+- керування Cloudflare через контрольовані GitHub Actions;
+- D1 inventory/readback;
+- D1 migrations;
+- backup/restore workflows;
+- Cloudflare Pages/Workers configuration;
+- DNS;
+- Cloudflare Access applications/policies;
+- Access service-token inventory/configuration.
+
+Approved permissions/scope:
+- Account → D1 → Edit
+- Account → Cloudflare Pages → Edit
+- Account → Workers Scripts → Edit
+- Account → Access: Apps and Policies → Edit
+- Account → Access: Service Tokens → Edit
+- Zone → Zone → Read
+- Zone → DNS → Edit
+
+Usage rules:
+- використовувати тільки для Cloudflare management/control-plane API operations;
+- НЕ використовувати замість Access service authentication;
+- кожна destructive/privileged зміна повинна мати minimal-scope action, explicit target та post-change API/production readback;
+- для D1 destructive migration перед зміною обов’язкові backup + restore verification;
+- D1 залишається canonical operational database.
+
+Current Wise GitHub readback, 2026-09-15:
+- `CF_API_TOKEN`: **MISSING** у `production` environment workflow context.
+
+### B. Cloudflare Access service authentication
+Existing Cloudflare service token: `GitHub Projects Automation`.
+
+GitHub secret names:
+- `CF_ACCESS_CLIENT_ID`
+- `CF_ACCESS_CLIENT_SECRET`
+
+Storage:
+- GitHub Actions `production` environment secrets.
+- Значення Client Secret ніколи не зберігати у repository, MASTER_RULES, logs, issues або chat.
+
+Purpose:
+- machine-to-machine проходження через Cloudflare Access до захищених production endpoints;
+- це data-plane/service authentication, а не Cloudflare management credential.
+
+Usage rules:
+- `CF_ACCESS_CLIENT_ID` + `CF_ACCESS_CLIENT_SECRET` використовуються тільки для Access-protected HTTP requests;
+- НЕ використовувати їх для Cloudflare Management API;
+- не відтворювати/не замінювати чинний service token без explicit need;
+- не змінювати чинні Access applications, policies або service-token rules без inventory/readback, щоб не заблокувати GitHub automation;
+- Access changes вважаються complete тільки після protected production readback з expected result.
+
+Current Wise GitHub readback, 2026-09-15:
+- `CF_ACCESS_CLIENT_ID`: **EXISTS / VERIFIED** in `production` environment workflow context.
+- `CF_ACCESS_CLIENT_SECRET`: **EXISTS / VERIFIED** in `production` environment workflow context.
+
+### Credential separation — HARD
+- `CF_API_TOKEN` керує Cloudflare control plane.
+- `CF_ACCESS_CLIENT_ID` + `CF_ACCESS_CLIENT_SECRET` проходять через Cloudflare Access.
+- Один тип credential НІКОЛИ не використовувати замість іншого.
+
+### Wise Cloudflare infrastructure inventory
+Known Wise infrastructure:
+- D1 database: `wisequotesworld`;
+- Cloudflare Pages project: Wise Quotes World;
+- zone: `wisequotesworld.com`.
+
+Не заявляти infrastructure/configuration change як завершену лише на основі commit або workflow code. Потрібен production/API readback фактичного Cloudflare/D1 state.
+
+### Secrets hygiene — HARD
+У MASTER_RULES дозволено зберігати тільки:
+- secret name;
+- storage location/type;
+- purpose;
+- permissions/scope;
+- usage rules;
+- non-secret existence/readback status.
+
+НІКОЛИ не записувати:
+- API token value;
+- Client Secret value;
+- passwords;
+- 2FA secrets/codes;
+- backup/recovery codes.

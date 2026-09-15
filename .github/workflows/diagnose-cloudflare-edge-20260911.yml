@@ -7,7 +7,7 @@ on:
       - '.github/workflows/diagnose-cloudflare-edge-20260911.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   diagnose:
@@ -23,11 +23,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          REPORT='ops/cloudflare-edge-diagnostic-20260915.md'
+          REPORT="$RUNNER_TEMP/cloudflare-edge-diagnostic-20260915.md"
           {
             echo '# Cloudflare edge diagnostic — 2026-09-15'
             echo
             echo 'Current production probes from the same GitHub Actions runner.'
+            echo
+            if [ -n "${CF_ACCESS_CLIENT_ID:-}" ] && [ -n "${CF_ACCESS_CLIENT_SECRET:-}" ]; then
+              echo '- Access service-token secrets: present'
+            else
+              echo '- Access service-token secrets: MISSING'
+            fi
             echo
           } > "$REPORT"
 
@@ -39,8 +45,8 @@ jobs:
             headers="$(mktemp)"
             body="$(mktemp)"
 
-            args=(-sS --connect-timeout 10 --max-time 30 --http1.1 -A 'GitHub-Actions-Cloudflare-Diagnostic/2.0' -D "$headers" -o "$body" -w '%{http_code}')
-            if [ "$mode" = 'service' ]; then
+            args=(-sS --connect-timeout 10 --max-time 30 --http1.1 -A 'GitHub-Actions-Cloudflare-Diagnostic/3.0' -D "$headers" -o "$body" -w '%{http_code}')
+            if [ "$mode" = 'service' ] && [ -n "${CF_ACCESS_CLIENT_ID:-}" ] && [ -n "${CF_ACCESS_CLIENT_SECRET:-}" ]; then
               args+=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
             fi
 
@@ -59,7 +65,7 @@ jobs:
               echo
               echo 'Body fingerprint:'
               echo '```text'
-              head -c 700 "$body" | tr '\n\r' '  ' | sed -E 's/[[:space:]]+/ /g'
+              head -c 500 "$body" | tr '\n\r' '  ' | sed -E 's/[[:space:]]+/ /g'
               echo
               echo '```'
               echo
@@ -72,17 +78,6 @@ jobs:
           check 'WQW /api/admin/health with service token' 'https://wisequotesworld.com/api/admin/health' service
           check 'WQW /ops/ with service token' 'https://wisequotesworld.com/ops/' service
           check 'WQW /admin/ anonymous' 'https://wisequotesworld.com/admin/' anonymous
-          check 'SNS /admin/console/ with service token' 'https://swedennosugar.com/admin/console/' service
-          check 'SNS /admin/console/ anonymous' 'https://swedennosugar.com/admin/console/' anonymous
 
           echo 'Diagnostic complete.' >> "$REPORT"
-
-      - name: Commit diagnostic report
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add ops/cloudflare-edge-diagnostic-20260915.md
-          git commit -m 'record Cloudflare edge diagnostic 2026-09-15' || exit 0
-          git push
+          cat "$REPORT"

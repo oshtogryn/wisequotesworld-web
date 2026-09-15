@@ -15,7 +15,7 @@ jobs:
         run: |
           set -euo pipefail
           h=$(mktemp)
-          curl -sSI --connect-timeout 10 --max-time 30 'https://wisequotesworld.com/admin/' > "$h"
+          curl -sS --connect-timeout 10 --max-time 30 -D "$h" -o /dev/null 'https://wisequotesworld.com/admin/'
           loc=$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]+:[[:space:]]*/,""); sub(/\r$/ ,""); print; exit}' "$h")
           test -n "$loc"
           python3 - "$loc" <<'PY'

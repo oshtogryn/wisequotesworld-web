@@ -9,6 +9,8 @@ on:
       - 'styles.css'
       - 'start/**'
       - '.github/workflows/production-smoke.yml'
+  schedule:
+    - cron: '30 5 * * *'
   workflow_dispatch:
 
 permissions:
@@ -28,6 +30,7 @@ jobs:
       CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
     steps:
       - name: Wait for Pages deployment
+        if: github.event_name == 'push'
         run: sleep 45
 
       - name: Verify production routes and security
@@ -39,6 +42,7 @@ jobs:
 
           headers="$(mktemp)"; body="$(mktemp)"
           code="$(curl -sS --retry 2 --retry-all-errors --connect-timeout 10 --max-time 30 -D "$headers" -o "$body" -w '%{http_code}' 'https://wisequotesworld.com/en/')"
+          echo "public /en/ => HTTP $code"
           test "$code" = "200"
           grep -qi '^x-wqw-revision: p0-runtime-20260915' "$headers"
           grep -qi '^strict-transport-security:' "$headers"
@@ -46,6 +50,7 @@ jobs:
           grep -q 'Wise Quotes World' "$body"
 
           code="$(curl -sS --connect-timeout 10 --max-time 30 -o /dev/null -w '%{http_code}' 'https://wisequotesworld.com/admin/')"
+          echo "anonymous /admin/ => HTTP $code"
           test "$code" = "302"
 
           headers="$(mktemp)"; body="$(mktemp)"
@@ -53,6 +58,7 @@ jobs:
             'https://wisequotesworld.com/api/admin/health' \
             -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
             -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")"
+          echo "service-auth /api/admin/health => HTTP $code"
           test "$code" = "200"
           grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' "$body"
           grep -Eq '"access"[[:space:]]*:[[:space:]]*true' "$body"
@@ -63,14 +69,30 @@ jobs:
             -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
             -H 'Accept: application/json' \
             -H 'Content-Type: application/json')"
+          echo "release-due scheduler endpoint => HTTP $code"
           test "$code" = "200"
           grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' "$body"
 
           code="$(curl -sS --connect-timeout 10 --max-time 30 -o "$body" -w '%{http_code}' 'https://wisequotesworld.com/prompt-audit-readback-20260914.json')"
+          echo "retired prompt audit endpoint => HTTP $code"
           test "$code" = "410"
 
           code="$(curl -sS --connect-timeout 10 --max-time 30 -o "$body" -w '%{http_code}' 'https://wisequotesworld.com/sitemap.xml')"
+          echo "sitemap.xml => HTTP $code"
           test "$code" = "200"
           grep -q '<urlset' "$body"
+
+          {
+            echo '## Wise Quotes World production smoke'
+            echo
+            echo "- Checked: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+            echo '- Public site: OK'
+            echo '- Cloudflare Access gate: OK'
+            echo '- Service-auth health endpoint: OK'
+            echo '- Visibility scheduler endpoint: OK'
+            echo '- Retired prompt-audit endpoint: OK (410)'
+            echo '- Sitemap: OK'
+            echo '- Security headers: OK'
+          } >> "$GITHUB_STEP_SUMMARY"
 
           echo 'Production smoke passed.'

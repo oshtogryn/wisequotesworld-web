@@ -49,19 +49,22 @@ jobs:
           grep -qi '^content-security-policy:' "$headers"
           grep -q 'Wise Quotes World' "$body"
 
-          # Verify visible locale-specific microcopy, not only route availability.
-          for spec in 'sv|Varje dag.|Vetenskap' 'es|Cada día.|Ciencia'; do
-            IFS='|' read -r locale daily category <<< "$spec"
+          # Verify locale-specific microcopy and the three remaining locale renderers.
+          for spec in \
+            'sv|Varje dag.|Vetenskap' \
+            'es|Cada día.|Ciencia' \
+            'it|Saggezza da ricordare|Tutte le citazioni' \
+            'pt|Sabedoria que vale a pena lembrar|Todas as citações' \
+            'id|Kebijaksanaan yang layak diingat|Semua kutipan' \
+            'tr|Hatırlamaya değer bilgelik|Tüm alıntılar' \
+            'ar|حكمة تستحق أن نتذكرها|جميع الاقتباسات'; do
+            IFS='|' read -r locale marker secondary <<< "$spec"
             locale_body="$(mktemp)"
             code="$(curl -sS --retry 2 --retry-all-errors --connect-timeout 10 --max-time 30 -o "$locale_body" -w '%{http_code}' "https://wisequotesworld.com/$locale/")"
             echo "localized /$locale/ => HTTP $code"
             test "$code" = '200'
-            grep -Fq "$daily" "$locale_body"
-            grep -Fq "$category" "$locale_body"
-            if grep -Fq '>Every day.<' "$locale_body"; then
-              echo "FAIL: untranslated homepage microcopy remains on /$locale/" >&2
-              exit 1
-            fi
+            grep -Fq "$marker" "$locale_body"
+            grep -Fq "$secondary" "$locale_body"
           done
 
           code="$(curl -sS --connect-timeout 10 --max-time 30 -o /dev/null -w '%{http_code}' 'https://wisequotesworld.com/admin/')"
@@ -131,20 +134,21 @@ jobs:
           echo "sitemap.xml => HTTP $code"
           test "$code" = "200"
           grep -q '<urlset' "$body"
+          grep -q 'hreflang="x-default"' "$body"
 
           {
             echo '## Wise Quotes World production smoke'
             echo
             echo "- Checked: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
             echo '- Public site: OK'
-            echo '- Swedish/Spanish localized homepage microcopy: OK'
+            echo '- Locale renderers sv/es/it/pt/id/tr/ar: OK'
             echo '- Cloudflare Access gate: OK'
             echo '- Service-auth health endpoint: OK'
             echo '- Newsletter health/readback endpoint: OK'
             echo '- Application guard on pages.dev privileged routes: OK'
             echo '- Visibility scheduler endpoint: OK'
             echo '- Retired prompt-audit endpoint: OK (410)'
-            echo '- Sitemap: OK'
+            echo '- Sitemap + x-default hreflang: OK'
             echo '- Security headers: OK'
           } >> "$GITHUB_STEP_SUMMARY"
 

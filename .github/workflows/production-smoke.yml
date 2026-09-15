@@ -73,6 +73,17 @@ jobs:
           test "$code" = "200"
           grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' "$body"
 
+          # pages.dev may remain publicly reachable, but the application-layer admin guard
+          # must still prevent direct Access bypass on privileged routes.
+          for path in '/admin/' '/api/admin/health' '/ops/'; do
+            code="$(curl -sS --connect-timeout 10 --max-time 30 -o /dev/null -w '%{http_code}' "https://wisequotesworld-web.pages.dev$path")"
+            echo "pages.dev anonymous $path => HTTP $code"
+            if [ "$code" = '200' ]; then
+              echo "FAIL: privileged pages.dev route is anonymously accessible" >&2
+              exit 1
+            fi
+          done
+
           code="$(curl -sS --connect-timeout 10 --max-time 30 -o "$body" -w '%{http_code}' 'https://wisequotesworld.com/prompt-audit-readback-20260914.json')"
           echo "retired prompt audit endpoint => HTTP $code"
           test "$code" = "410"
@@ -89,6 +100,7 @@ jobs:
             echo '- Public site: OK'
             echo '- Cloudflare Access gate: OK'
             echo '- Service-auth health endpoint: OK'
+            echo '- Application guard on pages.dev privileged routes: OK'
             echo '- Visibility scheduler endpoint: OK'
             echo '- Retired prompt-audit endpoint: OK (410)'
             echo '- Sitemap: OK'

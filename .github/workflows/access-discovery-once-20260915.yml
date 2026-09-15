@@ -1,0 +1,30 @@
+name: Access discovery once 2026-09-15
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/access-discovery-once-20260915.yml'
+permissions:
+  contents: read
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Discover Access redirect metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          h=$(mktemp)
+          curl -sSI --connect-timeout 10 --max-time 30 'https://wisequotesworld.com/admin/' > "$h"
+          loc=$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]+:[[:space:]]*/,""); sub(/\r$/ ,""); print; exit}' "$h")
+          test -n "$loc"
+          python3 - "$loc" <<'PY'
+          import sys,urllib.parse
+          u=urllib.parse.urlparse(sys.argv[1])
+          q=urllib.parse.parse_qs(u.query)
+          aud=(q.get('aud') or [''])[0]
+          print('ACCESS_TEAM_DOMAIN=https://'+u.netloc)
+          print('ACCESS_AUD='+aud)
+          if not aud:
+              raise SystemExit('Access AUD missing from redirect')
+          PY

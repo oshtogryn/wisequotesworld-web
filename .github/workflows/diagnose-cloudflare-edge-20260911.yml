@@ -23,11 +23,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          REPORT='ops/cloudflare-edge-diagnostic-20260911.md'
+          REPORT='ops/cloudflare-edge-diagnostic-20260915.md'
           {
-            echo '# Cloudflare edge diagnostic — 2026-09-11'
+            echo '# Cloudflare edge diagnostic — 2026-09-15'
             echo
-            echo 'Same GitHub Actions runner and same CF Access service-token secrets were used for both domains.'
+            echo 'Current production probes from the same GitHub Actions runner.'
             echo
           } > "$REPORT"
 
@@ -39,7 +39,7 @@ jobs:
             headers="$(mktemp)"
             body="$(mktemp)"
 
-            args=(-sS --connect-timeout 10 --max-time 30 --http1.1 -A 'GitHub-Actions-Cloudflare-Diagnostic/1.0' -D "$headers" -o "$body" -w '%{http_code}')
+            args=(-sS --connect-timeout 10 --max-time 30 --http1.1 -A 'GitHub-Actions-Cloudflare-Diagnostic/2.0' -D "$headers" -o "$body" -w '%{http_code}')
             if [ "$mode" = 'service' ]; then
               args+=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
             fi
@@ -54,7 +54,7 @@ jobs:
               echo
               echo 'Relevant response headers:'
               echo '```text'
-              awk 'BEGIN{IGNORECASE=1} /^(HTTP\/|server:|cf-ray:|cf-mitigated:|cf-cache-status:|content-type:|location:|cf-chl-out:|x-frame-options:|content-security-policy:|vary:)/ {gsub(/\r$/,""); print}' "$headers"
+              awk 'BEGIN{IGNORECASE=1} /^(HTTP\/|server:|cf-ray:|cf-mitigated:|cf-cache-status:|content-type:|location:|x-wqw-revision:|x-frame-options:|content-security-policy:|vary:)/ {gsub(/\r$/,""); print}' "$headers"
               echo '```'
               echo
               echo 'Body fingerprint:'
@@ -66,11 +66,13 @@ jobs:
             } >> "$REPORT"
           }
 
+          check 'WQW public /en/ anonymous' 'https://wisequotesworld.com/en/' anonymous
+          check 'WQW public /en/start/ anonymous' 'https://wisequotesworld.com/en/start/' anonymous
           check 'WQW /admin/ with service token' 'https://wisequotesworld.com/admin/' service
           check 'WQW /api/admin/health with service token' 'https://wisequotesworld.com/api/admin/health' service
           check 'WQW /ops/ with service token' 'https://wisequotesworld.com/ops/' service
-          check 'SNS /admin/console/ with service token' 'https://swedennosugar.com/admin/console/' service
           check 'WQW /admin/ anonymous' 'https://wisequotesworld.com/admin/' anonymous
+          check 'SNS /admin/console/ with service token' 'https://swedennosugar.com/admin/console/' service
           check 'SNS /admin/console/ anonymous' 'https://swedennosugar.com/admin/console/' anonymous
 
           echo 'Diagnostic complete.' >> "$REPORT"
@@ -81,6 +83,6 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add ops/cloudflare-edge-diagnostic-20260911.md
-          git commit -m 'record Cloudflare edge diagnostic' || exit 0
+          git add ops/cloudflare-edge-diagnostic-20260915.md
+          git commit -m 'record Cloudflare edge diagnostic 2026-09-15' || exit 0
           git push

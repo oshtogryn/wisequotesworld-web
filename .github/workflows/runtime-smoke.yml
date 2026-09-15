@@ -1,0 +1,39 @@
+name: Runtime Smoke
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  production-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Allow edge deployment to converge
+        run: sleep 45
+
+      - name: Verify public production revision and pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in /en/ /en/start/; do
+            headers="$(mktemp)"
+            body="$(mktemp)"
+            curl -fsS --max-time 30 -D "$headers" -o "$body" "https://wisequotesworld.com${path}"
+            tr -d '\r' < "$headers" | grep -qi '^x-wqw-revision: p0-runtime-20260915$'
+            grep -qi 'Wise Quotes World' "$body"
+          done
+
+      - name: Verify admin remains edge-protected
+        shell: bash
+        run: |
+          set -euo pipefail
+          code="$(curl -sS -o /tmp/admin-health -w '%{http_code}' --max-time 30 https://wisequotesworld.com/api/admin/health)"
+          if [ "$code" = "200" ]; then
+            echo 'Admin health unexpectedly accessible without Cloudflare Access.' >&2
+            exit 1
+          fi
+          echo "Unauthenticated admin health returned HTTP $code"

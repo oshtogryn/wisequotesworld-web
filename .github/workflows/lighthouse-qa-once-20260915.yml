@@ -1,0 +1,42 @@
+name: Lighthouse QA once 2026-09-15
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/lighthouse-qa-once-20260915.yml'
+permissions:
+  contents: read
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Run mobile Lighthouse on representative renderers
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/lh
+          for locale in en it id ar; do
+            echo "=== Lighthouse $locale ==="
+            npx --yes lighthouse@12 "https://wisequotesworld.com/$locale/" \
+              --quiet \
+              --chrome-flags='--headless --no-sandbox' \
+              --only-categories=accessibility,seo,best-practices,performance \
+              --output=json \
+              --output-path="/tmp/lh/$locale.json"
+          done
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          minimum={'accessibility':0.90,'seo':0.90,'best-practices':0.85}
+          bad=[]
+          for p in sorted(Path('/tmp/lh').glob('*.json')):
+              d=json.loads(p.read_text())
+              scores={k:round(v['score']*100) for k,v in d['categories'].items()}
+              print(p.stem, scores)
+              for k,m in minimum.items():
+                  if d['categories'][k]['score'] < m:
+                      bad.append(f'{p.stem} {k}={scores[k]}')
+          if bad:
+              raise SystemExit('Lighthouse thresholds failed: '+', '.join(bad))
+          PY

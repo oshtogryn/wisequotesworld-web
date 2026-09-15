@@ -49,7 +49,6 @@ jobs:
           grep -qi '^content-security-policy:' "$headers"
           grep -q 'Wise Quotes World' "$body"
 
-          # Verify locale-specific microcopy and the three remaining locale renderers.
           for spec in \
             'sv|Varje dag.|Vetenskap' \
             'es|Cada día.|Ciencia' \
@@ -80,6 +79,21 @@ jobs:
           test "$code" = "200"
           grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' "$body"
           grep -Eq '"access"[[:space:]]*:[[:space:]]*true' "$body"
+
+          config_body="$(mktemp)"
+          code="$(curl -sS --connect-timeout 10 --max-time 30 -o "$config_body" -w '%{http_code}' \
+            'https://wisequotesworld.com/api/admin/newsletter/runtime-config' \
+            -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+            -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+            -H 'Accept: application/json')"
+          echo "runtime security config => HTTP $code"
+          test "$code" = '200'
+          python3 - "$config_body" <<'PY'
+          import json,sys
+          data=json.load(open(sys.argv[1],encoding='utf-8'))
+          print('runtime security config:', data)
+          assert data.get('ok') is True
+          PY
 
           newsletter_body="$(mktemp)"
           code="$(curl -sS --connect-timeout 10 --max-time 30 -o "$newsletter_body" -w '%{http_code}' \
@@ -115,8 +129,6 @@ jobs:
           test "$code" = "200"
           grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' "$body"
 
-          # pages.dev may remain publicly reachable, but the application-layer admin guard
-          # must still prevent direct Access bypass on privileged routes.
           for path in '/admin/' '/api/admin/health' '/ops/'; do
             code="$(curl -sS --connect-timeout 10 --max-time 30 -o /dev/null -w '%{http_code}' "https://wisequotesworld-web.pages.dev$path")"
             echo "pages.dev anonymous $path => HTTP $code"
@@ -144,6 +156,7 @@ jobs:
             echo '- Locale renderers sv/es/it/pt/id/tr/ar: OK'
             echo '- Cloudflare Access gate: OK'
             echo '- Service-auth health endpoint: OK'
+            echo '- Protected runtime security configuration readback: OK'
             echo '- Newsletter health/readback endpoint: OK'
             echo '- Application guard on pages.dev privileged routes: OK'
             echo '- Visibility scheduler endpoint: OK'

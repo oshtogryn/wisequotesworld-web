@@ -47,3 +47,5 @@ jobs:
         run: python3 tests/query_index_smoke.py
       - name: Verify website visibility schedule semantics
         run: python3 tests/visibility_schedule_smoke.py
+      - name: Verify accessibility contrast and navigation semantics
+        run: python3 tests/accessibility_css_smoke.py

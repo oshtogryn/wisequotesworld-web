@@ -1,4 +1,4 @@
-name: Newsletter scheduler
+name: Runtime scheduler
 
 on:
   schedule:
@@ -9,43 +9,45 @@ permissions:
   contents: read
 
 concurrency:
-  group: newsletter-scheduler-production
+  group: runtime-scheduler-production
   cancel-in-progress: false
 
 jobs:
   run:
     environment: production
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 6
     env:
       CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
       CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
     steps:
-      - name: Run due newsletter batch
+      - name: Release due website visibility and run newsletter
         shell: bash
         run: |
           set -euo pipefail
           test -n "${CF_ACCESS_CLIENT_ID:-}"
           test -n "${CF_ACCESS_CLIENT_SECRET:-}"
 
-          body="$(mktemp)"
-          code="$(curl --retry 2 --retry-all-errors --connect-timeout 10 --max-time 45 \
-            -sS -o "$body" -w '%{http_code}' \
-            -X POST 'https://wisequotesworld.com/api/admin/newsletter/run-scheduled' \
-            -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
-            -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
-            -H 'Accept: application/json' \
-            -H 'Content-Type: application/json')"
+          post() {
+            local label="$1" url="$2" body code
+            body="$(mktemp)"
+            code="$(curl --retry 2 --retry-all-errors --connect-timeout 10 --max-time 45 \
+              -sS -o "$body" -w '%{http_code}' -X POST "$url" \
+              -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+              -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+              -H 'Accept: application/json' \
+              -H 'Content-Type: application/json')"
+            echo "$label — HTTP $code"
+            cat "$body"; echo
+            if [ "$code" != "200" ]; then
+              echo "$label returned HTTP $code" >&2
+              exit 1
+            fi
+            if grep -Eq '"ok"[[:space:]]*:[[:space:]]*false' "$body"; then
+              echo "$label reported ok=false" >&2
+              exit 1
+            fi
+          }
 
-          echo "HTTP $code"
-          cat "$body"
-          echo
-
-          if [ "$code" != "200" ]; then
-            echo "Newsletter scheduler endpoint returned HTTP $code" >&2
-            exit 1
-          fi
-          if grep -Eq '"ok"[[:space:]]*:[[:space:]]*false' "$body"; then
-            echo "Newsletter scheduler reported ok=false" >&2
-            exit 1
-          fi
+          post 'Website visibility release' 'https://wisequotesworld.com/api/admin/site-visibility/release-due'
+          post 'Newsletter scheduler' 'https://wisequotesworld.com/api/admin/newsletter/run-scheduled'

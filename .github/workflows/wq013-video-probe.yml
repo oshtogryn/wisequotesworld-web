@@ -1,14 +1,17 @@
 name: WQ013 video probe
+
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
   probe:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - run: sleep 35
       - name: Probe videos
         run: |
           set -x

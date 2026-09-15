@@ -8,23 +8,33 @@ permissions:
   contents: read
 jobs:
   discover:
+    environment: production
     runs-on: ubuntu-latest
+    env:
+      CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+      CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
     steps:
-      - name: Discover Access redirect metadata
+      - name: Discover Access identity metadata
         shell: bash
         run: |
           set -euo pipefail
-          h=$(mktemp)
-          curl -sS --connect-timeout 10 --max-time 30 -D "$h" -o /dev/null 'https://wisequotesworld.com/admin/'
-          loc=$(awk 'BEGIN{IGNORECASE=1} /^location:/{sub(/^[^:]+:[[:space:]]*/,""); sub(/\r$/ ,""); print; exit}' "$h")
-          test -n "$loc"
-          python3 - "$loc" <<'PY'
-          import sys,urllib.parse
-          u=urllib.parse.urlparse(sys.argv[1])
-          q=urllib.parse.parse_qs(u.query)
-          aud=(q.get('aud') or [''])[0]
-          print('ACCESS_TEAM_DOMAIN=https://'+u.netloc)
-          print('ACCESS_AUD='+aud)
-          if not aud:
-              raise SystemExit('Access AUD missing from redirect')
+          test -n "${CF_ACCESS_CLIENT_ID:-}"
+          test -n "${CF_ACCESS_CLIENT_SECRET:-}"
+          body=$(mktemp)
+          code=$(curl -sS --connect-timeout 10 --max-time 30 -o "$body" -w '%{http_code}' \
+            'https://wisequotesworld.com/cdn-cgi/access/get-identity' \
+            -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+            -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+            -H 'Accept: application/json')
+          echo "identity HTTP=$code"
+          test "$code" = '200'
+          python3 - "$body" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1],encoding='utf-8'))
+          print('ACCESS_ISSUER='+str(d.get('iss') or d.get('issuer') or ''))
+          print('ACCESS_AUD='+str(d.get('aud') or ''))
+          print('ACCESS_TYPE='+str(d.get('type') or ''))
+          print('ACCESS_COMMON_NAME='+str(d.get('common_name') or ''))
+          if not (d.get('aud')):
+              raise SystemExit('Access AUD absent in identity payload')
           PY

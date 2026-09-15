@@ -12,23 +12,20 @@ Rule: do not bulk-delete. Persistent workflows are kept; one-off/date-scoped wor
 - `follower-refresh-2026-09-09.yml` — potentially recurring operational follower refresh; retain pending separate dependency review.
 - `future-preprod.yml` — current pre-production preparation path; retain while prepared-topic flow exists.
 
-## Superseded diagnostics removed
+## Removed after inspection
 
-- `diagnose-cloudflare-edge-20260911.yml` — removed 2026-09-15 after Access/service-auth/public smoke became part of `production-smoke.yml`.
-- `diagnose-cloudflare-layer-20260911.yml` — removed 2026-09-15 after Bot Fight Mode root cause was resolved and production smoke covered the relevant routes.
-
-## Temporary current migration workflow
-
-- `apply-migration12-once-20260915.yml` — one-time protected production migration/readback. Delete after successful run and independent readback.
+- `diagnose-cloudflare-edge-20260911.yml` — superseded by `production-smoke.yml`.
+- `diagnose-cloudflare-layer-20260911.yml` — superseded after Bot Fight Mode root cause resolution and production smoke coverage.
+- `apply-migration12-once-20260915.yml` — deleted after successful production apply + independent readback.
+- `apply-wq019-fullquote-20260907.yml` — completed date-scoped mutation workflow that temporarily modified `_worker.js`; removed to eliminate accidental retrigger risk.
+- `apply-wq020-native-copy-fix-20260908.yml` — completed self-triggered one-off fix/readback workflow.
+- `apply-manual-social-019-026-20260907.yml` — completed date-scoped temporary-route/D1 mutation workflow.
+- `apply-manual-social-019-026-public-once-20260907.yml` — completed date-scoped public one-time route/D1 mutation workflow.
 
 ## One-off/date-scoped candidates for later removal after inspection
 
 These names strongly indicate completed migration, correction, export, readback, or installation jobs. They must not be deleted merely from the filename; inspect trigger + current code dependency first.
 
-- `apply-manual-social-019-026-20260907.yml`
-- `apply-manual-social-019-026-public-once-20260907.yml`
-- `apply-wq019-fullquote-20260907.yml`
-- `apply-wq020-native-copy-fix-20260908.yml`
 - `build-plain-db-payload.yml`
 - `capture-wq020-export-20260908.yml`
 - `enable-brevo-newsletter.yml`

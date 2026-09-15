@@ -1,0 +1,67 @@
+name: Production smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '_worker.js'
+      - 'lib/**'
+      - 'styles.css'
+      - 'start/**'
+      - '.github/workflows/production-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-smoke-main
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+      CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+    steps:
+      - name: Wait for Pages deployment
+        run: sleep 45
+
+      - name: Verify production routes and security
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${CF_ACCESS_CLIENT_ID:-}"
+          test -n "${CF_ACCESS_CLIENT_SECRET:-}"
+
+          headers="$(mktemp)"; body="$(mktemp)"
+          code="$(curl -sS --retry 2 --retry-all-errors --connect-timeout 10 --max-time 30 -D "$headers" -o "$body" -w '%{http_code}' 'https://wisequotesworld.com/en/')"
+          test "$code" = "200"
+          grep -qi '^x-wqw-revision: p0-runtime-20260915' "$headers"
+          grep -qi '^strict-transport-security:' "$headers"
+          grep -qi '^content-security-policy:' "$headers"
+          grep -q 'Wise Quotes World' "$body"
+
+          code="$(curl -sS --connect-timeout 10 --max-time 30 -o /dev/null -w '%{http_code}' 'https://wisequotesworld.com/admin/')"
+          test "$code" = "302"
+
+          headers="$(mktemp)"; body="$(mktemp)"
+          code="$(curl -sS --connect-timeout 10 --max-time 30 -D "$headers" -o "$body" -w '%{http_code}' \
+            'https://wisequotesworld.com/api/admin/health' \
+            -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+            -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")"
+          test "$code" = "200"
+          grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' "$body"
+          grep -Eq '"access"[[:space:]]*:[[:space:]]*true' "$body"
+
+          code="$(curl -sS --connect-timeout 10 --max-time 30 -o "$body" -w '%{http_code}' 'https://wisequotesworld.com/prompt-audit-readback-20260914.json')"
+          test "$code" = "410"
+
+          code="$(curl -sS --connect-timeout 10 --max-time 30 -o "$body" -w '%{http_code}' 'https://wisequotesworld.com/sitemap.xml')"
+          test "$code" = "200"
+          grep -q '<urlset' "$body"
+
+          echo 'Production smoke passed.'

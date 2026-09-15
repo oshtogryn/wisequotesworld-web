@@ -1,13 +1,6 @@
 name: Newsletter scheduler
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/newsletter-scheduler.yml'
-      - 'lib/admin_auth.js'
-      - 'lib/newsletter_admin.js'
-      - 'lib/newsletter_digest_visible.js'
   schedule:
     - cron: '17 * * * *'
   workflow_dispatch:

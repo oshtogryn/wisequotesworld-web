@@ -57,6 +57,15 @@ jobs:
           grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' "$body"
           grep -Eq '"access"[[:space:]]*:[[:space:]]*true' "$body"
 
+          code="$(curl -sS --connect-timeout 10 --max-time 30 -o "$body" -w '%{http_code}' \
+            -X POST 'https://wisequotesworld.com/api/admin/site-visibility/release-due' \
+            -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+            -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+            -H 'Accept: application/json' \
+            -H 'Content-Type: application/json')"
+          test "$code" = "200"
+          grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' "$body"
+
           code="$(curl -sS --connect-timeout 10 --max-time 30 -o "$body" -w '%{http_code}' 'https://wisequotesworld.com/prompt-audit-readback-20260914.json')"
           test "$code" = "410"
 

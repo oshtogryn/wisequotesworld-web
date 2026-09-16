@@ -7,7 +7,7 @@ on:
       - '.github/workflows/media-inventory-once-20260916.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   inventory:
@@ -18,6 +18,9 @@ jobs:
       CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
       CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - name: Read current production media state
         shell: bash
         run: |
@@ -26,15 +29,18 @@ jobs:
           test -n "${CF_ACCESS_CLIENT_SECRET:-}"
           auth=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
           tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+          mkdir -p ops/readbacks
+          report='ops/readbacks/media-inventory-20260916.json'
+          echo '[]' > "$report"
           echo '| Topic | Status | Social-ready | Raw videos | Normalized approved | Media issues |' >> "$GITHUB_STEP_SUMMARY"
           echo '|---|---|---:|---:|---:|---|' >> "$GITHUB_STEP_SUMMARY"
           for n in $(seq 11 35); do
             id="WQ$(printf '%03d' "$n")"
             code="$(curl -sS --retry 2 --connect-timeout 10 --max-time 30 "${auth[@]}" -o "$tmp/$id.json" -w '%{http_code}' "https://wisequotesworld.com/api/admin/production/$id")"
             [ "$code" = 200 ] || continue
-            python3 - "$tmp/$id.json" "$id" "$GITHUB_STEP_SUMMARY" <<'PY'
+            python3 - "$tmp/$id.json" "$id" "$GITHUB_STEP_SUMMARY" "$report" <<'PY'
           import json,sys
-          p,id,summary=sys.argv[1:]
+          p,id,summary,report=sys.argv[1:]
           d=json.load(open(p,encoding='utf-8'))
           if not d.get('ok'): raise SystemExit(0)
           r=d.get('readiness') or {}
@@ -44,11 +50,28 @@ jobs:
           raw=[m for m in vids if str(m.get('asset_type','')).lower() not in {'video_normalized','video_normalized_mp4','social_video_normalized'}]
           norm=[m for m in vids if str(m.get('asset_type','')).lower() in {'video_normalized','video_normalized_mp4','social_video_normalized'} and str(m.get('mime_type','')).lower()=='video/mp4' and m.get('qa_status')=='approved']
           issues=[]
+          locale_rows=[]
           for x in r.get('languages') or []:
-              if x.get('social_connected') and x.get('media_issues'):
-                  issues.append(f"{x.get('language')}:{','.join(x.get('media_issues') or [])}")
-          row=f"| {id} | {item.get('status','')} | {'YES' if r.get('ready_for_metricool') else 'NO'} | {len(raw)} | {len(norm)} | {'; '.join(issues)[:500]} |\n"
-          open(summary,'a',encoding='utf-8').write(row)
-          print(json.dumps({'id':id,'status':item.get('status'),'ready_for_metricool':r.get('ready_for_metricool'),'raw_videos':len(raw),'normalized_approved':len(norm),'issues':issues},ensure_ascii=False))
+              if x.get('social_connected'):
+                  locale_rows.append({'language':x.get('language'),'ready':bool(x.get('ready')),'video':bool(x.get('video')),'video_delivery_ready':bool(x.get('video_delivery_ready')),'media_qa':bool(x.get('media_qa')),'media_issues':x.get('media_issues') or []})
+                  if x.get('media_issues'): issues.append(f"{x.get('language')}:{','.join(x.get('media_issues') or [])}")
+          row={'id':id,'status':item.get('status'),'ready_for_metricool':bool(r.get('ready_for_metricool')),'raw_videos':len(raw),'normalized_approved':len(norm),'issues':issues,'social_locales':locale_rows}
+          rows=json.load(open(report,encoding='utf-8')); rows.append(row)
+          with open(report,'w',encoding='utf-8') as f: json.dump(rows,f,ensure_ascii=False,indent=2)
+          open(summary,'a',encoding='utf-8').write(f"| {id} | {item.get('status','')} | {'YES' if r.get('ready_for_metricool') else 'NO'} | {len(raw)} | {len(norm)} | {'; '.join(issues)[:500]} |\n")
+          print(json.dumps(row,ensure_ascii=False))
           PY
           done
+      - name: Persist readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readbacks/media-inventory-20260916.json
+          if git diff --cached --quiet; then
+            echo 'No inventory changes.'
+            exit 0
+          fi
+          git commit -m 'audit: persist 2026-09-16 media inventory'
+          git push

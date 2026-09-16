@@ -15,150 +15,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Update canonical rules document
+        env:
+          SECTION_B64: IyMgMjMuIE1lZGlhIGRlbGl2ZXJ5LCB2MiBvdXRwdXRzIGFuZCByZXRyeSBzYWZldHkg4oCUIEhBUkQKCiMjIyAyMy4xIExvY2FsZSByZWdpc3RyeQotINCE0LTQuNC90LjQuSBydW50aW1lIGxvY2FsZSByZWdpc3RyeSDRlCDQutCw0L3QvtC90ZbRh9C90LjQvCBtYXBwaW5nIGxheWVyINC00LvRjyB3ZWJzaXRlL3NvY2lhbCBzZW1hbnRpY3MuCi0gQnJhemlsaWFuIFBvcnR1Z3Vlc2U6IGNhbm9uaWNhbCBCQ1AtNDcvSFRNTC9ocmVmbGFuZyA9IGBwdC1CUmA7IGV4aXN0aW5nIEQxL1VSTCBjb2RlID0gYHB0YCDRj9C6IGJhY2t3YXJkLWNvbXBhdGlibGUgYWxpYXMuCi0g0J3QtSDRgNC+0LHQuNGC0LggZGVzdHJ1Y3RpdmUgcmVuYW1lINGW0YHRgtC+0YDQuNGH0L3QuNGFIGBwdGAgcm93cy9VUkxzLgotIENvbm5lY3RlZCBzb2NpYWwgbG9jYWxlcyDQt9Cw0LvQuNGI0LDRjtGC0YzRgdGPIGB1aywgcnUsIHBsLCBlbiwgc3YsIGRlLCBlcywgZnJgLgoKIyMjIDIzLjIgVmlkZW8gZGVsaXZlcnkgY29udHJhY3QKUmF3IHVwbG9hZCDRgyBSMiDQndCVINC+0LfQvdCw0YfQsNGUIHNvY2lhbCByZWFkaW5lc3MuCgpDYW5vbmljYWwgZmxvdzoKYG9yaWdpbmFsIGltbXV0YWJsZSBSMiB1cGxvYWQgLT4gcHJvdGVjdGVkIHNvdXJjZSBkb3dubG9hZC9wcm9iZSAtPiBmZm1wZWcgbm9ybWFsaXplZCBkZXJpdmF0aXZlIC0+IGZmcHJvYmUgdmFsaWRhdGlvbiAtPiBub3JtYWxpemVkIE1QNCBpbiBSMi9EMSAtPiBtZWRpYSBRQSAtPiBhcHByb3ZlZCBjYW5vbmljYWwgc29jaWFsIGRlcml2YXRpdmUgLT4gc2NoZWR1bGVyIC0+IFBsYW5uZXIvcGxhdGZvcm0gcmVhZGJhY2tgLgoK0JTQu9GPINC90L7QstC40YUgc29jaWFsLWRlbGl2ZXJ5IGFzc2V0cyDQvdC+0YDQvNCw0LvRltC30L7QstCw0L3QuNC5IG1hc3RlcjoKLSBjb250YWluZXI6IE1QNDsKLSB2aWRlbzogSC4yNjQ7Ci0gcGl4ZWwgZm9ybWF0OiBgeXV2NDIwcGA7Ci0gYXVkaW86IEFBQyDQtNC70Y8gbmFycmF0ZWQgcXVvdGUgdmlkZW87Ci0gYGZhc3RzdGFydGA7Ci0gY29uc2VydmF0aXZlIGRlbGl2ZXJ5LXNpemUgZ2F0ZTogPD0gOTUgTUI7Ci0gYXNwZWN0L2NvbnRlbnQg0L3QtSDRgdC/0L7RgtCy0L7RgNGO0LLQsNGC0Lg7IGRvd25zY2FsZSBvbmx5IHdoZW4gdGVjaG5pY2FsbHkgbmVlZGVkLgoKUmF3IE1PVi9IRVZDINC80L7QttC1INC30LHQtdGA0ZbQs9Cw0YLQuNGB0Y8g0Y/QuiBzb3VyY2UgYXNzZXQsINCw0LvQtSDQvdC1INCy0LLQsNC20LDRlNGC0YzRgdGPIGRlbGl2ZXJ5LXJlYWR5LgoKSEFSRDoKLSDQt9C80ZbQvdCwIGZpbGVuYW1lL1VSTCBzdWZmaXgvTUlNRSBoZWFkZXIg0J3QlSDRlCDQutC+0L3QstC10YDRgtCw0YbRltGU0Y47Ci0g0L3QtSDQv9C+0LTQsNCy0LDRgtC4IE1PVi9IRVZDIGJ5dGVzINGP0LogTVA0INC70LjRiNC1INGC0L7QvNGDLCDRidC+IFVSTCDQt9Cw0LrRltC90YfRg9GU0YLRjNGB0Y8gYC5tcDRgOwotIGZhaWxlZCBub3JtYWxpemVkIGRlcml2YXRpdmUg0LzQvtC20L3QsCByZWdlbmVyYXRlZCBmcm9tIG9yaWdpbmFsIFIyIHNvdXJjZSDQsdC10Lcg0L/QvtCy0YLQvtGA0L3QvtCz0L4gdXNlciB1cGxvYWQ7Ci0gbWVkaWEgUUEg0YLQsCBkZWxpdmVyeSBjb21wYXRpYmlsaXR5IOKAlCDQvtC60YDQtdC80ZYg0L/QtdGA0LXQstGW0YDQutC4LgoKIyMjIDIzLjMgQWN0aXZlIHVwbG9hZCBoYXJkZW5pbmcKQWRtaW4gdXBsb2FkINC/0L7QstC40L3QtdC9OgotIHZhbGlkYXRlIGBhc3NldF90eXBlYCwgTUlNRSDRliBzaXplOwotINC30LHQtdGA0ZbQs9Cw0YLQuCBvcmlnaW5hbCBpbW11dGFibGUgYXNzZXQg0YMgUjI7Ci0gcm9sbGJhY2sgUjIgb2JqZWN0INC/0YDQuCBEMSByZWdpc3RyYXRpb24gZmFpbHVyZTsKLSDQtNC70Y8gYHZpZGVvX25vcm1hbGl6ZWRgINC/0YDQuNC50LzQsNGC0Lgg0YLRltC70YzQutC4IGFjdHVhbCBgLm1wNGAgKyBgdmlkZW8vbXA0YCBtZXRhZGF0YTsKLSDQvdC1IGF1dG8tYXBwcm92ZSByYXcgdmlkZW8uCgojIyMgMjMuNCBTb2NpYWwgb3V0cHV0IGNvbnRyYWN0IGZyb20gV1EwMjcKV1EwMDHigJNXUTAyNiDQt9Cw0LvQuNGI0LDRjtGC0YzRgdGPIGxlZ2FjeS1jb21wYXRpYmxlIHJlYWRiYWNrIGhpc3Rvcnkg0ZYg0L3QtSDQv9C10YDQtdC/0LjRgdGD0Y7RgtGM0YHRjyBkZXN0cnVjdGl2ZWx5LgoKV1EwMjcrINCy0LjQutC+0YDQuNGB0YLQvtCy0YPRlCDQvtC60YDQtdC80ZYgY2Fub25pY2FsIG91dHB1dHM6Ci0gYGZhY2Vib29rYDsKLSBgaW5zdGFncmFtYDsKLSBgdGhyZWFkc18xYDsKLSBgdGhyZWFkc18yYDsKLSBgdGhyZWFkc18zYDsKLSBgdGlrdG9rYDsKLSBgeW91dHViZV90aXRsZWA7Ci0gYHlvdXR1YmVfZGVzY3JpcHRpb25gOwotIGBwaW50ZXJlc3RfaW1hZ2VfdGl0bGVgOwotIGBwaW50ZXJlc3RfaW1hZ2VfZGVzY3JpcHRpb25gOwotIGBwaW50ZXJlc3RfdmlkZW9fdGl0bGVgOwotIGBwaW50ZXJlc3RfdmlkZW9fZGVzY3JpcHRpb25gOwotIGBwaW50ZXJlc3RfcHJvbXB0YDsKLSBgYXJ0aWNsZV91cmxgLgoKVGhyZWFkcyByb2xlczoKMS4gcXVvdGUgKyBjb3JlIGludGVycHJldGF0aW9uOwoyLiBudWFuY2UgLyBjb3VudGVycG9pbnQ7CjMuIHByYWN0aWNhbCBxdWVzdGlvbiAvIGFwcGxpY2F0aW9uLgoKTmVhci1kdXBsaWNhdGUgVGhyZWFkcyA9IGZhaWxlZCBhdXRvbWF0ZWQgY29weSBRQS4KCiMjIyAyMy41IEF1dG9tYXRlZCBjb3B5L3Byb21wdCBRQQpCZWZvcmUgc2NoZWR1bGluZyBXUTAyNysgcnVuIG1hY2hpbmUgbGludCBpbiBhZGRpdGlvbiB0byBodW1hbi9lZGl0b3JpYWwgUUE6Ci0gRmFjZWJvb2svVGhyZWFkczogZXhhY3Qgc2FtZS1sYW5ndWFnZSBhcnRpY2xlIFVSTDsKLSBJbnN0YWdyYW0vWW91VHViZSBkZXNjcmlwdGlvbjogbm8gcmF3IFVSTDsKLSBUaWtUb2s6IGRvIG5vdCBmYWxzZWx5IGRlc2NyaWJlIHBsYWluIHRleHQgYWRkcmVzcyBhcyBjbGlja2FibGU7Ci0gPD01IGhhc2h0YWdzOwotIHBsYXRmb3JtIHdvcmtpbmcgbGVuZ3RoIHRhcmdldHMgYXJlIHdhcm5pbmdzIHVubGVzcyBjbGVhcmx5IHRvbyB0aGluL2V4Y2Vzc2l2ZTsKLSB0aHJlZSBUaHJlYWRzIG11c3QgYmUgc2VtYW50aWNhbGx5IGRpc3RpbmN0OwotIHZpZGVvIHByb21wdDogOToxNiwgZXhhY3QgbG9jYWxpemVkIHF1b3RlLCBgQXVkaW86YCwgYW50aS1jYXB0aW9uL2JyYW5kaW5nIGxpbmUsIG5vIGxlYWtlZCBpbnRlcm5hbCBRQSBpbnN0cnVjdGlvbnM7Ci0gYWRhcHRlZCBwcm9tcHQ6IG5vIGF1dGhvciBhdHRyaWJ1dGlvbjsKLSB2ZXJiYXRpbSBwcm9tcHQ6IHZlcmlmaWVkIGF1dGhvci9zb3VyY2UgcmVxdWlyZW1lbnRzIHJlbWFpbiBIQVJELgoKIyMjIDIzLjYgQXJ0aWNsZSBpbmZvcm1hdGlvbiBnYWluClRhcmdldCByZW1haW5zIDI1MOKAkzUwMCBzdWJzdGFudGl2ZSBuYXRpdmUgd29yZHMuCgpSZWFkaW5lc3MgYmVoYXZpb3I6Ci0gYDwxODBgIHdvcmRzID0gSEFSRCBmYWlsOwotIGAxODDigJMyNDlgID0gZWRpdG9yaWFsIHdhcm5pbmc7IGRvIG5vdCBwYWQgbWVjaGFuaWNhbGx5OwotIGAyNTDigJM1MDBgID0gbm9ybWFsIHRhcmdldDsKLSBtYXRlcmlhbGx5IHJlcGV0aXRpdmUvdGVtcGxhdGUtaGVhdnkgY29weSA9IFFBIHdhcm5pbmcvZmFpbCBkZXBlbmRpbmcgc2V2ZXJpdHk7Ci0gcXVvdGUtc3BlY2lmaWMgY29udGV4dCwgaW50ZXJwcmV0YXRpb24sIGFwcGxpY2F0aW9uIGFuZCBudWFuY2UgYXJlIHByZWZlcnJlZCBvdmVyIGdlbmVyaWMgZmlsbGVyLgoKIyMjIDIzLjcgTWV0cmljb29sIHRyYW5zcG9ydCBkdXJpbmcgY3VycmVudCBwcmUtQVBJIHBoYXNlCk1ldHJpY29vbCByZW1haW5zIFBSSU1BUlkgc2NoZWR1bGVyLgoKVW50aWwgb2ZmaWNpYWwgTWV0cmljb29sIEFQSSBhY2Nlc3MgaXMgcHVyY2hhc2VkIGFuZCBleHBsaWNpdGx5IGFjdGl2YXRlZDoKLSBwcmVzZXJ2ZSB0aGUgZXhpc3RpbmcgYXV0aG9yaXplZCBwcm9kdWN0aW9uIGJyaWRnZS90b2tlbiB3b3JrZmxvdzsKLSBleGlzdGluZyBDbG91ZGZsYXJlIEFjY2VzcyBzZXJ2aWNlIGNyZWRlbnRpYWxzIGNvbnRpbnVlIHRvIHByb3RlY3QgcHJvZHVjdGlvbiBlbmRwb2ludHM7Ci0gZG8gTk9UIHdlYWtlbi9yZXBsYWNlIENsb3VkZmxhcmUgQWNjZXNzIGZvciBzY2hlZHVsZXIgY29udmVuaWVuY2U7Ci0gZG8gTk9UIG1pZ3JhdGUgdHJhbnNwb3J0IG1lcmVseSBiZWNhdXNlIGFuIEFQSS1jYXBhYmxlIHRvb2wgZXhpc3RzIGVsc2V3aGVyZTsKLSBzZWNyZXQgVkFMVUVTIG5ldmVyIGVudGVyIHJlcG9zaXRvcnksIE1BU1RFUl9SVUxFUywgbG9ncyBvciBjaGF0OwotIEQxIGRlc2lyZWQgc3RhdGUgKyBsaXZlIFBsYW5uZXIgcmVhZGJhY2sgcmVtYWluIHRoZSBzY2hlZHVsaW5nIHRydXRoLgoKQWZ0ZXIgb2ZmaWNpYWwgTWV0cmljb29sIEFQSSBwdXJjaGFzZSwgdHJhbnNwb3J0IG1heSBiZSBtaWdyYXRlZCBleHBsaWNpdGx5LCBidXQgRDEgZ2F0ZXMsIGlkZW1wb3RlbmN5LCBtZWRpYSBRQSBhbmQgUGxhbm5lci9yZWFkYmFjayByZXF1aXJlbWVudHMgcmVtYWluLgoKIyMjIDIzLjggSWRlbXBvdGVudCBkZWxpdmVyeSBsZWRnZXIgYW5kIHJldHJ5IHF1ZXVlCkV2ZXJ5IGRlbGl2ZXJ5IHNsb3QgaXMgaWRlbnRpZmllZCBieToKYGNvbnRlbnRfaWQgKyBsb2NhbGUgKyBuZXR3b3JrICsgc2xvdGAuCgpDYW5vbmljYWwgZGVsaXZlcnkgc3RhdHVzZXM6CmBwZW5kaW5nIHwgc2NoZWR1bGVkIHwgcHVibGlzaGVkIHwgZmFpbGVkIHwgY2FuY2VsbGVkYC4KCkQxIG1haW50YWluczoKLSBgc29jaWFsX2RlbGl2ZXJ5X3N0YXRlYCDigJQgY3VycmVudCBwZXItc2xvdCBkZWxpdmVyeSBzdGF0ZS9leHRlcm5hbCBJRHMvdGltZXMvYXR0ZW1wdCBjb3VudDsKLSBgcHVibGljYXRpb25fZmFpbHVyZXNgIOKAlCBhcHBlbmQtc3R5bGUgZmFpbHVyZSBoaXN0b3J5IHdpdGggZXJyb3IgY29kZS90ZXh0IGFuZCByZXNvbHV0aW9uIHRpbWVzdGFtcC4KClJldHJ5IHJ1bGVzOgotIHJldHJ5IG9ubHkgZmFpbGVkL21pc3Npbmcgc2xvdHM7Ci0gbmV2ZXIgcmVjcmVhdGUgYSBzbG90IGFscmVhZHkgY29uZmlybWVkIGBzY2hlZHVsZWRgIG9yIGBwdWJsaXNoZWRgOwotIG5ldHdvcmsgZmFpbHVyZSBkb2VzIG5vdCByb2xsIGJhY2sgc3VjY2Vzc2Z1bGx5IHB1Ymxpc2hlZCBzaWJsaW5nIG5ldHdvcmtzOwotIHRvcGljLWxldmVsIGBzY2hlZHVsZWRgIHN0aWxsIHJlcXVpcmVzIGNvbXBsZXRlIGxpdmUgUGxhbm5lciByZWFkYmFjayB1bmRlciBzZWN0aW9uIDE3OwotIHRvcGljLWxldmVsIGBwdWJsaXNoZWRgIHJlcXVpcmVzIGFjdHVhbCBwdWJsaWNhdGlvbiBjb25maXJtYXRpb24uCgojIyMgMjMuOSBQaW50ZXJlc3QgYW5hbHl0aWNzIGF0dHJpYnV0aW9uCkJlY2F1c2UgbXVsdGlwbGUgV2lzZSBsb2NhbGUgYnJhbmRzIG1heSBzaGFyZSB0aGUgc2FtZSBQaW50ZXJlc3QgYWNjb3VudCwgYnJhbmQtbGV2ZWwgUGludGVyZXN0IHRvdGFscyBhbG9uZSBhcmUgbm90IGEgcmVsaWFibGUgbG9jYWxlIGF0dHJpYnV0aW9uIHNvdXJjZS4KClBpbnRlcmVzdCBkZXN0aW5hdGlvbiBtYXkgdXNlOgpgdXRtX3NvdXJjZT1waW50ZXJlc3QmdXRtX21lZGl1bT1vcmdhbmljJnV0bV9jYW1wYWlnbj08Y29udGVudF9pZD4mdXRtX2NvbnRlbnQ9PGxvY2FsZT5fPGltYWdlfHZpZGVvPmAKCndoaWxlIGNhbm9uaWNhbC9ocmVmbGFuZyBhcnRpY2xlIFVSTHMgcmVtYWluIHF1ZXJ5LWZyZWUuCgojIyMgMjMuMTAgTWFjaGluZS1yZWFkYWJsZSBydWxlIHBhcml0eQpgbGliL2Nhbm9uaWNhbF9ydWxlcy5qc2AgLyBEMSBgcnVsZXNgIG11c3QgbWlycm9yIHRoZXNlIGNyaXRpY2FsIHY0LjE1IGRlY2lzaW9ucy4KTGVnYWN5IG9wZXJhdGlvbmFsIHN0YXRlIHN5bmMgbXVzdCBuZXZlciBhdXRvLWFwcHJvdmUgcmF3IG1lZGlhIG1lcmVseSBiZWNhdXNlIGFuIG9sZCB0b3BpYyB3YXMgaGlzdG9yaWNhbGx5IHB1Ymxpc2hlZC4=
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
+          import base64,os
           from pathlib import Path
           p=Path('ops/MASTER_RULES.md')
           s=p.read_text(encoding='utf-8')
           s=s.replace('Останнє оновлення: 2026-09-15','Останнє оновлення: 2026-09-16',1)
           s=s.replace('Версія: database-first v4.14','Версія: database-first v4.15',1)
           marker='## 23. Media delivery, v2 outputs and retry safety — HARD'
-          section=r'''
-
-## 23. Media delivery, v2 outputs and retry safety — HARD
-
-### 23.1 Locale registry
-- Єдиний runtime locale registry є канонічним mapping layer для website/social semantics.
-- Brazilian Portuguese: canonical BCP-47/HTML/hreflang = `pt-BR`; existing D1/URL code = `pt` як backward-compatible alias.
-- Не робити destructive rename історичних `pt` rows/URLs.
-- Connected social locales залишаються `uk, ru, pl, en, sv, de, es, fr`.
-
-### 23.2 Video delivery contract
-Raw upload у R2 НЕ означає social readiness.
-
-Canonical flow:
-`original immutable R2 upload -> protected source download/probe -> ffmpeg normalized derivative -> ffprobe validation -> normalized MP4 in R2/D1 -> media QA -> approved canonical social derivative -> scheduler -> Planner/platform readback`.
-
-Для нових social-delivery assets нормалізований master:
-- container: MP4;
-- video: H.264;
-- pixel format: `yuv420p`;
-- audio: AAC для narrated quote video;
-- `faststart`;
-- conservative delivery-size gate: <= 95 MB;
-- aspect/content не спотворювати; downscale only when technically needed.
-
-Raw MOV/HEVC може зберігатися як source asset, але не вважається delivery-ready.
-
-HARD:
-- зміна filename/URL suffix/MIME header НЕ є конвертацією;
-- не подавати MOV/HEVC bytes як MP4 лише тому, що URL закінчується `.mp4`;
-- failed normalized derivative можна regenerated from original R2 source без повторного user upload;
-- media QA та delivery compatibility — окремі перевірки.
-
-### 23.3 Active upload hardening
-Admin upload повинен:
-- validate `asset_type`, MIME і size;
-- зберігати original immutable asset у R2;
-- rollback R2 object при D1 registration failure;
-- для `video_normalized` приймати тільки actual `.mp4` + `video/mp4` metadata;
-- не auto-approve raw video.
-
-### 23.4 Social output contract from WQ027
-WQ001–WQ026 залишаються legacy-compatible readback history і не переписуються destructively.
-
-WQ027+ використовує окремі canonical outputs:
-- `facebook`;
-- `instagram`;
-- `threads_1`;
-- `threads_2`;
-- `threads_3`;
-- `tiktok`;
-- `youtube_title`;
-- `youtube_description`;
-- `pinterest_image_title`;
-- `pinterest_image_description`;
-- `pinterest_video_title`;
-- `pinterest_video_description`;
-- `pinterest_prompt`;
-- `article_url`.
-
-Threads roles:
-1. quote + core interpretation;
-2. nuance / counterpoint;
-3. practical question / application.
-
-Near-duplicate Threads = failed automated copy QA.
-
-### 23.5 Automated copy/prompt QA
-Before scheduling WQ027+ run machine lint in addition to human/editorial QA:
-- Facebook/Threads: exact same-language article URL;
-- Instagram/YouTube description: no raw URL;
-- TikTok: do not falsely describe plain text address as clickable;
-- <=5 hashtags;
-- platform working length targets are warnings unless clearly too thin/excessive;
-- three Threads must be semantically distinct;
-- video prompt: 9:16, exact localized quote, `Audio:`, anti-caption/branding line, no leaked internal QA instructions;
-- adapted prompt: no author attribution;
-- verbatim prompt: verified author/source requirements remain HARD.
-
-### 23.6 Article information gain
-Target remains 250–500 substantive native words.
-
-Readiness behavior:
-- `<180` words = HARD fail;
-- `180–249` = editorial warning; do not pad mechanically;
-- `250–500` = normal target;
-- materially repetitive/template-heavy copy = QA warning/fail depending severity;
-- quote-specific context, interpretation, application and nuance are preferred over generic filler.
-
-### 23.7 Metricool transport during current pre-API phase
-Metricool remains PRIMARY scheduler.
-
-Until official Metricool API access is purchased and explicitly activated:
-- preserve the existing authorized production bridge/token workflow;
-- existing Cloudflare Access service credentials continue to protect production endpoints;
-- do NOT weaken/replace Cloudflare Access for scheduler convenience;
-- do NOT migrate transport merely because an API-capable tool exists elsewhere;
-- secret VALUES never enter repository, MASTER_RULES, logs or chat;
-- D1 desired state + live Planner readback remain the scheduling truth.
-
-After official Metricool API purchase, transport may be migrated explicitly, but D1 gates, idempotency, media QA and Planner/readback requirements remain.
-
-### 23.8 Idempotent delivery ledger and retry queue
-Every delivery slot is identified by:
-`content_id + locale + network + slot`.
-
-Canonical delivery statuses:
-`pending | scheduled | published | failed | cancelled`.
-
-D1 maintains:
-- `social_delivery_state` — current per-slot delivery state/external IDs/times/attempt count;
-- `publication_failures` — append-style failure history with error code/text and resolution timestamp.
-
-Retry rules:
-- retry only failed/missing slots;
-- never recreate a slot already confirmed `scheduled` or `published`;
-- network failure does not roll back successfully published sibling networks;
-- topic-level `scheduled` still requires complete live Planner readback under section 17;
-- topic-level `published` requires actual publication confirmation.
-
-### 23.9 Pinterest analytics attribution
-Because multiple Wise locale brands may share the same Pinterest account, brand-level Pinterest totals alone are not a reliable locale attribution source.
-
-Pinterest destination may use:
-`utm_source=pinterest&utm_medium=organic&utm_campaign=<content_id>&utm_content=<locale>_<image|video>`
-
-while canonical/hreflang article URLs remain query-free.
-
-### 23.10 Machine-readable rule parity
-`lib/canonical_rules.js` / D1 `rules` must mirror these critical v4.15 decisions.
-Legacy operational state sync must never auto-approve raw media merely because an old topic was historically published.
-'''
-          if marker not in s:
-              s=s.rstrip()+section+'\n'
+          section=base64.b64decode(os.environ['SECTION_B64']).decode('utf-8')
+          if marker not in s:s=s.rstrip()+'\n\n'+section+'\n'
           p.write_text(s,encoding='utf-8')
           PY
           grep -q 'database-first v4.15' ops/MASTER_RULES.md

@@ -1,0 +1,55 @@
+name: Integrate production quality once 2026-09-16
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/integrate-production-quality-once-20260916.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch production readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('lib/production_console_api_v2.js')
+          s=p.read_text(encoding='utf-8')
+          imp="import {evaluateProductionQuality} from './production_quality_gate.js';\n"
+          if imp not in s:
+              anchor="import {mediaKind,videoDeliveryCheck,imageDeliveryCheck} from './media_delivery_policy.js';\n"
+              assert anchor in s
+              s=s.replace(anchor,anchor+imp,1)
+          old="const versions=await latestVersions(env,id),outs=await outputs(env,id),med=await media(env,id),modeMap=await modes(env),omap=outputMap(outs);"
+          new="const versions=await latestVersions(env,id),outs=await outputs(env,id),med=await media(env,id),modeMap=await modes(env),omap=outputMap(outs),quality=evaluateProductionQuality({id,item,versions,outputs:outs}),qualityMap=new Map((quality.languages||[]).map(x=>[x.language,x]));"
+          assert old in s, 'readiness anchor missing'
+          s=s.replace(old,new,1)
+          old2="const langs=ALL_LANGS.map(l=>{const mode=modeMap[l]||{},isSocial=!!Number(mode.social_connected)&&mode.publishing_mode==='metricool',base={language:l,canonical_locale:localeConfig(l)?.canonical||l,...byLang[l],publishing_mode:mode.publishing_mode||'manual',social_connected:!!Number(mode.social_connected),copy_required:isSocial?byLang[l].copy_state.required:0};return{...base,ready:isSocial?base.version&&base.video_prompt&&base.pinterest_prompt&&base.article_url&&base.copy_state.ready&&base.video_delivery_ready&&base.pinterest_delivery_ready&&base.media_qa:base.version&&base.article_url}});const metricoolLangs=langs.filter(x=>SOCIAL_LANGS.includes(x.language));return{item:{id:item.id,quote_type:item.quote_type,author_name:item.author_name,attribution_status:item.attribution_status,status:item.status},source_ok:sourceOk,approval:approval||{status:'pending'},languages:langs,ready_for_metricool:sourceOk&&metricoolLangs.every(x=>x.ready)&&approval?.status==='approved',output_standard:legacyTopic(id)?'legacy-compatible':'v2',media_standard:'mp4-h264-aac-yuv420p-faststart',metricool_locales:SOCIAL_LANGS,all_locales:ALL_LANGS}"
+          new2="const langs=ALL_LANGS.map(l=>{const mode=modeMap[l]||{},isSocial=!!Number(mode.social_connected)&&mode.publishing_mode==='metricool',q=qualityMap.get(l),base={language:l,canonical_locale:localeConfig(l)?.canonical||l,...byLang[l],quality:q||null,publishing_mode:mode.publishing_mode||'manual',social_connected:!!Number(mode.social_connected),copy_required:isSocial?byLang[l].copy_state.required:0};return{...base,ready:isSocial?base.version&&base.video_prompt&&base.pinterest_prompt&&base.article_url&&base.copy_state.ready&&base.video_delivery_ready&&base.pinterest_delivery_ready&&base.media_qa&&(!quality.enforced||q?.ready===true):base.version&&base.article_url}});const metricoolLangs=langs.filter(x=>SOCIAL_LANGS.includes(x.language));return{item:{id:item.id,quote_type:item.quote_type,author_name:item.author_name,attribution_status:item.attribution_status,status:item.status},source_ok:sourceOk,approval:approval||{status:'pending'},quality, languages:langs,ready_for_metricool:sourceOk&&quality.ready&&metricoolLangs.every(x=>x.ready)&&approval?.status==='approved',output_standard:legacyTopic(id)?'legacy-compatible':'v2',media_standard:'mp4-h264-aac-yuv420p-faststart',metricool_locales:SOCIAL_LANGS,all_locales:ALL_LANGS}"
+          assert old2 in s, 'language readiness anchor missing'
+          s=s.replace(old2,new2,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          node --check lib/production_console_api_v2.js
+          node --check lib/production_quality_gate.js
+          node --check lib/social_copy_quality.js
+          node --check lib/prompt_quality.js
+          if [ -f lib/production_regression_test.mjs ]; then node lib/production_regression_test.mjs; fi
+      - name: Commit integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/production_console_api_v2.js
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'quality: enforce v2 copy and prompt QA in readiness'
+          git pull --rebase
+          git push

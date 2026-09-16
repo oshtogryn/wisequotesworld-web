@@ -1,0 +1,88 @@
+name: Canonical quality regression
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/locale_registry.js'
+      - 'lib/media_delivery_policy.js'
+      - 'lib/social_copy_quality.js'
+      - 'lib/prompt_quality.js'
+      - 'lib/editorial_quality.js'
+      - 'lib/publication_engine.js'
+      - '.github/workflows/quality-regression.yml'
+  pull_request:
+    paths:
+      - 'lib/locale_registry.js'
+      - 'lib/media_delivery_policy.js'
+      - 'lib/social_copy_quality.js'
+      - 'lib/prompt_quality.js'
+      - 'lib/editorial_quality.js'
+      - 'lib/publication_engine.js'
+      - '.github/workflows/quality-regression.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-regression-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run quality invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import {normalizeLocale,hreflang,localeConfig} from './lib/locale_registry.js';
+          import {videoDeliveryCheck} from './lib/media_delivery_policy.js';
+          import {validateSocialCopy,validateThreadSet} from './lib/social_copy_quality.js';
+          import {validateVideoPrompt} from './lib/prompt_quality.js';
+          import {evaluateEditorialQuality} from './lib/editorial_quality.js';
+
+          const assert=(condition,message)=>{if(!condition)throw new Error(message)};
+
+          // Locale invariant: internal /pt remains stable; semantics are Brazilian Portuguese.
+          assert(normalizeLocale('pt-BR')==='pt','pt-BR alias regression');
+          assert(hreflang('pt')==='pt-BR','pt hreflang regression');
+          assert(localeConfig('ar')?.dir==='rtl','Arabic RTL regression');
+
+          // Delivery invariant: renaming MOV to MP4 must never make it publish-ready.
+          const raw={asset_type:'video',mime_type:'video/quicktime',original_filename:'clip.mov',size_bytes:10_000_000};
+          assert(!videoDeliveryCheck(raw).ready,'raw MOV incorrectly accepted');
+          const normalized={asset_type:'video_normalized',mime_type:'video/mp4',original_filename:'clip.mp4',size_bytes:10_000_000};
+          assert(videoDeliveryCheck(normalized).ready,'normalized MP4 incorrectly rejected');
+
+          // Link routing invariants from MASTER_RULES.
+          const article='https://wisequotesworld.com/en/quotes/example/';
+          const fb=('A useful reflection about attention, action, and responsibility. '.repeat(9))+article+' #WiseQuotesWorld';
+          assert(validateSocialCopy({network:'facebook',value:fb,locale:'en',article_url:article}).ready,'Facebook exact article link rejected');
+          assert(!validateSocialCopy({network:'instagram',value:'Read this '+article+' '.repeat(20),locale:'en',article_url:article}).ready,'Instagram raw URL accepted');
+          assert(!validateThreadSet(['Same useful thought about discipline and attention','Same useful thought about discipline and attention','A different practical question for today']).ready,'duplicate Threads accepted');
+
+          // Prompt invariant: structural generation controls are mandatory.
+          const quote='What you repeat becomes what you become.';
+          const goodPrompt=`Create a premium photorealistic vertical 9:16 cinematic video in English. A quiet morning scene with restrained camera movement. Exact text card: "${quote}". Audio: calm native narrator reads the exact quote naturally. No subtitles. No captions. No emoji. No decorative symbols. No logo. No branding. No watermark. No other readable text.`;
+          assert(validateVideoPrompt({prompt:goodPrompt,localized_quote:quote,quote_type:'adapted',author_name:''}).ready,'valid video prompt rejected');
+          assert(!validateVideoPrompt({prompt:'Create a vertical 9:16 video. '+quote,localized_quote:quote,quote_type:'adapted',author_name:''}).ready,'incomplete video prompt accepted');
+
+          // Editorial invariant: rich multi-paragraph copy passes; thin/duplicated copy does not.
+          const p1='The idea becomes useful when it is tied to a specific decision. Instead of treating the quote as decoration, consider what it asks you to notice in an ordinary day, especially when habit is stronger than intention. This gives the thought a concrete place in real life.';
+          const p2='Imagine a difficult conversation at work. The easiest reaction may be defensive, but a small pause creates room for a deliberate response. That example matters because philosophy is only valuable when it changes conduct rather than merely sounding intelligent.';
+          const p3='There is also a limit to the idea. Reflection cannot control every circumstance, and it should not be used to deny grief, uncertainty, or structural problems. Its value is narrower and more practical: it clarifies the part of the next action that still belongs to you.';
+          const p4='A useful conclusion is therefore modest. Choose one situation today in which you normally react automatically, identify the decision that is actually yours, and make that single response more intentional. Repeated choices turn an abstract principle into a lived one.';
+          const rich=[p1,p2,p3,p4,p1.replace('specific decision','clear decision')].join('\n\n');
+          const ed=evaluateEditorialQuality({reflection:rich,quote,seo_title:'A practical reflection on intentional action',meta_description:'A practical reflection on how a philosophical idea can become a concrete decision in ordinary life without turning into a slogan.'});
+          assert(ed.metrics.words>=180,'test fixture too short');
+          assert(ed.ready,'rich editorial copy rejected: '+JSON.stringify(ed));
+          const duplicate=[p1,p1,p1].join('\n\n');
+          assert(!evaluateEditorialQuality({reflection:duplicate,quote,seo_title:'Example',meta_description:'A sufficiently descriptive meta description about this example and its practical meaning for everyday decisions.'}).ready,'duplicated editorial copy accepted');
+
+          console.log('All canonical quality invariants passed.');
+          NODE

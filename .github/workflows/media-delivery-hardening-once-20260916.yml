@@ -1,0 +1,55 @@
+name: Harden media delivery once 2026-09-16
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/media-delivery-hardening-once-20260916.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: media-delivery-hardening-once-20260916
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    env:
+      PATCH_B64: YXN5bmMgZnVuY3Rpb24gc2VydmVPYmplY3QocmVxdWVzdCxlbnYsa2V5LGtpbmQsZXh0LG1pbWUsZmlsZW5hbWU9JycpewogaWYoIWVudi5NRURJQSlyZXR1cm4ganNvbih7b2s6ZmFsc2UsZXJyb3I6J21lZGlhIHVuYXZhaWxhYmxlJ30sNTAzKTsKIGNvbnN0IG1ldGE9YXdhaXQgZW52Lk1FRElBLmhlYWQoa2V5KTtpZighbWV0YSlyZXR1cm4ganNvbih7b2s6ZmFsc2UsZXJyb3I6J1IyIG9iamVjdCBtaXNzaW5nJ30sNDA0KTsKIGNvbnN0IHN0b3JlZFR5cGU9U3RyaW5nKG1pbWV8fG1ldGEuaHR0cE1ldGFkYXRhPy5jb250ZW50VHlwZXx8bWV0YS5odHRwTWV0YWRhdGE/LmNvbnRlbnRfdHlwZXx8J2FwcGxpY2F0aW9uL29jdGV0LXN0cmVhbScpLnRvTG93ZXJDYXNlKCk7CiBjb25zdCBzdG9yZWROYW1lPVN0cmluZyhmaWxlbmFtZXx8a2V5LnNwbGl0KCcvJykucG9wKCl8fCdtZWRpYS5iaW4nKTsKIGlmKGtpbmQ9PT0ndmlkZW8nJiZleHQ9PT0nbXA0JyYmKHN0b3JlZFR5cGUhPT0ndmlkZW8vbXA0J3x8IXN0b3JlZE5hbWUudG9Mb3dlckNhc2UoKS5lbmRzV2l0aCgnLm1wNCcpKSl7CiAgcmV0dXJuIGpzb24oe29rOmZhbHNlLGVycm9yOidub3JtYWxpemVkX21wNF9yZXF1aXJlZCcsY29udGVudF90eXBlOnN0b3JlZFR5cGUsZmlsZW5hbWU6c3RvcmVkTmFtZX0sNDA5KTsKIH0KIGNvbnN0IHNpemU9TnVtYmVyKG1ldGEuc2l6ZXx8MCkscmFuZ2VIZWFkZXI9cmVxdWVzdC5oZWFkZXJzLmdldCgncmFuZ2UnKTtsZXQgc3RhcnQ9MCxlbmQ9TWF0aC5tYXgoMCxzaXplLTEpLHBhcnRpYWw9ZmFsc2U7CiBpZihyYW5nZUhlYWRlcil7Y29uc3QgbT1yYW5nZUhlYWRlci5tYXRjaCgvXmJ5dGVzPShcZCopLShcZCopJC8pO2lmKG0pe2lmKG1bMV0pc3RhcnQ9TWF0aC5tYXgoMCxOdW1iZXIobVsxXSkpO2lmKG1bMl0pZW5kPU1hdGgubWluKHNpemUtMSxOdW1iZXIobVsyXSkpO2Vsc2UgZW5kPXNpemUtMTtpZighbVsxXSYmbVsyXSl7Y29uc3Qgc3VmZml4PU1hdGgubWluKHNpemUsTnVtYmVyKG1bMl0pKTtzdGFydD1NYXRoLm1heCgwLHNpemUtc3VmZml4KTtlbmQ9c2l6ZS0xfWlmKHN0YXJ0PD1lbmQmJnN0YXJ0PHNpemUpcGFydGlhbD10cnVlfX0KIGNvbnN0IG9iaj1yZXF1ZXN0Lm1ldGhvZD09PSdIRUFEJz9tZXRhOmF3YWl0IGVudi5NRURJQS5nZXQoa2V5LHBhcnRpYWw/e3JhbmdlOntvZmZzZXQ6c3RhcnQsbGVuZ3RoOmVuZC1zdGFydCsxfX06dW5kZWZpbmVkKTtpZighb2JqKXJldHVybiBqc29uKHtvazpmYWxzZSxlcnJvcjonUjIgb2JqZWN0IG1pc3NpbmcnfSw0MDQpOwogY29uc3QgaGVhZGVycz1uZXcgSGVhZGVycygpO29iai53cml0ZUh0dHBNZXRhZGF0YT8uKGhlYWRlcnMpOwogaGVhZGVycy5zZXQoJ2NvbnRlbnQtdHlwZScsc3RvcmVkVHlwZSk7CiBjb25zdCBzYWZlTmFtZT1zdG9yZWROYW1lLnJlcGxhY2UoL1siXFxcXHJcbl0vZywnXycpOwogaGVhZGVycy5zZXQoJ2NvbnRlbnQtZGlzcG9zaXRpb24nLGBpbmxpbmU7IGZpbGVuYW1lPSIke3NhZmVOYW1lfSJgKTsKIGhlYWRlcnMuc2V0KCdjYWNoZS1jb250cm9sJywncHVibGljLCBtYXgtYWdlPTg2NDAwLCBpbW11dGFibGUnKTsKIGhlYWRlcnMuc2V0KCdhY2Nlc3MtY29udHJvbC1hbGxvdy1vcmlnaW4nLCcqJyk7CiBoZWFkZXJzLnNldCgnYWNjZXB0LXJhbmdlcycsJ2J5dGVzJyk7CiBoZWFkZXJzLnNldCgneC1jb250ZW50LXR5cGUtb3B0aW9ucycsJ25vc25pZmYnKTsKIGlmKHBhcnRpYWwpe2hlYWRlcnMuc2V0KCdjb250ZW50LXJhbmdlJyxgYnl0ZXMgJHtzdGFydH0tJHtlbmR9LyR7c2l6ZX1gKTtoZWFkZXJzLnNldCgnY29udGVudC1sZW5ndGgnLFN0cmluZyhlbmQtc3RhcnQrMSkpfWVsc2UgaGVhZGVycy5zZXQoJ2NvbnRlbnQtbGVuZ3RoJyxTdHJpbmcoc2l6ZSkpOwogaWYocmVxdWVzdC5tZXRob2Q9PT0nSEVBRCcpcmV0dXJuIG5ldyBSZXNwb25zZShudWxsLHtzdGF0dXM6MjAwLGhlYWRlcnN9KTsKIHJldHVybiBuZXcgUmVzcG9uc2Uob2JqLmJvZHkse3N0YXR1czpwYXJ0aWFsPzIwNjoyMDAsaGVhZGVyc30pOwp9CmFzeW5jIGZ1bmN0aW9uIGFwcHJvdmVkTWVkaWEocmVxdWVzdCxlbnYsaWQsbGFuZyxraW5kLGV4dCl7CiBpZihpZD09PSdXUTAxMycmJld1EwMTNfTUVESUFbbGFuZ10/LltraW5kXSl7CiAgaWYoa2luZD09PSd2aWRlbycmJmV4dD09PSdtcDQnKXJldHVybiBqc29uKHtvazpmYWxzZSxlcnJvcjonbm9ybWFsaXplZF9tcDRfbm90X2F2YWlsYWJsZScsY29udGVudF9pZDppZCxsYW5ndWFnZV9jb2RlOmxhbmd9LDQwOSk7CiAgY29uc3Qga2V5PVdRMDEzX01FRElBW2xhbmddW2tpbmRdLG1pbWU9a2luZD09PSd2aWRlbyc/J3ZpZGVvL3F1aWNrdGltZSc6J2ltYWdlL3BuZycsZmlsZW5hbWU9a2V5LnNwbGl0KCcvJykucG9wKCl8fCdtZWRpYS5iaW4nOwogIHJldHVybiBzZXJ2ZU9iamVjdChyZXF1ZXN0LGVudixrZXksa2luZCxleHQsbWltZSxmaWxlbmFtZSk7CiB9CiBpZighZW52LkRCfHwhZW52Lk1FRElBKXJldHVybiBqc29uKHtvazpmYWxzZSxlcnJvcjonbWVkaWEgZGVsaXZlcnkgdW5hdmFpbGFibGUnfSw1MDMpOwogbGV0IHNxbDsKIGlmKGtpbmQ9PT0ndmlkZW8nJiZleHQ9PT0nbXA0Jyl7CiAgc3FsPWBTSEVMRUNUIG0ucjJfa2V5LG0ubWltZV90eXBlLG0ub3JpZ2luYWxfZmlsZW5hbWUsbS5hc3NldF90eXBlIEZST00gbWVkaWFfaW5ib3ggbSBKT0lOIG1lZGlhX3Jldmlld3MgciBPTiByLm1lZGlhX2luYm94X2lkPW0uaWQgV0hFUkUgbS5wcm9qZWN0X2lkPSd3aXNlcXVvdGVzd29ybGQnIEFORCBtLmNvbnRlbnRfaXRlbV9pZD0/IEFORCBtLmxhbmd1YWdlX2NvZGU9PyBBTkQgci5xYV9zdGF0dXM9J2FwcHJvdmVkJyBBTkQgTE9XRVIoQ09BTEVTQ0UobS5hc3NldF90eXBlLCcnKSkgSU4gKCd2aWRlb19ub3JtYWxpemVkJywndmlkZW9fbm9ybWFsaXplZF9tcDQnLCdzb2NpYWxfdmlkZW9fbm9ybWFsaXplZCcpIEFORCBMT1dFUihDT0FMRVNDRShtLm1pbWVfdHlwZSwnJykpPSd2aWRlby9tcDQnIEFORCBMT1dFUihDT0FMRVNDRShtLm9yaWdpbmFsX2ZpbGVuYW1lLCcnKSkgTElLRSAnJS5tcDQnIE9SREVSIEJZIG0uY3JlYXRlZF9hdCBERVNDIExJTUlUIDFgOwogfWVsc2V7CiAgc3FsPWBTSEVMRUNUIG0ucjJfa2V5LG0ubWltZV90eXBlLG0ub3JpZ2luYWxfZmlsZW5hbWUsbS5hc3NldF90eXBlIEZST00gbWVkaWFfaW5ib3ggbSBKT0lOIG1lZGlhX3Jldmlld3MgciBPTiByLm1lZGlhX2luYm94X2lkPW0uaWQgV0hFUkUgbS5wcm9qZWN0X2lkPSd3aXNlcXVvdGVzd29ybGQnIEFORCBtLmNvbnRlbnRfaXRlbV9pZD0/IEFORCBtLmxhbmd1YWdlX2NvZGU9PyBBTkQgci5xYV9zdGF0dXM9J2FwcHJvdmVkJyBBTkQgJHttZWRpYUtpbmRTcWwoa2luZCl9IE9SREVSIEJZIENBU0UgV0hFTiBMT1dFUihDT0FMRVNDRShtLmFzc2V0X3R5cGUsJycpKSBJTiAoJ3ZpZGVvX25vcm1hbGl6ZWQnLCd2aWRlb19ub3JtYWxpemVkX21wNCcsJ3NvY2lhbF92aWRlb19ub3JtYWxpemVkJykgVEhFTiAwIEVMU0UgMSBFTkQsbS5jcmVhdGVkX2F0IERFU0MgTElNSVQgMWA7CiB9CiBjb25zdCByb3c9YXdhaXQgZW52LkRCLnByZXBhcmUoc3FsKS5iaW5kKGlkLGxhbmcpLmZpcnN0KCk7CiBpZighcm93Py5yMl9rZXkpcmV0dXJuIGpzb24oe29rOmZhbHNlLGVycm9yOmtpbmQ9PT0ndmlkZW8nJiZleHQ9PT0nbXA0Jz8nbm9ybWFsaXplZF9tcDRfbm90X2F2YWlsYWJsZSc6J2FwcHJvdmVkIG1lZGlhIG5vdCBmb3VuZCcsY29udGVudF9pZDppZCxsYW5ndWFnZV9jb2RlOmxhbmd9LGtpbmQ9PT0ndmlkZW8nJiZleHQ9PT0nbXA0Jz80MDk6NDA0KTsKIHJldHVybiBzZXJ2ZU9iamVjdChyZXF1ZXN0LGVudixyb3cucjJfa2V5LGtpbmQsZXh0LHJvdy5taW1lX3R5cGUscm93Lm9yaWdpbmFsX2ZpbGVuYW1lKTsKfQo="
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch media delivery
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64,os
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text(encoding='utf-8')
+          start=s.index('async function serveObject(request,env,key,kind,ext,mime){')
+          end=s.index('\nfunction scheduleIndexNow(',start)
+          replacement=base64.b64decode(os.environ['PATCH_B64']).decode('utf-8')
+          p.write_text(s[:start]+replacement+s[end:],encoding='utf-8')
+          PY
+          node --check _worker.js
+          grep -q "normalized_mp4_required" _worker.js
+          grep -q "normalized_mp4_not_available" _worker.js
+      - name: Commit patch safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'media: require real normalized MP4 for mp4 delivery route'
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main

@@ -1,0 +1,87 @@
+name: WQ023 repair probe once 2026-09-16
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/wq023-repair-probe-once-20260916.yml'
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  probe:
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+      CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+      BASE_URL: https://wisequotesworld.com
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for current production deployment
+        run: sleep 45
+      - name: Probe WQ023 and persist exact response
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ops/readbacks
+          auth=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
+          code="$(curl -sS --retry 4 --retry-all-errors --retry-delay 3 "${auth[@]}" -o /tmp/wq023.json -w '%{http_code}' "$BASE_URL/api/admin/production/WQ023")"
+          python3 - "$code" /tmp/wq023.json > ops/readbacks/WQ023-production-probe-20260916.json <<'PY'
+          import json,sys
+          code=int(sys.argv[1]); path=sys.argv[2]
+          try: body=json.load(open(path,encoding='utf-8'))
+          except Exception as e: body={'parse_error':str(e),'raw':open(path,encoding='utf-8',errors='replace').read()[:2000]}
+          out={'http_status':code,'body':body}
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+          echo "WQ023 production endpoint HTTP $code"
+          cat ops/readbacks/WQ023-production-probe-20260916.json
+          test "$code" = 200
+          python3 - /tmp/wq023.json <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1],encoding='utf-8'))
+          assert d.get('ok') is True,d
+          assert (d.get('readiness') or {}).get('item',{}).get('id')=='WQ023',d
+          PY
+      - name: Record confirmed missing YouTube deliveries
+        shell: bash
+        run: |
+          set -euo pipefail
+          auth=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" -H 'Content-Type: application/json')
+          for lang in uk ru pl en sv de es fr; do
+            curl -fsS --retry 3 --retry-all-errors "${auth[@]}" \
+              -X PUT "$BASE_URL/api/admin/production/WQ023/delivery/$lang/youtube" \
+              --data '{"status":"failed","slot":"main","error_code":"youtube_missing_after_2026-09-14_publish","error":"Metricool publication readback on 2026-09-16 confirms WQ023 published on Facebook, Instagram, TikTok, Threads and Pinterest, but no YouTube publication for this locale. User reported recent video-format publication failures. Retry only after normalized MP4 validation."}' \
+              > "/tmp/$lang-youtube-failure.json"
+            python3 - "/tmp/$lang-youtube-failure.json" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1],encoding='utf-8'))
+          assert d.get('ok') is True and d.get('status')=='failed',d
+          PY
+          done
+      - name: Trigger normalized WQ023 delivery masters
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run media-normalize.yml --ref main \
+            -f content_id=WQ023 \
+            -f locales=uk,ru,pl,en,sv,de,es,fr \
+            -f approve_normalized=true
+          echo 'Triggered media-normalize.yml for WQ023.'
+      - name: Commit probe readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/readbacks/WQ023-production-probe-20260916.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'ops: persist WQ023 repair probe'
+          git pull --rebase
+          git push

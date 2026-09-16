@@ -78,22 +78,29 @@ jobs:
             case "$lang" in uk|ru|pl|en|sv|de|es|fr) ;; *) echo "Unsupported connected locale: $lang" >&2; failures=$((failures+1)); continue;; esac
             echo "---- $CONTENT_ID / $lang ----"
 
-            # If the newest approved video is already a normalized MP4, do nothing.
-            already="$(python3 - "$work/before.json" "$lang" <<'PY'
+            state="$(python3 - "$work/before.json" "$lang" <<'PY'
           import json,sys
-          d=json.load(open(sys.argv[1],encoding='utf-8'))
-          lang=sys.argv[2]
-          rows=[x for x in (d.get('media') or []) if x.get('language_code')==lang and ('video' in str(x.get('asset_type','')).lower() or str(x.get('mime_type','')).lower().startswith('video/')) and x.get('qa_status')=='approved']
+          d=json.load(open(sys.argv[1],encoding='utf-8')); lang=sys.argv[2]
+          rows=[x for x in (d.get('media') or []) if x.get('language_code')==lang and ('video' in str(x.get('asset_type','')).lower() or str(x.get('mime_type','')).lower().startswith('video/'))]
           rows.sort(key=lambda x:str(x.get('created_at') or ''),reverse=True)
-          x=rows[0] if rows else None
-          ok=bool(x and str(x.get('asset_type','')).lower() in {'video_normalized','video_normalized_mp4','social_video_normalized'} and str(x.get('mime_type','')).lower()=='video/mp4' and str(x.get('original_filename','')).lower().endswith('.mp4'))
-          print('yes' if ok else 'no')
+          approved_norm=next((x for x in rows if x.get('qa_status')=='approved' and str(x.get('asset_type','')).lower() in {'video_normalized','video_normalized_mp4','social_video_normalized'} and str(x.get('mime_type','')).lower()=='video/mp4' and str(x.get('original_filename','')).lower().endswith('.mp4')),None)
+          if approved_norm:
+              print('ALREADY:'+str(approved_norm.get('id') or ''))
+          else:
+              # Prefer the newest raw/non-normalized source. If only an unapproved upload exists,
+              # the protected download endpoint still lets the normalizer process it safely.
+              source=next((x for x in rows if str(x.get('asset_type','')).lower() not in {'video_normalized','video_normalized_mp4','social_video_normalized'}),None) or (rows[0] if rows else None)
+              print('SOURCE:'+str((source or {}).get('id') or ''))
           PY
             )"
-            if [ "$already" = yes ]; then
-              echo "Already normalized and approved; skip."
-              skipped=$((skipped+1))
-              continue
+            case "$state" in
+              ALREADY:*) echo "Already normalized and approved; skip."; skipped=$((skipped+1)); continue ;;
+              SOURCE:*) source_id="${state#SOURCE:}" ;;
+              *) source_id="" ;;
+            esac
+            if [ -z "$source_id" ]; then
+              echo "No source video registered for $lang" >&2
+              failures=$((failures+1)); continue
             fi
 
             src="$work/${lang}-source.bin"
@@ -101,10 +108,9 @@ jobs:
             probe="$work/${lang}-probe.json"
             upload="$work/${lang}-upload.json"
 
-            # No extension on purpose: ffmpeg must inspect the actual bytes instead of trusting a .mp4 label.
-            if ! curl -fLsS --retry 3 --retry-all-errors --connect-timeout 15 --max-time 240 \
-              "$BASE_URL/media/approved/$CONTENT_ID/$lang/video" -o "$src"; then
-              echo "No downloadable approved source video for $lang" >&2
+            if ! curl -fsS --retry 3 --retry-all-errors --connect-timeout 15 --max-time 240 "${auth[@]}" \
+              "$BASE_URL/api/admin/production/media/$source_id/download" -o "$src"; then
+              echo "Protected source download failed for $lang / $source_id" >&2
               failures=$((failures+1)); continue
             fi
             test -s "$src" || { echo "Empty source for $lang" >&2; failures=$((failures+1)); continue; }
@@ -114,8 +120,8 @@ jobs:
               failures=$((failures+1)); continue
             fi
 
-            # Conservative cross-platform master: preserve aspect ratio/content, normalize codecs/pixel format,
-            # cap width at 1080, enforce even dimensions, AAC audio, and move MP4 metadata to the front.
+            # Preserve content/aspect ratio. Downscale only when wider than 1080; enforce even dimensions.
+            # H.264 High + yuv420p + AAC + faststart is deliberately conservative for Meta/TikTok/YouTube/Pinterest.
             if ! ffmpeg -hide_banner -loglevel warning -y -i "$src" \
               -map 0:v:0 -map 0:a:0? \
               -vf "scale='trunc(min(iw,1080)/2)*2':'trunc(ih*min(iw,1080)/iw/2)*2':flags=lanczos,setsar=1" \
@@ -188,18 +194,21 @@ jobs:
           curl -fsS --retry 3 --retry-all-errors "${auth[@]}" \
             "$BASE_URL/api/admin/production/$CONTENT_ID" -o "$work/after.json"
 
-          python3 - "$work/after.json" "$LOCALES" <<'PY'
+          python3 - "$work/after.json" "$LOCALES" "${APPROVE_NORMALIZED,,}" <<'PY'
           import json,sys
           d=json.load(open(sys.argv[1],encoding='utf-8'))
           assert d.get('ok') is True,d
           wanted=[x.strip().lower() for x in sys.argv[2].split(',') if x.strip()]
+          require_approved=sys.argv[3]=='true'
           media=d.get('media') or []
           bad=[]
           for lang in wanted:
-              rows=[x for x in media if x.get('language_code')==lang and str(x.get('asset_type','')).lower() in {'video_normalized','video_normalized_mp4','social_video_normalized'} and str(x.get('mime_type','')).lower()=='video/mp4' and x.get('qa_status')=='approved']
+              rows=[x for x in media if x.get('language_code')==lang and str(x.get('asset_type','')).lower() in {'video_normalized','video_normalized_mp4','social_video_normalized'} and str(x.get('mime_type','')).lower()=='video/mp4' and str(x.get('original_filename','')).lower().endswith('.mp4') and (not require_approved or x.get('qa_status')=='approved')]
               if not rows: bad.append(lang)
-          print('Normalized approved locales:',sorted(set(wanted)-set(bad)))
-          if bad: print('Still missing normalized approved video:',bad)
+          print('Normalized locales:',sorted(set(wanted)-set(bad)))
+          if bad:
+              print('Missing normalized delivery master:',bad)
+              raise SystemExit(1)
           PY
 
           {

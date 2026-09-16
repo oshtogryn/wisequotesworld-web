@@ -1,13 +1,10 @@
 name: Media inventory once 2026-09-16
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/media-inventory-once-20260916.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: media-inventory-once-20260916
@@ -32,8 +29,7 @@ jobs:
           test -n "${CF_ACCESS_CLIENT_ID:-}"
           test -n "${CF_ACCESS_CLIENT_SECRET:-}"
           tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
-          mkdir -p ops/readbacks
-          report='ops/readbacks/media-inventory-20260916.json'
+          report="$RUNNER_TEMP/media-inventory-20260916.json"
           echo '[]' > "$report"
           export CF_ACCESS_CLIENT_ID CF_ACCESS_CLIENT_SECRET tmp
           seq 11 35 | xargs -P 10 -I{} bash -c '
@@ -74,13 +70,14 @@ jobs:
                   f.write(f"| {row['id']} | {row.get('status','')} | {'YES' if row['ready_for_metricool'] else 'NO'} | {row['raw_videos']} | {row['normalized_approved']} | {'; '.join(row['issues'])[:500]} |\n")
           print(json.dumps(rows,ensure_ascii=False,indent=2))
           PY
-      - name: Persist readback
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add ops/readbacks/media-inventory-20260916.json
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'audit: persist 2026-09-16 media inventory'
-          git push
+
+          # The audit is intentionally read-only. Production state lives in D1;
+          # an observational readback must never race with or mutate main.
+          cp "$report" ./media-inventory-readback.json
+      - name: Upload audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: media-inventory-20260916
+          path: media-inventory-readback.json
+          if-no-files-found: error
+          retention-days: 14

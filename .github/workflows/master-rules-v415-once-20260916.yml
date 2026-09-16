@@ -1,0 +1,176 @@
+name: MASTER_RULES v4.15 once 2026-09-16
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/master-rules-v415-once-20260916.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update canonical rules document
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('ops/MASTER_RULES.md')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('Останнє оновлення: 2026-09-15','Останнє оновлення: 2026-09-16',1)
+          s=s.replace('Версія: database-first v4.14','Версія: database-first v4.15',1)
+          marker='## 23. Media delivery, v2 outputs and retry safety — HARD'
+          section=r'''
+
+## 23. Media delivery, v2 outputs and retry safety — HARD
+
+### 23.1 Locale registry
+- Єдиний runtime locale registry є канонічним mapping layer для website/social semantics.
+- Brazilian Portuguese: canonical BCP-47/HTML/hreflang = `pt-BR`; existing D1/URL code = `pt` як backward-compatible alias.
+- Не робити destructive rename історичних `pt` rows/URLs.
+- Connected social locales залишаються `uk, ru, pl, en, sv, de, es, fr`.
+
+### 23.2 Video delivery contract
+Raw upload у R2 НЕ означає social readiness.
+
+Canonical flow:
+`original immutable R2 upload -> protected source download/probe -> ffmpeg normalized derivative -> ffprobe validation -> normalized MP4 in R2/D1 -> media QA -> approved canonical social derivative -> scheduler -> Planner/platform readback`.
+
+Для нових social-delivery assets нормалізований master:
+- container: MP4;
+- video: H.264;
+- pixel format: `yuv420p`;
+- audio: AAC для narrated quote video;
+- `faststart`;
+- conservative delivery-size gate: <= 95 MB;
+- aspect/content не спотворювати; downscale only when technically needed.
+
+Raw MOV/HEVC може зберігатися як source asset, але не вважається delivery-ready.
+
+HARD:
+- зміна filename/URL suffix/MIME header НЕ є конвертацією;
+- не подавати MOV/HEVC bytes як MP4 лише тому, що URL закінчується `.mp4`;
+- failed normalized derivative можна regenerated from original R2 source без повторного user upload;
+- media QA та delivery compatibility — окремі перевірки.
+
+### 23.3 Active upload hardening
+Admin upload повинен:
+- validate `asset_type`, MIME і size;
+- зберігати original immutable asset у R2;
+- rollback R2 object при D1 registration failure;
+- для `video_normalized` приймати тільки actual `.mp4` + `video/mp4` metadata;
+- не auto-approve raw video.
+
+### 23.4 Social output contract from WQ027
+WQ001–WQ026 залишаються legacy-compatible readback history і не переписуються destructively.
+
+WQ027+ використовує окремі canonical outputs:
+- `facebook`;
+- `instagram`;
+- `threads_1`;
+- `threads_2`;
+- `threads_3`;
+- `tiktok`;
+- `youtube_title`;
+- `youtube_description`;
+- `pinterest_image_title`;
+- `pinterest_image_description`;
+- `pinterest_video_title`;
+- `pinterest_video_description`;
+- `pinterest_prompt`;
+- `article_url`.
+
+Threads roles:
+1. quote + core interpretation;
+2. nuance / counterpoint;
+3. practical question / application.
+
+Near-duplicate Threads = failed automated copy QA.
+
+### 23.5 Automated copy/prompt QA
+Before scheduling WQ027+ run machine lint in addition to human/editorial QA:
+- Facebook/Threads: exact same-language article URL;
+- Instagram/YouTube description: no raw URL;
+- TikTok: do not falsely describe plain text address as clickable;
+- <=5 hashtags;
+- platform working length targets are warnings unless clearly too thin/excessive;
+- three Threads must be semantically distinct;
+- video prompt: 9:16, exact localized quote, `Audio:`, anti-caption/branding line, no leaked internal QA instructions;
+- adapted prompt: no author attribution;
+- verbatim prompt: verified author/source requirements remain HARD.
+
+### 23.6 Article information gain
+Target remains 250–500 substantive native words.
+
+Readiness behavior:
+- `<180` words = HARD fail;
+- `180–249` = editorial warning; do not pad mechanically;
+- `250–500` = normal target;
+- materially repetitive/template-heavy copy = QA warning/fail depending severity;
+- quote-specific context, interpretation, application and nuance are preferred over generic filler.
+
+### 23.7 Metricool transport during current pre-API phase
+Metricool remains PRIMARY scheduler.
+
+Until official Metricool API access is purchased and explicitly activated:
+- preserve the existing authorized production bridge/token workflow;
+- existing Cloudflare Access service credentials continue to protect production endpoints;
+- do NOT weaken/replace Cloudflare Access for scheduler convenience;
+- do NOT migrate transport merely because an API-capable tool exists elsewhere;
+- secret VALUES never enter repository, MASTER_RULES, logs or chat;
+- D1 desired state + live Planner readback remain the scheduling truth.
+
+After official Metricool API purchase, transport may be migrated explicitly, but D1 gates, idempotency, media QA and Planner/readback requirements remain.
+
+### 23.8 Idempotent delivery ledger and retry queue
+Every delivery slot is identified by:
+`content_id + locale + network + slot`.
+
+Canonical delivery statuses:
+`pending | scheduled | published | failed | cancelled`.
+
+D1 maintains:
+- `social_delivery_state` — current per-slot delivery state/external IDs/times/attempt count;
+- `publication_failures` — append-style failure history with error code/text and resolution timestamp.
+
+Retry rules:
+- retry only failed/missing slots;
+- never recreate a slot already confirmed `scheduled` or `published`;
+- network failure does not roll back successfully published sibling networks;
+- topic-level `scheduled` still requires complete live Planner readback under section 17;
+- topic-level `published` requires actual publication confirmation.
+
+### 23.9 Pinterest analytics attribution
+Because multiple Wise locale brands may share the same Pinterest account, brand-level Pinterest totals alone are not a reliable locale attribution source.
+
+Pinterest destination may use:
+`utm_source=pinterest&utm_medium=organic&utm_campaign=<content_id>&utm_content=<locale>_<image|video>`
+
+while canonical/hreflang article URLs remain query-free.
+
+### 23.10 Machine-readable rule parity
+`lib/canonical_rules.js` / D1 `rules` must mirror these critical v4.15 decisions.
+Legacy operational state sync must never auto-approve raw media merely because an old topic was historically published.
+'''
+          if marker not in s:
+              s=s.rstrip()+section+'\n'
+          p.write_text(s,encoding='utf-8')
+          PY
+          grep -q 'database-first v4.15' ops/MASTER_RULES.md
+          grep -q 'Media delivery, v2 outputs and retry safety' ops/MASTER_RULES.md
+      - name: Commit MASTER_RULES
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ops/MASTER_RULES.md
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'rules: MASTER_RULES v4.15 media and retry contract'
+          git pull --rebase
+          git push

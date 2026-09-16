@@ -132,13 +132,29 @@ async function upsertPage(request,env,id,lang){
 
 async function mediaList(env){try{return (await env.DB.prepare(`SELECT * FROM media_inbox WHERE project_id=? ORDER BY created_at DESC LIMIT 100`).bind(PROJECT_ID).all()).results||[]}catch{return[]}}
 async function mediaUpload(request,env){
- if(!env.MEDIA)return json({ok:false,error:'R2 binding MEDIA unavailable'},503);const form=await request.formData(),file=form.get('file');if(!file||typeof file==='string')return json({ok:false,error:'file required'},400);
- const lang=String(form.get('language_code')||'').toLowerCase();if(lang&&!LANGS.includes(lang))return json({ok:false,error:'unsupported language'},400);const contentId=safeId(form.get('content_item_id'))||null;
+ if(!env.MEDIA)return json({ok:false,error:'R2 binding MEDIA unavailable'},503);
+ const form=await request.formData(),file=form.get('file');
+ if(!file||typeof file==='string')return json({ok:false,error:'file required'},400);
+ const lang=String(form.get('language_code')||'').toLowerCase();
+ if(lang&&!LANGS.includes(lang))return json({ok:false,error:'unsupported language'},400);
+ const contentId=safeId(form.get('content_item_id'))||null;
  if(contentId&&!await env.DB.prepare(`SELECT 1 FROM content_items WHERE id=? AND project_id=?`).bind(contentId,PROJECT_ID).first())return json({ok:false,error:'content_item_id not found'},404);
- const mediaId=crypto.randomUUID(),filename=String(file.name||'upload.bin').replace(/[^a-zA-Z0-9._-]/g,'_'),key=`uploads/${new Date().toISOString().slice(0,10)}/${mediaId}-${filename}`;
- await env.MEDIA.put(key,await file.arrayBuffer(),{httpMetadata:{contentType:file.type||'application/octet-stream'}});
- try{await env.DB.prepare(`INSERT INTO media_inbox(id,project_id,content_item_id,content_version_id,r2_key,original_filename,asset_type,language_code,mime_type,size_bytes,status,uploaded_via,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(mediaId,PROJECT_ID,contentId,null,key,file.name,form.get('asset_type')||'unknown',lang||null,file.type||null,file.size,'unassigned','admin',now(),now()).run()}catch(e){await env.MEDIA.delete(key);return json({ok:false,error:'db_insert_failed_r2_rolled_back',detail:String(e.message||e)},500)}
- return json({ok:true,id:mediaId,key,name:file.name},201);
+ const type=String(file.type||'application/octet-stream').toLowerCase();
+ const assetType=String(form.get('asset_type')||'unknown').toLowerCase();
+ const allowed=new Set(['video','video_normalized','video_normalized_mp4','social_video_normalized','pinterest','pinterest_image','image']);
+ if(!allowed.has(assetType))return json({ok:false,error:'unsupported asset_type',asset_type:assetType},400);
+ const filename=String(file.name||'upload.bin').replace(/[^a-zA-Z0-9._-]/g,'_'),lowerName=filename.toLowerCase();
+ const normalized=['video_normalized','video_normalized_mp4','social_video_normalized'].includes(assetType),isVideo=assetType.includes('video'),isImage=!isVideo;
+ if(isVideo&&!type.startsWith('video/'))return json({ok:false,error:'wrong MIME for video',content_type:type},415);
+ if(isImage&&!['image/png','image/jpeg','image/webp'].includes(type))return json({ok:false,error:'unsupported image MIME',content_type:type},415);
+ if(normalized&&(type!=='video/mp4'||!lowerName.endsWith('.mp4')))return json({ok:false,error:'normalized video must be MP4',content_type:type,filename},415);
+ const size=Number(file.size||0),max=isVideo?(normalized?95:300)*1024*1024:20*1024*1024;
+ if(size<=0)return json({ok:false,error:'empty file'},400);
+ if(size>max)return json({ok:false,error:'file too large',max_bytes:max},413);
+ const mediaId=crypto.randomUUID(),key=`uploads/${new Date().toISOString().slice(0,10)}/${mediaId}-${filename}`;
+ await env.MEDIA.put(key,await file.arrayBuffer(),{httpMetadata:{contentType:type},customMetadata:{project:PROJECT_ID,content_id:contentId||'',language_code:lang||'',asset_type:assetType,normalized:normalized?'1':'0',original_name:String(file.name||'')}});
+ try{await env.DB.prepare(`INSERT INTO media_inbox(id,project_id,content_item_id,content_version_id,r2_key,original_filename,asset_type,language_code,mime_type,size_bytes,status,uploaded_via,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(mediaId,PROJECT_ID,contentId,null,key,file.name,assetType,lang||null,type,size,'unassigned',normalized?'media-normalizer':'admin',now(),now()).run()}catch(e){await env.MEDIA.delete(key);return json({ok:false,error:'db_insert_failed_r2_rolled_back',detail:String(e.message||e)},500)}
+ return json({ok:true,id:mediaId,key,name:file.name,asset_type:assetType,content_type:type,size_bytes:size,normalized,needs_normalization:isVideo&&!normalized},201);
 }
 
 async function generatePinterest(request,env,id,lang){

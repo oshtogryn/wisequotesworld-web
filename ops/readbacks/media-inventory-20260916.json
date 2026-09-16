@@ -1,0 +1,2773 @@
+[
+  {
+    "id": "WQ011",
+    "status": "published",
+    "ready_for_metricool": false,
+    "raw_videos": 9,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "ru:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "pl:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "en:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "sv:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "de:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "es:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "fr:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ012",
+    "status": "published",
+    "ready_for_metricool": false,
+    "raw_videos": 8,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "ru:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "pl:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "en:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "sv:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "de:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "es:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "fr:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ013",
+    "status": "published",
+    "ready_for_metricool": false,
+    "raw_videos": 8,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "ru:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "pl:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "en:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "sv:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "de:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "es:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "fr:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ014",
+    "status": "published",
+    "ready_for_metricool": false,
+    "raw_videos": 8,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "ru:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "pl:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "en:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "sv:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "de:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "es:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "fr:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ015",
+    "status": "published",
+    "ready_for_metricool": false,
+    "raw_videos": 9,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "ru:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "pl:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "en:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "sv:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "de:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "es:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "fr:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ016",
+    "status": "skipped",
+    "ready_for_metricool": false,
+    "raw_videos": 0,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:missing_video,missing_image",
+      "ru:missing_video,missing_image",
+      "pl:missing_video,missing_image",
+      "en:missing_video,missing_image",
+      "sv:missing_video,missing_image",
+      "de:missing_video,missing_image",
+      "es:missing_video,missing_image",
+      "fr:missing_video,missing_image"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ017",
+    "status": "published",
+    "ready_for_metricool": false,
+    "raw_videos": 9,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "ru:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "pl:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "en:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "sv:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "de:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "es:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "fr:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ018",
+    "status": "published",
+    "ready_for_metricool": false,
+    "raw_videos": 8,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "ru:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "pl:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "en:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "sv:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "de:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "es:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "fr:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ019",
+    "status": "published",
+    "ready_for_metricool": false,
+    "raw_videos": 8,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "ru:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "pl:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "en:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "sv:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "de:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "es:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "fr:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ020",
+    "status": "published",
+    "ready_for_metricool": false,
+    "raw_videos": 8,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "ru:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "pl:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "en:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "sv:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "de:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "es:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "fr:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ021",
+    "status": "published",
+    "ready_for_metricool": false,
+    "raw_videos": 8,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "ru:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "pl:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "en:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "sv:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "de:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "es:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "fr:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ022",
+    "status": "approved",
+    "ready_for_metricool": false,
+    "raw_videos": 8,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "ru:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "pl:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "en:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "sv:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "de:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "es:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "fr:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ023",
+    "status": "approved",
+    "ready_for_metricool": false,
+    "raw_videos": 8,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "ru:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "pl:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "en:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "sv:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "de:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "es:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized",
+      "fr:video_mime_not_mp4,video_extension_not_mp4,video_not_normalized"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": true,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "video_mime_not_mp4",
+          "video_extension_not_mp4",
+          "video_not_normalized"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ024",
+    "status": "media_pending",
+    "ready_for_metricool": false,
+    "raw_videos": 0,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:missing_video,missing_image",
+      "ru:missing_video,missing_image",
+      "pl:missing_video,missing_image",
+      "en:missing_video,missing_image",
+      "sv:missing_video,missing_image",
+      "de:missing_video,missing_image",
+      "es:missing_video,missing_image",
+      "fr:missing_video,missing_image"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ025",
+    "status": "media_pending",
+    "ready_for_metricool": false,
+    "raw_videos": 0,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:missing_video,missing_image",
+      "ru:missing_video,missing_image",
+      "pl:missing_video,missing_image",
+      "en:missing_video,missing_image",
+      "sv:missing_video,missing_image",
+      "de:missing_video,missing_image",
+      "es:missing_video,missing_image",
+      "fr:missing_video,missing_image"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ026",
+    "status": "media_pending",
+    "ready_for_metricool": false,
+    "raw_videos": 0,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:missing_video,missing_image",
+      "ru:missing_video,missing_image",
+      "pl:missing_video,missing_image",
+      "en:missing_video,missing_image",
+      "sv:missing_video,missing_image",
+      "de:missing_video,missing_image",
+      "es:missing_video,missing_image",
+      "fr:missing_video,missing_image"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ027",
+    "status": "media_pending",
+    "ready_for_metricool": false,
+    "raw_videos": 0,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:missing_video,missing_image",
+      "ru:missing_video,missing_image",
+      "pl:missing_video,missing_image",
+      "en:missing_video,missing_image",
+      "sv:missing_video,missing_image",
+      "de:missing_video,missing_image",
+      "es:missing_video,missing_image",
+      "fr:missing_video,missing_image"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ028",
+    "status": "media_pending",
+    "ready_for_metricool": false,
+    "raw_videos": 0,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:missing_video,missing_image",
+      "ru:missing_video,missing_image",
+      "pl:missing_video,missing_image",
+      "en:missing_video,missing_image",
+      "sv:missing_video,missing_image",
+      "de:missing_video,missing_image",
+      "es:missing_video,missing_image",
+      "fr:missing_video,missing_image"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ029",
+    "status": "media_pending",
+    "ready_for_metricool": false,
+    "raw_videos": 0,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:missing_video,missing_image",
+      "ru:missing_video,missing_image",
+      "pl:missing_video,missing_image",
+      "en:missing_video,missing_image",
+      "sv:missing_video,missing_image",
+      "de:missing_video,missing_image",
+      "es:missing_video,missing_image",
+      "fr:missing_video,missing_image"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ030",
+    "status": "media_pending",
+    "ready_for_metricool": false,
+    "raw_videos": 0,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:missing_video,missing_image",
+      "ru:missing_video,missing_image",
+      "pl:missing_video,missing_image",
+      "en:missing_video,missing_image",
+      "sv:missing_video,missing_image",
+      "de:missing_video,missing_image",
+      "es:missing_video,missing_image",
+      "fr:missing_video,missing_image"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ031",
+    "status": "media_pending",
+    "ready_for_metricool": false,
+    "raw_videos": 0,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:missing_video,missing_image",
+      "ru:missing_video,missing_image",
+      "pl:missing_video,missing_image",
+      "en:missing_video,missing_image",
+      "sv:missing_video,missing_image",
+      "de:missing_video,missing_image",
+      "es:missing_video,missing_image",
+      "fr:missing_video,missing_image"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ032",
+    "status": "idea",
+    "ready_for_metricool": false,
+    "raw_videos": 0,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:missing_video,missing_image",
+      "ru:missing_video,missing_image",
+      "pl:missing_video,missing_image",
+      "en:missing_video,missing_image",
+      "sv:missing_video,missing_image",
+      "de:missing_video,missing_image",
+      "es:missing_video,missing_image",
+      "fr:missing_video,missing_image"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ033",
+    "status": "idea",
+    "ready_for_metricool": false,
+    "raw_videos": 0,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:missing_video,missing_image",
+      "ru:missing_video,missing_image",
+      "pl:missing_video,missing_image",
+      "en:missing_video,missing_image",
+      "sv:missing_video,missing_image",
+      "de:missing_video,missing_image",
+      "es:missing_video,missing_image",
+      "fr:missing_video,missing_image"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ034",
+    "status": "idea",
+    "ready_for_metricool": false,
+    "raw_videos": 0,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:missing_video,missing_image",
+      "ru:missing_video,missing_image",
+      "pl:missing_video,missing_image",
+      "en:missing_video,missing_image",
+      "sv:missing_video,missing_image",
+      "de:missing_video,missing_image",
+      "es:missing_video,missing_image",
+      "fr:missing_video,missing_image"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "WQ035",
+    "status": "idea",
+    "ready_for_metricool": false,
+    "raw_videos": 0,
+    "normalized_approved": 0,
+    "issues": [
+      "uk:missing_video,missing_image",
+      "ru:missing_video,missing_image",
+      "pl:missing_video,missing_image",
+      "en:missing_video,missing_image",
+      "sv:missing_video,missing_image",
+      "de:missing_video,missing_image",
+      "es:missing_video,missing_image",
+      "fr:missing_video,missing_image"
+    ],
+    "social_locales": [
+      {
+        "language": "uk",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "ru",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "pl",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "en",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "sv",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "de",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "es",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      },
+      {
+        "language": "fr",
+        "ready": false,
+        "video": false,
+        "video_delivery_ready": false,
+        "media_qa": false,
+        "media_issues": [
+          "missing_video",
+          "missing_image"
+        ]
+      }
+    ]
+  }
+]

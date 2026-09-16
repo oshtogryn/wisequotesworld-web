@@ -1,12 +1,10 @@
-# trigger: 2026-09-16-p0-direct-2
 name: P0 media hardening 2026-09-16
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
-      - .github/workflows/p0-media-hardening-20260916.yml
+      - '.github/workflows/p0-media-hardening-20260916.yml'
 
 permissions:
   contents: write
@@ -19,60 +17,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Patch worker media delivery
+      - name: Patch worker
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          p = Path('_worker.js')
-          s = p.read_text(encoding='utf-8')
-
-          imp = "import {mediaKind,videoDeliveryCheck,imageDeliveryCheck} from './lib/media_delivery_policy.js';\n"
-          anchor = "import {publicationApi} from './lib/publication_api.js';\n"
-          if imp not in s:
-              if anchor not in s:
-                  raise SystemExit('publicationApi import anchor missing')
-              s = s.replace(anchor, anchor + imp, 1)
-
-          start = s.find('async function serveObject(')
-          middle = s.find('async function approvedMedia(', start)
-          end = s.find('function scheduleIndexNow(', middle)
-          if min(start, middle, end) < 0:
-              raise SystemExit('media function anchors missing')
-
-          replacement = r'''async function serveObject(request,env,key,kind,ext,mime){
- if(!env.MEDIA)return json({ok:false,error:'media unavailable'},503);
- const meta=await env.MEDIA.head(key);if(!meta)return json({ok:false,error:'R2 object missing'},404);
- const storedMime=String(meta.httpMetadata?.contentType||mime||'application/octet-stream').toLowerCase();
- if(kind==='video'&&ext==='mp4'&&storedMime!=='video/mp4')return json({ok:false,error:'normalized_mp4_required',stored_mime:storedMime},409);
- const size=Number(meta.size||0),rangeHeader=request.headers.get('range');let start=0,end=Math.max(0,size-1),partial=false;
- if(rangeHeader){const m=rangeHeader.match(/^bytes=(\d*)-(\d*)$/);if(m){if(m[1])start=Math.max(0,Number(m[1]));if(m[2])end=Math.min(size-1,Number(m[2]));else end=size-1;if(!m[1]&&m[2]){const suffix=Math.min(size,Number(m[2]));start=Math.max(0,size-suffix);end=size-1}if(start<=end&&start<size)partial=true}}
- const obj=request.method==='HEAD'?meta:await env.MEDIA.get(key,partial?{range:{offset:start,length:end-start+1}}:undefined);if(!obj)return json({ok:false,error:'R2 object missing'},404);
- const headers=new Headers();obj.writeHttpMetadata(headers);headers.set('content-type',storedMime);headers.set('content-disposition',`inline; filename="${kind==='video'?(storedMime==='video/mp4'?'video.mp4':'video.mov'):'pinterest.png'}"`);headers.set('cache-control','public, max-age=86400, immutable');headers.set('access-control-allow-origin','*');headers.set('accept-ranges','bytes');headers.set('x-content-type-options','nosniff');if(partial){headers.set('content-range',`bytes ${start}-${end}/${size}`);headers.set('content-length',String(end-start+1))}else headers.set('content-length',String(size));if(request.method==='HEAD')return new Response(null,{status:200,headers});return new Response(obj.body,{status:partial?206:200,headers})}
-async function approvedMedia(request,env,id,lang,kind,ext){
- if(!env.DB||!env.MEDIA)return json({ok:false,error:'media delivery unavailable'},503);
- if(id==='WQ013'&&WQ013_MEDIA[lang]?.[kind]){
-   if(kind==='video'&&ext==='mp4')return json({ok:false,error:'normalized_mp4_required',legacy_source:true},409);
-   return serveObject(request,env,WQ013_MEDIA[lang][kind],kind,ext,kind==='video'?'video/quicktime':'image/png');
- }
- const sql=`SELECT m.* FROM media_inbox m JOIN media_reviews r ON r.media_inbox_id=m.id WHERE m.project_id='wisequotesworld' AND m.content_item_id=? AND m.language_code=? AND r.qa_status='approved' AND ${mediaKindSql(kind)} ORDER BY m.created_at DESC LIMIT 20`;
- const rows=(await env.DB.prepare(sql).bind(id,lang).all()).results||[];
- const compatible=rows.find(row=>kind==='video'?videoDeliveryCheck(row).ready:imageDeliveryCheck(row).ready);
- if(!compatible){const newest=rows[0]||null;const check=kind==='video'?videoDeliveryCheck(newest):imageDeliveryCheck(newest);return json({ok:false,error:kind==='video'?'approved_delivery_video_not_found':'approved_delivery_image_not_found',issues:check.issues||[]},409)}
- return serveObject(request,env,compatible.r2_key,kind,ext,compatible.mime_type);
-}
-'''
-
-          s = s[:start] + replacement + s[end:]
-          p.write_text(s, encoding='utf-8')
-          PY
+          echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCnA9UGF0aCgnX3dvcmtlci5qcycpCnM9cC5yZWFkX3RleHQoZW5jb2Rpbmc9J3V0Zi04JykKaW1wPSJpbXBvcnQge3ZpZGVvRGVsaXZlcnlDaGVjayxpbWFnZURlbGl2ZXJ5Q2hlY2t9IGZyb20gJy4vbGliL21lZGlhX2RlbGl2ZXJ5X3BvbGljeS5qcyc7XG4iCmFuY2hvcj0iaW1wb3J0IHtwdWJsaWNhdGlvbkFwaX0gZnJvbSAnLi9saWIvcHVibGljYXRpb25fYXBpLmpzJztcbiIKaWYgaW1wIG5vdCBpbiBzOgogICAgaWYgYW5jaG9yIG5vdCBpbiBzOgogICAgICAgIHJhaXNlIFN5c3RlbUV4aXQoJ3B1YmxpY2F0aW9uQXBpIGltcG9ydCBhbmNob3IgbWlzc2luZycpCiAgICBzPXMucmVwbGFjZShhbmNob3IsYW5jaG9yK2ltcCwxKQpzdGFydD1zLmZpbmQoJ2FzeW5jIGZ1bmN0aW9uIHNlcnZlT2JqZWN0KCcpCm1pZGRsZT1zLmZpbmQoJ2FzeW5jIGZ1bmN0aW9uIGFwcHJvdmVkTWVkaWEoJyxzdGFydCkKZW5kPXMuZmluZCgnZnVuY3Rpb24gc2NoZWR1bGVJbmRleE5vdygnLG1pZGRsZSkKaWYgbWluKHN0YXJ0LG1pZGRsZSxlbmQpPDA6CiAgICByYWlzZSBTeXN0ZW1FeGl0KCdtZWRpYSBmdW5jdGlvbiBhbmNob3JzIG1pc3NpbmcnKQpyZXBsYWNlbWVudD0iIiJhc3luYyBmdW5jdGlvbiBzZXJ2ZU9iamVjdChyZXF1ZXN0LGVudixrZXksa2luZCxleHQsbWltZSl7CiBpZighZW52Lk1FRElBKXJldHVybiBqc29uKHtvazpmYWxzZSxlcnJvcjonbWVkaWEgdW5hdmFpbGFibGUnfSw1MDMpOwogY29uc3QgbWV0YT1hd2FpdCBlbnYuTUVESUEuaGVhZChrZXkpO2lmKCFtZXRhKXJldHVybiBqc29uKHtvazpmYWxzZSxlcnJvcjonUjIgb2JqZWN0IG1pc3NpbmcnfSw0MDQpOwogY29uc3Qgc3RvcmVkTWltZT1TdHJpbmcobWV0YS5odHRwTWV0YWRhdGE/LmNvbnRlbnRUeXBlfHxtaW1lfHwnYXBwbGljYXRpb24vb2N0ZXQtc3RyZWFtJykudG9Mb3dlckNhc2UoKTsKIGlmKGtpbmQ9PT0ndmlkZW8nJiZleHQ9PT0nbXA0JyYmc3RvcmVkTWltZSE9PSd2aWRlby9tcDQnKXJldHVybiBqc29uKHtvazpmYWxzZSxlcnJvcjonbm9ybWFsaXplZF9tcDRfcmVxdWlyZWQnLHN0b3JlZF9taW1lOnN0b3JlZE1pbWV9LDQwOSk7CiBjb25zdCBzaXplPU51bWJlcihtZXRhLnNpemV8fDApLHJhbmdlSGVhZGVyPXJlcXVlc3QuaGVhZGVycy5nZXQoJ3JhbmdlJyk7bGV0IHN0YXJ0PTAsZW5kPU1hdGgubWF4KDAsc2l6ZS0xKSxwYXJ0aWFsPWZhbHNlOwogaWYocmFuZ2VIZWFkZXIpe2NvbnN0IG09cmFuZ2VIZWFkZXIubWF0Y2goL15ieXRlcz0oXFxkKiktKFxcZCopJC8pO2lmKG0pe2lmKG1bMV0pc3RhcnQ9TWF0aC5tYXgoMCxOdW1iZXIobVsxXSkpO2lmKG1bMl0pZW5kPU1hdGgubWluKHNpemUtMSxOdW1iZXIobVsyXSkpO2Vsc2UgZW5kPXNpemUtMTtpZighbVsxXSYmbVsyXSl7Y29uc3Qgc3VmZml4PU1hdGgubWluKHNpemUsTnVtYmVyKG1bMl0pKTtzdGFydD1NYXRoLm1heCgwLHNpemUtc3VmZml4KTtlbmQ9c2l6ZS0xfWlmKHN0YXJ0PD1lbmQmJnN0YXJ0PHNpemUpcGFydGlhbD10cnVlfX0KIGNvbnN0IG9iaj1yZXF1ZXN0Lm1ldGhvZD09PSdIRUFEJz9tZXRhOmF3YWl0IGVudi5NRURJQS5nZXQoa2V5LHBhcnRpYWw/e3JhbmdlOntvZmZzZXQ6c3RhcnQsbGVuZ3RoOmVuZC1zdGFydCsxfX06dW5kZWZpbmVkKTtpZighb2JqKXJldHVybiBqc29uKHtvazpmYWxzZSxlcnJvcjonUjIgb2JqZWN0IG1pc3NpbmcnfSw0MDQpOwogY29uc3QgaGVhZGVycz1uZXcgSGVhZGVycygpO29iai53cml0ZUh0dHBNZXRhZGF0YShoZWFkZXJzKTtoZWFkZXJzLnNldCgnY29udGVudC10eXBlJyxzdG9yZWRNaW1lKTtoZWFkZXJzLnNldCgnY29udGVudC1kaXNwb3NpdGlvbicsYGlubGluZTsgZmlsZW5hbWU9IiR7a2luZD09PSd2aWRlbyc/KHN0b3JlZE1pbWU9PT0ndmlkZW8vbXA0Jz8ndmlkZW8ubXA0JzondmlkZW8ubW92Jyk6J3BpbnRlcmVzdC5wbmcnfSJgKTtoZWFkZXJzLnNldCgnY2FjaGUtY29udHJvbCcsJ3B1YmxpYywgbWF4LWFnZT04NjQwMCwgaW1tdXRhYmxlJyk7aGVhZGVycy5zZXQoJ2FjY2Vzcy1jb250cm9sLWFsbG93LW9yaWdpbicsJyonKTtoZWFkZXJzLnNldCgnYWNjZXB0LXJhbmdlcycsJ2J5dGVzJyk7aGVhZGVycy5zZXQoJ3gtY29udGVudC10eXBlLW9wdGlvbnMnLCdub3NuaWZmJyk7aWYocGFydGlhbCl7aGVhZGVycy5zZXQoJ2NvbnRlbnQtcmFuZ2UnLGBieXRlcyAke3N0YXJ0fS0ke2VuZH0vJHtzaXplfWApO2hlYWRlcnMuc2V0KCdjb250ZW50LWxlbmd0aCcsU3RyaW5nKGVuZC1zdGFydCsxKSl9ZWxzZSBoZWFkZXJzLnNldCgnY29udGVudC1sZW5ndGgnLFN0cmluZyhzaXplKSk7aWYocmVxdWVzdC5tZXRob2Q9PT0nSEVBRCcpcmV0dXJuIG5ldyBSZXNwb25zZShudWxsLHtzdGF0dXM6MjAwLGhlYWRlcnN9KTtyZXR1cm4gbmV3IFJlc3BvbnNlKG9iai5ib2R5LHtzdGF0dXM6cGFydGlhbD8yMDY6MjAwLGhlYWRlcnN9KQp9CmFzeW5jIGZ1bmN0aW9uIGFwcHJvdmVkTWVkaWEocmVxdWVzdCxlbnYsaWQsbGFuZyxraW5kLGV4dCl7CiBpZighZW52LkRCfHwhZW52Lk1FRElBKXJldHVybiBqc29uKHtvazpmYWxzZSxlcnJvcjonbWVkaWEgZGVsaXZlcnkgdW5hdmFpbGFibGUnfSw1MDMpOwogaWYoaWQ9PT0nV1EwMTMnJiZXUTAxM19NRURJQVtsYW5nXT8uW2tpbmRdKXsKICAgaWYoa2luZD09PSd2aWRlbycmJmV4dD09PSdtcDQnKXJldHVybiBqc29uKHtvazpmYWxzZSxlcnJvcjonbm9ybWFsaXplZF9tcDRfcmVxdWlyZWQnLGxlZ2FjeV9zb3VyY2U6dHJ1ZX0sNDA5KTsKICAgcmV0dXJuIHNlcnZlT2JqZWN0KHJlcXVlc3QsZW52LFdRMDEzX01FRElBW2xhbmddW2tpbmRdLGtpbmQsZXh0LGtpbmQ9PT0ndmlkZW8nPyd2aWRlby9xdWlja3RpbWUnOidpbWFnZS9wbmcnKTsKIH0KIGNvbnN0IHNxbD1gU0VMRUNUIG0uKiBGUk9NIG1lZGlhX2luYm94IG0gSk9JTiBtZWRpYV9yZXZpZXdzIHIgT04gci5tZWRpYV9pbmJveF9pZD1tLmlkIFdIRVJFIG0ucHJvamVjdF9pZD0nd2lzZXF1b3Rlc3dvcmxkJyBBTkQgbS5jb250ZW50X2l0ZW1faWQ9PyBBTkQgbS5sYW5ndWFnZV9jb2RlPT8gQU5EIHIucWFfc3RhdHVzPSdhcHByb3ZlZCcgQU5EICR7bWVkaWFLaW5kU3FsKGtpbmQpfSBPUkRFUiBCWSBtLmNyZWF0ZWRfYXQgREVTQyBMSU1JVCAyMGA7CiBjb25zdCByb3dzPShhd2FpdCBlbnYuREIucHJlcGFyZShzcWwpLmJpbmQoaWQsbGFuZykuYWxsKCkpLnJlc3VsdHN8fFtdOwogY29uc3QgY29tcGF0aWJsZT1yb3dzLmZpbmQocm93PT5raW5kPT09J3ZpZGVvJz92aWRlb0RlbGl2ZXJ5Q2hlY2socm93KS5yZWFkeTppbWFnZURlbGl2ZXJ5Q2hlY2socm93KS5yZWFkeSk7CiBpZighY29tcGF0aWJsZSl7Y29uc3QgbmV3ZXN0PXJvd3NbMF18fG51bGw7Y29uc3QgY2hlY2s9a2luZD09PSd2aWRlbyc/dmlkZW9EZWxpdmVyeUNoZWNrKG5ld2VzdCk6aW1hZ2VEZWxpdmVyeUNoZWNrKG5ld2VzdCk7cmV0dXJuIGpzb24oe29rOmZhbHNlLGVycm9yOmtpbmQ9PT0ndmlkZW8nPydhcHByb3ZlZF9kZWxpdmVyeV92aWRlb19ub3RfZm91bmQnOidhcHByb3ZlZF9kZWxpdmVyeV9pbWFnZV9ub3RfZm91bmQnLGlzc3VlczpjaGVjay5pc3N1ZXN8fFtdfSw0MDkpfQogcmV0dXJuIHNlcnZlT2JqZWN0KHJlcXVlc3QsZW52LGNvbXBhdGlibGUucjJfa2V5LGtpbmQsZXh0LGNvbXBhdGlibGUubWltZV90eXBlKTsKfQoiIiIKcz1zWzpzdGFydF0rcmVwbGFjZW1lbnQrc1tlbmQ6XQpwLndyaXRlX3RleHQocyxlbmNvZGluZz0ndXRmLTgnKQo=' | base64 -d > /tmp/patch.py
+          python3 /tmp/patch.py
           node --check _worker.js
-          grep -q "normalized_mp4_required" _worker.js
-          grep -q "videoDeliveryCheck" _worker.js
-
+          grep -q 'normalized_mp4_required' _worker.js
+          grep -q 'videoDeliveryCheck' _worker.js
       - name: Commit patch
         shell: bash
         run: |

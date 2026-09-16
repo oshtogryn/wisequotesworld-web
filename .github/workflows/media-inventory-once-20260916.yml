@@ -1,0 +1,54 @@
+name: Media inventory once 2026-09-16
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/media-inventory-once-20260916.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+      CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+    steps:
+      - name: Read current production media state
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${CF_ACCESS_CLIENT_ID:-}"
+          test -n "${CF_ACCESS_CLIENT_SECRET:-}"
+          auth=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
+          tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+          echo '| Topic | Status | Social-ready | Raw videos | Normalized approved | Media issues |' >> "$GITHUB_STEP_SUMMARY"
+          echo '|---|---|---:|---:|---:|---|' >> "$GITHUB_STEP_SUMMARY"
+          for n in $(seq 11 35); do
+            id="WQ$(printf '%03d' "$n")"
+            code="$(curl -sS --retry 2 --connect-timeout 10 --max-time 30 "${auth[@]}" -o "$tmp/$id.json" -w '%{http_code}' "https://wisequotesworld.com/api/admin/production/$id")"
+            [ "$code" = 200 ] || continue
+            python3 - "$tmp/$id.json" "$id" "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json,sys
+          p,id,summary=sys.argv[1:]
+          d=json.load(open(p,encoding='utf-8'))
+          if not d.get('ok'): raise SystemExit(0)
+          r=d.get('readiness') or {}
+          item=r.get('item') or {}
+          media=d.get('media') or []
+          vids=[m for m in media if 'video' in str(m.get('asset_type','')).lower() or str(m.get('mime_type','')).lower().startswith('video/')]
+          raw=[m for m in vids if str(m.get('asset_type','')).lower() not in {'video_normalized','video_normalized_mp4','social_video_normalized'}]
+          norm=[m for m in vids if str(m.get('asset_type','')).lower() in {'video_normalized','video_normalized_mp4','social_video_normalized'} and str(m.get('mime_type','')).lower()=='video/mp4' and m.get('qa_status')=='approved']
+          issues=[]
+          for x in r.get('languages') or []:
+              if x.get('social_connected') and x.get('media_issues'):
+                  issues.append(f"{x.get('language')}:{','.join(x.get('media_issues') or [])}")
+          row=f"| {id} | {item.get('status','')} | {'YES' if r.get('ready_for_metricool') else 'NO'} | {len(raw)} | {len(norm)} | {'; '.join(issues)[:500]} |\n"
+          open(summary,'a',encoding='utf-8').write(row)
+          print(json.dumps({'id':id,'status':item.get('status'),'ready_for_metricool':r.get('ready_for_metricool'),'raw_videos':len(raw),'normalized_approved':len(norm),'issues':issues},ensure_ascii=False))
+          PY
+          done

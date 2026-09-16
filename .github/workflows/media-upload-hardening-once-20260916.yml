@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/media-upload-hardening-once-20260916.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -16,45 +17,26 @@ concurrency:
 jobs:
   patch:
     runs-on: ubuntu-latest
+    timeout-minutes: 4
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Harden mediaUpload in legacy worker
         shell: bash
+        env:
+          MEDIA_UPLOAD_B64: YXN5bmMgZnVuY3Rpb24gbWVkaWFVcGxvYWQocmVxdWVzdCxlbnYpewogaWYoIWVudi5NRURJQSlyZXR1cm4ganNvbih7b2s6ZmFsc2UsZXJyb3I6J1IyIGJpbmRpbmcgTUVESUEgdW5hdmFpbGFibGUnfSw1MDMpOwogY29uc3QgZm9ybT1hd2FpdCByZXF1ZXN0LmZvcm1EYXRhKCksZmlsZT1mb3JtLmdldCgnZmlsZScpOwogaWYoIWZpbGV8fHR5cGVvZiBmaWxlPT09J3N0cmluZycpcmV0dXJuIGpzb24oe29rOmZhbHNlLGVycm9yOidmaWxlIHJlcXVpcmVkJ30sNDAwKTsKIGNvbnN0IGxhbmc9U3RyaW5nKGZvcm0uZ2V0KCdsYW5ndWFnZV9jb2RlJyl8fCcnKS50b0xvd2VyQ2FzZSgpOwogaWYobGFuZyYmIUxBTkdTLmluY2x1ZGVzKGxhbmcpKXJldHVybiBqc29uKHtvazpmYWxzZSxlcnJvcjondW5zdXBwb3J0ZWQgbGFuZ3VhZ2UnfSw0MDApOwogY29uc3QgY29udGVudElkPXNhZmVJZChmb3JtLmdldCgnY29udGVudF9pdGVtX2lkJykpfHxudWxsOwogaWYoY29udGVudElkJiYhYXdhaXQgZW52LkRCLnByZXBhcmUoYFNFTEVDVCAxIEZST00gY29udGVudF9pdGVtcyBXSEVSRSBpZD0/IEFORCBwcm9qZWN0X2lkPT9gKS5iaW5kKGNvbnRlbnRJZCxQUk9KRUNUX0lEKS5maXJzdCgpKXJldHVybiBqc29uKHtvazpmYWxzZSxlcnJvcjonY29udGVudF9pdGVtX2lkIG5vdCBmb3VuZCd9LDQwNCk7CiBjb25zdCB0eXBlPVN0cmluZyhmaWxlLnR5cGV8fCdhcHBsaWNhdGlvbi9vY3RldC1zdHJlYW0nKS50b0xvd2VyQ2FzZSgpOwogY29uc3QgYXNzZXRUeXBlPVN0cmluZyhmb3JtLmdldCgnYXNzZXRfdHlwZScpfHwndW5rbm93bicpLnRvTG93ZXJDYXNlKCk7CiBjb25zdCBhbGxvd2VkPW5ldyBTZXQoWyd2aWRlbycsJ3ZpZGVvX25vcm1hbGl6ZWQnLCd2aWRlb19ub3JtYWxpemVkX21wNCcsJ3NvY2lhbF92aWRlb19ub3JtYWxpemVkJywncGludGVyZXN0JywncGludGVyZXN0X2ltYWdlJywnaW1hZ2UnXSk7CiBpZighYWxsb3dlZC5oYXMoYXNzZXRUeXBlKSlyZXR1cm4ganNvbih7b2s6ZmFsc2UsZXJyb3I6J3Vuc3VwcG9ydGVkIGFzc2V0X3R5cGUnLGFzc2V0X3R5cGU6YXNzZXRUeXBlfSw0MDApOwogY29uc3QgZmlsZW5hbWU9U3RyaW5nKGZpbGUubmFtZXx8J3VwbG9hZC5iaW4nKS5yZXBsYWNlKC9bXmEtekEtWjAtOS5fLV0vZywnXycpLGxvd2VyTmFtZT1maWxlbmFtZS50b0xvd2VyQ2FzZSgpOwogY29uc3Qgbm9ybWFsaXplZD1bJ3ZpZGVvX25vcm1hbGl6ZWQnLCd2aWRlb19ub3JtYWxpemVkX21wNCcsJ3NvY2lhbF92aWRlb19ub3JtYWxpemVkJ10uaW5jbHVkZXMoYXNzZXRUeXBlKSxpc1ZpZGVvPWFzc2V0VHlwZS5pbmNsdWRlcygndmlkZW8nKSxpc0ltYWdlPSFpc1ZpZGVvOwogaWYoaXNWaWRlbyYmIXR5cGUuc3RhcnRzV2l0aCgndmlkZW8vJykpcmV0dXJuIGpzb24oe29rOmZhbHNlLGVycm9yOid3cm9uZyBNSU1FIGZvciB2aWRlbycsY29udGVudF90eXBlOnR5cGV9LDQxNSk7CiBpZihpc0ltYWdlJiYhWydpbWFnZS9wbmcnLCdpbWFnZS9qcGVnJywnaW1hZ2Uvd2VicCddLmluY2x1ZGVzKHR5cGUpKXJldHVybiBqc29uKHtvazpmYWxzZSxlcnJvcjondW5zdXBwb3J0ZWQgaW1hZ2UgTUlNRScsY29udGVudF90eXBlOnR5cGV9LDQxNSk7CiBpZihub3JtYWxpemVkJiYodHlwZSE9PSd2aWRlby9tcDQnfHwhbG93ZXJOYW1lLmVuZHNXaXRoKCcubXA0JykpKXJldHVybiBqc29uKHtvazpmYWxzZSxlcnJvcjonbm9ybWFsaXplZCB2aWRlbyBtdXN0IGJlIE1QNCcsY29udGVudF90eXBlOnR5cGUsZmlsZW5hbWV9LDQxNSk7CiBjb25zdCBzaXplPU51bWJlcihmaWxlLnNpemV8fDApLG1heD1pc1ZpZGVvPyhub3JtYWxpemVkPzk1OjMwMCkqMTAyNCoxMDI0OjIwKjEwMjQqMTAyNDsKIGlmKHNpemU8PTApcmV0dXJuIGpzb24oe29rOmZhbHNlLGVycm9yOidlbXB0eSBmaWxlJ30sNDAwKTsKIGlmKHNpemU+bWF4KXJldHVybiBqc29uKHtvazpmYWxzZSxlcnJvcjonZmlsZSB0b28gbGFyZ2UnLG1heF9ieXRlczptYXh9LDQxMyk7CiBjb25zdCBtZWRpYUlkPWNyeXB0by5yYW5kb21VVUlEKCksa2V5PWB1cGxvYWRzLyR7bmV3IERhdGUoKS50b0lTT1N0cmluZygpLnNsaWNlKDAsMTApfS8ke21lZGlhSWR9LSR7ZmlsZW5hbWV9YDsKIGF3YWl0IGVudi5NRURJQS5wdXQoa2V5LGF3YWl0IGZpbGUuYXJyYXlCdWZmZXIoKSx7aHR0cE1ldGFkYXRhOntjb250ZW50VHlwZTp0eXBlfSxjdXN0b21NZXRhZGF0YTp7cHJvamVjdDpQUk9KRUNUX0lELGNvbnRlbnRfaWQ6Y29udGVudElkfHwnJyxsYW5ndWFnZV9jb2RlOmxhbmd8fCcnLGFzc2V0X3R5cGU6YXNzZXRUeXBlLG5vcm1hbGl6ZWQ6bm9ybWFsaXplZD8nMSc6JzAnLG9yaWdpbmFsX25hbWU6U3RyaW5nKGZpbGUubmFtZXx8JycpfX0pOwogdHJ5e2F3YWl0IGVudi5EQi5wcmVwYXJlKGBJTlNFUlQgSU5UTyBtZWRpYV9pbmJveChpZCxwcm9qZWN0X2lkLGNvbnRlbnRfaXRlbV9pZCxjb250ZW50X3ZlcnNpb25faWQscjJfa2V5LG9yaWdpbmFsX2ZpbGVuYW1lLGFzc2V0X3R5cGUsbGFuZ3VhZ2VfY29kZSxtaW1lX3R5cGUsc2l6ZV9ieXRlcyxzdGF0dXMsdXBsb2FkZWRfdmlhLGNyZWF0ZWRfYXQsdXBkYXRlZF9hdCkgVkFMVUVTKD8sPyw/LD8sPyw/LD8sPyw/LD8sPyw/LD8sPylgKS5iaW5kKG1lZGlhSWQsUFJPSkVDVF9JRCxjb250ZW50SWQsbnVsbCxrZXksZmlsZS5uYW1lLGFzc2V0VHlwZSxsYW5nfHxudWxsLHR5cGUsc2l6ZSwndW5hc3NpZ25lZCcsbm9ybWFsaXplZD8nbWVkaWEtbm9ybWFsaXplcic6J2FkbWluJyxub3coKSxub3coKSkucnVuKCl9Y2F0Y2goZSl7YXdhaXQgZW52Lk1FRElBLmRlbGV0ZShrZXkpO3JldHVybiBqc29uKHtvazpmYWxzZSxlcnJvcjonZGJfaW5zZXJ0X2ZhaWxlZF9yMl9yb2xsZWRfYmFjaycsZGV0YWlsOlN0cmluZyhlLm1lc3NhZ2V8fGUpfSw1MDApfQogcmV0dXJuIGpzb24oe29rOnRydWUsaWQ6bWVkaWFJZCxrZXksbmFtZTpmaWxlLm5hbWUsYXNzZXRfdHlwZTphc3NldFR5cGUsY29udGVudF90eXBlOnR5cGUsc2l6ZV9ieXRlczpzaXplLG5vcm1hbGl6ZWQsbmVlZHNfbm9ybWFsaXphdGlvbjppc1ZpZGVvJiYhbm9ybWFsaXplZH0sMjAxKTsKfQo=
         run: |
           set -euo pipefail
           python3 - <<'PY'
+          import base64,os
           from pathlib import Path
           p=Path('_worker_legacy.js')
           s=p.read_text(encoding='utf-8')
           start=s.index('async function mediaUpload(request,env){')
           end=s.index('\nasync function generatePinterest(',start)
+          new=base64.b64decode(os.environ['MEDIA_UPLOAD_B64']).decode('utf-8')
           old=s[start:end]
-          new=r'''async function mediaUpload(request,env){
- if(!env.MEDIA)return json({ok:false,error:'R2 binding MEDIA unavailable'},503);
- const form=await request.formData(),file=form.get('file');
- if(!file||typeof file==='string')return json({ok:false,error:'file required'},400);
- const lang=String(form.get('language_code')||'').toLowerCase();
- if(lang&&!LANGS.includes(lang))return json({ok:false,error:'unsupported language'},400);
- const contentId=safeId(form.get('content_item_id'))||null;
- if(contentId&&!await env.DB.prepare(`SELECT 1 FROM content_items WHERE id=? AND project_id=?`).bind(contentId,PROJECT_ID).first())return json({ok:false,error:'content_item_id not found'},404);
- const type=String(file.type||'application/octet-stream').toLowerCase();
- const assetType=String(form.get('asset_type')||'unknown').toLowerCase();
- const allowed=new Set(['video','video_normalized','video_normalized_mp4','social_video_normalized','pinterest','pinterest_image','image']);
- if(!allowed.has(assetType))return json({ok:false,error:'unsupported asset_type',asset_type:assetType},400);
- const filename=String(file.name||'upload.bin').replace(/[^a-zA-Z0-9._-]/g,'_'),lowerName=filename.toLowerCase();
- const normalized=['video_normalized','video_normalized_mp4','social_video_normalized'].includes(assetType),isVideo=assetType.includes('video'),isImage=!isVideo;
- if(isVideo&&!type.startsWith('video/'))return json({ok:false,error:'wrong MIME for video',content_type:type},415);
- if(isImage&&!['image/png','image/jpeg','image/webp'].includes(type))return json({ok:false,error:'unsupported image MIME',content_type:type},415);
- if(normalized&&(type!=='video/mp4'||!lowerName.endsWith('.mp4')))return json({ok:false,error:'normalized video must be MP4',content_type:type,filename},415);
- const size=Number(file.size||0),max=isVideo?(normalized?95:300)*1024*1024:20*1024*1024;
- if(size<=0)return json({ok:false,error:'empty file'},400);
- if(size>max)return json({ok:false,error:'file too large',max_bytes:max},413);
- const mediaId=crypto.randomUUID(),key=`uploads/${new Date().toISOString().slice(0,10)}/${mediaId}-${filename}`;
- await env.MEDIA.put(key,await file.arrayBuffer(),{httpMetadata:{contentType:type},customMetadata:{project:PROJECT_ID,content_id:contentId||'',language_code:lang||'',asset_type:assetType,normalized:normalized?'1':'0',original_name:String(file.name||'')}});
- try{await env.DB.prepare(`INSERT INTO media_inbox(id,project_id,content_item_id,content_version_id,r2_key,original_filename,asset_type,language_code,mime_type,size_bytes,status,uploaded_via,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(mediaId,PROJECT_ID,contentId,null,key,file.name,assetType,lang||null,type,size,'unassigned',normalized?'media-normalizer':'admin',now(),now()).run()}catch(e){await env.MEDIA.delete(key);return json({ok:false,error:'db_insert_failed_r2_rolled_back',detail:String(e.message||e)},500)}
- return json({ok:true,id:mediaId,key,name:file.name,asset_type:assetType,content_type:type,size_bytes:size,normalized,needs_normalization:isVideo&&!normalized},201);
-}
-'''
           if old==new:
               print('Already hardened')
           else:
@@ -62,7 +44,7 @@ jobs:
               print('mediaUpload hardened')
           PY
           node --check _worker_legacy.js
-      - name: Commit patch
+      - name: Commit patch safely
         shell: bash
         run: |
           set -euo pipefail
@@ -71,4 +53,6 @@ jobs:
           git add _worker_legacy.js
           if git diff --cached --quiet; then exit 0; fi
           git commit -m 'media: validate active upload types and sizes'
-          git push
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main

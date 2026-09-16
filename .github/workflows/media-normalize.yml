@@ -1,0 +1,216 @@
+name: Normalize social video
+
+on:
+  workflow_dispatch:
+    inputs:
+      content_id:
+        description: 'Content ID, e.g. WQ019'
+        required: true
+        type: string
+      locales:
+        description: 'Comma-separated connected locales'
+        required: false
+        default: 'uk,ru,pl,en,sv,de,es,fr'
+        type: string
+      approve_normalized:
+        description: 'Approve normalized files after codec/readback validation'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: media-normalize-${{ inputs.content_id }}
+  cancel-in-progress: false
+
+jobs:
+  normalize:
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE_URL: https://wisequotesworld.com
+      CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+      CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+      CONTENT_ID: ${{ inputs.content_id }}
+      LOCALES: ${{ inputs.locales }}
+      APPROVE_NORMALIZED: ${{ inputs.approve_normalized }}
+    steps:
+      - name: Validate runtime and tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${CF_ACCESS_CLIENT_ID:-}"
+          test -n "${CF_ACCESS_CLIENT_SECRET:-}"
+          [[ "$CONTENT_ID" =~ ^WQ[0-9]{3,}$ ]]
+          ffmpeg -hide_banner -version | head -1
+          ffprobe -hide_banner -version | head -1
+          python3 --version
+
+      - name: Normalize, upload and verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          auth=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
+          work="$(mktemp -d)"
+          trap 'rm -rf "$work"' EXIT
+
+          curl -fsS --retry 3 --retry-all-errors "${auth[@]}" \
+            "$BASE_URL/api/admin/production/$CONTENT_ID" -o "$work/before.json"
+          python3 - "$work/before.json" "$CONTENT_ID" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1],encoding='utf-8'))
+          assert d.get('ok') is True, d
+          r=d.get('readiness') or {}
+          assert (r.get('item') or {}).get('id')==sys.argv[2], d
+          print('Production record found:',sys.argv[2])
+          PY
+
+          IFS=',' read -ra requested <<< "$LOCALES"
+          failures=0
+          normalized=0
+          skipped=0
+
+          for raw in "${requested[@]}"; do
+            lang="$(printf '%s' "$raw" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+            case "$lang" in uk|ru|pl|en|sv|de|es|fr) ;; *) echo "Unsupported connected locale: $lang" >&2; failures=$((failures+1)); continue;; esac
+            echo "---- $CONTENT_ID / $lang ----"
+
+            # If the newest approved video is already a normalized MP4, do nothing.
+            already="$(python3 - "$work/before.json" "$lang" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1],encoding='utf-8'))
+          lang=sys.argv[2]
+          rows=[x for x in (d.get('media') or []) if x.get('language_code')==lang and ('video' in str(x.get('asset_type','')).lower() or str(x.get('mime_type','')).lower().startswith('video/')) and x.get('qa_status')=='approved']
+          rows.sort(key=lambda x:str(x.get('created_at') or ''),reverse=True)
+          x=rows[0] if rows else None
+          ok=bool(x and str(x.get('asset_type','')).lower() in {'video_normalized','video_normalized_mp4','social_video_normalized'} and str(x.get('mime_type','')).lower()=='video/mp4' and str(x.get('original_filename','')).lower().endswith('.mp4'))
+          print('yes' if ok else 'no')
+          PY
+            )"
+            if [ "$already" = yes ]; then
+              echo "Already normalized and approved; skip."
+              skipped=$((skipped+1))
+              continue
+            fi
+
+            src="$work/${lang}-source.bin"
+            out="$work/${lang}-normalized.mp4"
+            probe="$work/${lang}-probe.json"
+            upload="$work/${lang}-upload.json"
+
+            # No extension on purpose: ffmpeg must inspect the actual bytes instead of trusting a .mp4 label.
+            if ! curl -fLsS --retry 3 --retry-all-errors --connect-timeout 15 --max-time 240 \
+              "$BASE_URL/media/approved/$CONTENT_ID/$lang/video" -o "$src"; then
+              echo "No downloadable approved source video for $lang" >&2
+              failures=$((failures+1)); continue
+            fi
+            test -s "$src" || { echo "Empty source for $lang" >&2; failures=$((failures+1)); continue; }
+
+            if ! ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height,pix_fmt -of json "$src" > "$work/${lang}-source-probe.json"; then
+              echo "Source is not a readable video for $lang" >&2
+              failures=$((failures+1)); continue
+            fi
+
+            # Conservative cross-platform master: preserve aspect ratio/content, normalize codecs/pixel format,
+            # cap width at 1080, enforce even dimensions, AAC audio, and move MP4 metadata to the front.
+            if ! ffmpeg -hide_banner -loglevel warning -y -i "$src" \
+              -map 0:v:0 -map 0:a:0? \
+              -vf "scale='trunc(min(iw,1080)/2)*2':'trunc(ih*min(iw,1080)/iw/2)*2':flags=lanczos,setsar=1" \
+              -c:v libx264 -profile:v high -level 4.1 -pix_fmt yuv420p -preset medium -crf 20 \
+              -c:a aac -b:a 160k -ar 48000 -ac 2 \
+              -movflags +faststart \
+              "$out"; then
+              echo "ffmpeg normalization failed for $lang" >&2
+              failures=$((failures+1)); continue
+            fi
+
+            ffprobe -v error -show_entries stream=index,codec_type,codec_name,pix_fmt,width,height:format=format_name,duration,size \
+              -of json "$out" > "$probe"
+            if ! python3 - "$probe" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1],encoding='utf-8'))
+          streams=d.get('streams') or []
+          v=next((s for s in streams if s.get('codec_type')=='video'),None)
+          a=next((s for s in streams if s.get('codec_type')=='audio'),None)
+          assert v and v.get('codec_name')=='h264',d
+          assert v.get('pix_fmt')=='yuv420p',d
+          assert int(v.get('width') or 0)>0 and int(v.get('height') or 0)>0,d
+          if a: assert a.get('codec_name')=='aac',d
+          fmt=str((d.get('format') or {}).get('format_name') or '')
+          assert 'mp4' in fmt or 'mov' in fmt,d
+          size=int((d.get('format') or {}).get('size') or 0)
+          assert 0<size<=95*1024*1024,(size,d)
+          print('Validated normalized media:',v.get('width'),'x',v.get('height'),'bytes',size)
+          PY
+            then
+              echo "Normalized file failed delivery validation for $lang" >&2
+              failures=$((failures+1)); continue
+            fi
+
+            if ! curl -fsS --retry 3 --retry-all-errors "${auth[@]}" \
+              -X POST "$BASE_URL/api/admin/media" \
+              -F "file=@$out;type=video/mp4;filename=${CONTENT_ID}_${lang}_normalized.mp4" \
+              -F "language_code=$lang" \
+              -F "asset_type=video_normalized" \
+              -F "content_item_id=$CONTENT_ID" \
+              -o "$upload"; then
+              echo "Upload failed for $lang" >&2
+              failures=$((failures+1)); continue
+            fi
+
+            media_id="$(python3 - "$upload" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1],encoding='utf-8'))
+          assert d.get('ok') is True,d
+          print(d.get('id') or d.get('media_id') or '')
+          PY
+            )"
+            test -n "$media_id" || { echo "Upload returned no media id for $lang" >&2; failures=$((failures+1)); continue; }
+
+            if [ "${APPROVE_NORMALIZED,,}" = true ]; then
+              curl -fsS --retry 3 --retry-all-errors "${auth[@]}" \
+                -H 'Content-Type: application/json' \
+                -X POST "$BASE_URL/api/admin/production/media/$media_id/qa" \
+                --data '{"status":"approved","notes":"Normalized delivery master: MP4/H.264/AAC/yuv420p/faststart; ffprobe validated by GitHub workflow."}' \
+                -o "$work/${lang}-qa.json"
+              python3 - "$work/${lang}-qa.json" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1],encoding='utf-8'))
+          assert d.get('ok') is True and d.get('qa_status')=='approved',d
+          PY
+            fi
+            normalized=$((normalized+1))
+          done
+
+          curl -fsS --retry 3 --retry-all-errors "${auth[@]}" \
+            "$BASE_URL/api/admin/production/$CONTENT_ID" -o "$work/after.json"
+
+          python3 - "$work/after.json" "$LOCALES" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1],encoding='utf-8'))
+          assert d.get('ok') is True,d
+          wanted=[x.strip().lower() for x in sys.argv[2].split(',') if x.strip()]
+          media=d.get('media') or []
+          bad=[]
+          for lang in wanted:
+              rows=[x for x in media if x.get('language_code')==lang and str(x.get('asset_type','')).lower() in {'video_normalized','video_normalized_mp4','social_video_normalized'} and str(x.get('mime_type','')).lower()=='video/mp4' and x.get('qa_status')=='approved']
+              if not rows: bad.append(lang)
+          print('Normalized approved locales:',sorted(set(wanted)-set(bad)))
+          if bad: print('Still missing normalized approved video:',bad)
+          PY
+
+          {
+            echo '## Video normalization'
+            echo
+            echo "- Content: $CONTENT_ID"
+            echo "- Requested locales: $LOCALES"
+            echo "- Newly normalized: $normalized"
+            echo "- Already normalized: $skipped"
+            echo "- Failures: $failures"
+            echo '- Delivery master: MP4 / H.264 / AAC / yuv420p / faststart / <=95 MB'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          test "$failures" -eq 0

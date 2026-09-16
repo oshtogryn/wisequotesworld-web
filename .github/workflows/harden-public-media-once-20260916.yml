@@ -1,0 +1,72 @@
+name: Harden public media once 2026-09-16
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/harden-public-media-once-20260916.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch public media delivery
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('_worker.js')
+          s=p.read_text(encoding='utf-8')
+          imp="import {mediaKind,videoDeliveryCheck,imageDeliveryCheck} from './lib/media_delivery_policy.js';\n"
+          if imp not in s:
+              anchor="import {publicationApi} from './lib/publication_api.js';\n"
+              assert anchor in s
+              s=s.replace(anchor,anchor+imp,1)
+          a=s.index('async function serveObject(')
+          b=s.index('\nasync function approvedMedia(',a)
+          c=s.index('\nfunction scheduleIndexNow(',b)
+          new_serve=r'''async function serveObject(request,env,key,kind,ext,mime){
+ if(!env.MEDIA)return json({ok:false,error:'media unavailable'},503);
+ const meta=await env.MEDIA.head(key);if(!meta)return json({ok:false,error:'R2 object missing'},404);
+ const storedMime=String(mime||meta.httpMetadata?.contentType||'application/octet-stream').toLowerCase();
+ if(kind==='video'&&ext==='mp4'&&storedMime!=='video/mp4')return json({ok:false,error:'normalized_mp4_required',stored_mime:storedMime},409);
+ const size=Number(meta.size||0),rangeHeader=request.headers.get('range');let start=0,end=Math.max(0,size-1),partial=false;
+ if(rangeHeader){const m=rangeHeader.match(/^bytes=(\d*)-(\d*)$/);if(m){if(m[1])start=Math.max(0,Number(m[1]));if(m[2])end=Math.min(size-1,Number(m[2]));else end=size-1;if(!m[1]&&m[2]){const suffix=Math.min(size,Number(m[2]));start=Math.max(0,size-suffix);end=size-1}if(start<=end&&start<size)partial=true}}
+ const obj=request.method==='HEAD'?meta:await env.MEDIA.get(key,partial?{range:{offset:start,length:end-start+1}}:undefined);if(!obj)return json({ok:false,error:'R2 object missing'},404);
+ const headers=new Headers();obj.writeHttpMetadata(headers);headers.set('content-type',storedMime);headers.set('content-disposition',`inline; filename="${kind==='video'?(storedMime==='video/mp4'?'video.mp4':'video.mov'):'pinterest.png'}"`);headers.set('cache-control','public, max-age=86400, immutable');headers.set('access-control-allow-origin','*');headers.set('accept-ranges','bytes');headers.set('x-content-type-options','nosniff');if(partial){headers.set('content-range',`bytes ${start}-${end}/${size}`);headers.set('content-length',String(end-start+1))}else headers.set('content-length',String(size));if(request.method==='HEAD')return new Response(null,{status:200,headers});return new Response(obj.body,{status:partial?206:200,headers})}
+'''
+          new_approved=r'''async function approvedMedia(request,env,id,lang,kind,ext){
+ if(!env.DB||!env.MEDIA)return json({ok:false,error:'media delivery unavailable'},503);
+ // Historical WQ013 hard-coded source remains available only in its truthful original format.
+ // Never disguise QuickTime bytes behind an .mp4 route.
+ if(id==='WQ013'&&WQ013_MEDIA[lang]?.[kind]){
+   if(kind==='video'&&ext==='mp4')return json({ok:false,error:'normalized_mp4_required',legacy_source:true},409);
+   return serveObject(request,env,WQ013_MEDIA[lang][kind],kind,ext,kind==='video'?'video/quicktime':'image/png');
+ }
+ const sql=`SELECT m.*,COALESCE(r.qa_status,'pending') qa_status FROM media_inbox m JOIN media_reviews r ON r.media_inbox_id=m.id WHERE m.project_id='wisequotesworld' AND m.content_item_id=? AND m.language_code=? AND r.qa_status='approved' AND ${mediaKindSql(kind)} ORDER BY m.created_at DESC LIMIT 20`;
+ const rows=(await env.DB.prepare(sql).bind(id,lang).all()).results||[];
+ const compatible=rows.find(row=>kind==='video'?videoDeliveryCheck(row).ready:imageDeliveryCheck(row).ready);
+ if(!compatible){const newest=rows[0]||null;const check=kind==='video'?videoDeliveryCheck(newest):imageDeliveryCheck(newest);return json({ok:false,error:kind==='video'?'approved_delivery_video_not_found':'approved_delivery_image_not_found',issues:check.issues||[]},409)}
+ return serveObject(request,env,compatible.r2_key,kind,ext,compatible.mime_type);
+}
+'''
+          s=s[:a]+new_serve+new_approved+s[c:]
+          p.write_text(s,encoding='utf-8')
+          PY
+          node --check _worker.js
+      - name: Commit hardening
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add _worker.js
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'media: stop MIME spoofing and require compatible approved assets'
+          git pull --rebase
+          git push
